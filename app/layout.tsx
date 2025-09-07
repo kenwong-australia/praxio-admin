@@ -1,7 +1,8 @@
 import "./globals.css";
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { BarChart3, Settings, Users, Brain } from "lucide-react";
+import { BarChart3, Settings, Users } from "lucide-react";
+import Image from 'next/image';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,8 +25,14 @@ export default function RootLayout({
             <aside className="w-64 min-h-screen bg-white shadow-xl border-r border-slate-200">
               <div className="p-6 border-b border-slate-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Brain className="h-6 w-6 text-white" />
+                  <div className="w-10 h-10 flex items-center justify-center">
+                    <Image 
+                      src="/Praxio Logo clean-12 (logo only) copy.png" 
+                      alt="Praxio AI Logo" 
+                      width={40} 
+                      height={40}
+                      className="object-contain"
+                    />
                   </div>
                   <div>
                     <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
