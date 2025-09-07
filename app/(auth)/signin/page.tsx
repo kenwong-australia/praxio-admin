@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
+import Image from 'next/image';
 
 function friendlyError(code: string) {
   switch (code) {
@@ -42,7 +43,18 @@ function SignInForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <Image
+            src="/Praxio Logo clean-12 (logo only).png"
+            alt="Praxio AI"
+            width={24}
+            height={24}
+            priority
+          />
+          <span className="text-sm font-medium text-neutral-700">Praxio AI</span>
+        </div>
         <h1 className="text-xl font-semibold mb-4">Admin sign in</h1>
+
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
             <span className="text-sm">Email</span>
@@ -51,7 +63,7 @@ function SignInForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring"
+              className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-[#2563EB]"
               autoComplete="email"
             />
           </label>
@@ -63,7 +75,7 @@ function SignInForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring"
+              className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-[#2563EB]"
               autoComplete="current-password"
             />
           </label>
@@ -73,7 +85,8 @@ function SignInForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-black py-2 text-white disabled:opacity-60"
+            className="w-full rounded-lg py-2 text-white disabled:opacity-60 hover:bg-[#1D4ED8] transition-colors"
+            style={{ backgroundColor: '#2563EB' }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
