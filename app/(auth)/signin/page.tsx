@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
@@ -28,6 +28,13 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 🟢 Always clear fields when arriving on /signin
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+  }, [reason]); 
+  // reason in deps ensures it also clears after redirects like ?reason=not_admin
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
