@@ -49,17 +49,20 @@ export async function getKPIs(input: unknown) {
     if (e1) throw e1;
     const chatRows = chats ?? [];
 
-    // Get conversations for engagement calculation
-    const { data: conv, error: e2 } = await sb
+    // Get user messages for engagement calculation
+    const chatIds = chatRows.map((c: any) => c.id);
+    let userMessagesQuery = sb
       .from('conversation')
-      .select('id,chat_id,created_at')
+      .select('id,chat_id')
+      .eq('type', 'user')
       .gte('created_at', f.fromISO)
-      .lte('created_at', f.toISO);
+      .lte('created_at', f.toISO)
+      .in('chat_id', chatIds);
 
+    const { data: userMessages, error: e2 } = await userMessagesQuery;
     if (e2) throw e2;
 
-    const chatIds = new Set(chatRows.map((c: any) => c.id));
-    const convCount = (conv ?? []).filter((c: any) => chatIds.has(c.chat_id)).length;
+    const userMessageCount = (userMessages ?? []).length;
 
     const totalScenarios = chatRows.length;
     const times = chatRows.map((c: any) => c.processTime).filter((x: any) => x != null) as number[];
@@ -70,7 +73,8 @@ export async function getKPIs(input: unknown) {
     const totalFeedback = feedbacks.length;
     const avgFeedback = totalFeedback > 0 ? feedbacks.reduce((a, b) => a + b, 0) / totalFeedback : 0;
 
-    const engagement = totalScenarios > 0 ? convCount / totalScenarios : 0;
+    // Engagement = (# chats + # user messages) / # chats
+    const engagement = totalScenarios > 0 ? (totalScenarios + userMessageCount) / totalScenarios : 0;
 
     return {
       totalScenarios,
