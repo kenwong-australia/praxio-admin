@@ -5,6 +5,7 @@ import {
   browserLocalPersistence,
   Auth,
 } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 let auth: Auth | null = null;
 
@@ -23,4 +24,9 @@ export function getFirebaseAuth() {
   auth = getAuth();
   setPersistence(auth, browserLocalPersistence);
   return auth;
+}
+
+export function getDb() {
+  // Firestore shares the same default app
+  return getFirestore();
 }

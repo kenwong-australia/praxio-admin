@@ -1,96 +1,95 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { usePathname, useRouter } from 'next/navigation';
-import { getFirebaseAuth } from '@/lib/firebase';
-import { BarChart3, Settings, Users } from "lucide-react";
-import Image from 'next/image';
-import { SignOutButton } from '@/components/SignOutButton';
+import { getFirebaseAuth, getDb } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Sidebar } from '@/components/Sidebar';
+
+// Optional: small screen shown to non-admins
+function NotAuthorized({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200); // auto sign-out after ~2s
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div className="min-h-screen grid place-items-center bg-neutral-100">
+      <div className="rounded-2xl bg-white p-6 shadow max-w-md text-center">
+        <h1 className="text-lg font-semibold mb-2">Access restricted</h1>
+        <p className="text-sm text-neutral-600">
+          This area is for <b>admins</b> only. You'll be signed out now.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [status, setStatus] = useState<'loading' | 'in' | 'out'>('loading');
+
+  const [phase, setPhase] = useState<
+    'auth-loading' | 'role-loading' | 'in' | 'not-admin' | 'out'
+  >('auth-loading');
 
   useEffect(() => {
     const auth = getFirebaseAuth();
-    const unsub = onAuthStateChanged(auth, (user: User | null) => {
-      if (user) {
-        setStatus('in');
-      } else {
-        setStatus('out');
+    const unsub = onAuthStateChanged(auth, async (user: User | null) => {
+      if (!user) {
+        setPhase('out');
         const q = new URLSearchParams({ redirect: pathname ?? '/admin' });
         router.replace(`/signin?${q.toString()}`);
+        return;
+      }
+
+      // Authenticated → check role in Firestore
+      setPhase('role-loading');
+      try {
+        const db = getDb();
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        const role = snap.exists() ? (snap.data() as any).role : undefined;
+
+        if (role === 'admin') {
+          setPhase('in');
+        } else {
+          setPhase('not-admin');
+        }
+      } catch {
+        // If role check fails, treat as not-admin for safety
+        setPhase('not-admin');
       }
     });
+
     return () => unsub();
   }, [pathname, router]);
 
-  if (status === 'loading' || status === 'out') {
+  if (phase === 'auth-loading' || phase === 'role-loading') {
+    return <div className="min-h-screen grid place-items-center bg-neutral-100">Loading…</div>;
+  }
+
+  if (phase === 'not-admin') {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <div>Loading…</div>
-      </div>
+      <NotAuthorized
+        onDone={async () => {
+          await signOut(getFirebaseAuth());
+          router.replace('/signin?reason=not_admin');
+        }}
+      />
     );
   }
 
+  if (phase === 'out') {
+    // brief placeholder while redirect occurs
+    return <div className="min-h-screen grid place-items-center bg-neutral-100">Redirecting…</div>;
+  }
+
+  // phase === 'in'
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 min-h-screen bg-white shadow-xl border-r border-slate-200">
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Image 
-                  src="/Praxio Logo clean-12 (logo only).png" 
-                  alt="Praxio AI Logo" 
-                  width={40} 
-                  height={40}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Praxio AI
-                </h1>
-                <p className="text-xs text-muted-foreground">Admin Dashboard</p>
-              </div>
-            </div>
-          </div>
-          
-          <nav className="p-4 space-y-2">
-            <a
-              href="/admin"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium transition-colors"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
-            </a>
-            <a
-              href="#"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-            >
-              <Users className="h-4 w-4" />
-              Users
-              <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full">Soon</span>
-            </a>
-            <a
-              href="#"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-              <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full">Soon</span>
-            </a>
-          </nav>
-          
-          <div className="mt-auto p-4">
-            <SignOutButton />
-          </div>
-        </aside>
-        {/* Main Content */}
+        <Sidebar />
         <main className="flex-1 overflow-x-hidden">
           {children}
         </main>

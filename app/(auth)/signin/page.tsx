@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 
 function friendlyError(code: string) {
@@ -21,6 +21,7 @@ function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = params.get('redirect') || '/admin';
+  const reason = params.get('reason');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,6 +57,15 @@ function SignInForm() {
           <span className="text-sm font-medium text-neutral-700">Praxio AI</span>
         </div>
         <h1 className="text-xl font-semibold mb-4">Admin sign in</h1>
+
+        {reason === 'not_admin' && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-red-700">
+              Your account isn't authorized for admin access. Try another account or contact your administrator.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
