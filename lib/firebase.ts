@@ -1,0 +1,26 @@
+import { getApps, initializeApp } from 'firebase/app';
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  Auth,
+} from 'firebase/auth';
+
+let auth: Auth | null = null;
+
+export function getFirebaseAuth() {
+  if (auth) return auth;
+
+  const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
+  };
+
+  if (!getApps().length) {
+    initializeApp(firebaseConfig);
+  }
+  auth = getAuth();
+  setPersistence(auth, browserLocalPersistence);
+  return auth;
+}

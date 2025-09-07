@@ -1,8 +1,9 @@
 import "./globals.css";
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { BarChart3, Settings, Users } from "lucide-react";
+import { BarChart3, Settings, Users, LogOut } from "lucide-react";
 import Image from 'next/image';
+import { SignOutButton } from '@/components/SignOutButton';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -68,6 +69,10 @@ export default function RootLayout({
                   <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full">Soon</span>
                 </a>
               </nav>
+              
+              <div className="mt-auto p-4">
+                <SignOutButton />
+              </div>
             </aside>
 
             {/* Main Content */}
