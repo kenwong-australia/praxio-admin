@@ -81,8 +81,10 @@
   }
 }
 
-/* Ensure white export background when marked */
-[data-pdf-bg="true"] { background: #fff !important; }
-
 /* Prevent KPI cards/tables from splitting across pages */
 .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+
+/* PDF export helpers */
+[data-pdf-mode="on"] { background: #fff !important; }
+.pdf-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+.pdf-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }

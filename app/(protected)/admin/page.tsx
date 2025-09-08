@@ -10,7 +10,7 @@ import { ScenariosTable } from "@/components/ScenariosTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KPIData } from "@/lib/types";
-import DownloadPdfButton from "@/components/DownloadPdfButton";
+import PdfDownloadButton from "@/components/PdfDownloadButton";
 import PrintableHeader from "@/components/PrintableHeader";
 import FilterSummary from "@/components/FilterSummary";
 
@@ -100,29 +100,38 @@ export default function AdminPage() {
               Monitor and analyze your AI scenarios, user engagement, and system performance.
             </p>
           </div>
-          {!loading && <DownloadPdfButton targetId="print-area" />}
+          {!loading && (
+            <PdfDownloadButton
+              targetId="print-area"
+              filenamePrefix="praxio-admin-summary"
+              options={{ paper: { format: 'a4', orientation: 'portrait' }, fixedWidthPx: 794, hideSelectors: ['.pdf-hide'] }}
+              className="rounded-md px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
+            />
+          )}
         </div>
 
         {/* === Printable area starts === */}
         <section id="print-area" className="bg-white rounded-xl p-5 shadow-sm">
-          <PrintableHeader />
+          <PrintableHeader title="Admin Summary" />
 
           {/* Read-only filter summary for the PDF */}
           <FilterSummary email={filters.email} fromISO={filters.from} toISO={filters.to} />
 
-          {/* Interactive filters (kept as-is; they'll render fine in the PDF) */}
-          <FiltersBar
-            emails={emails}
-            onApply={(email, from, to) => applyFilters(email, from, to, 1)}
-            defaultFrom={filters.from}
-            defaultTo={filters.to}
-          />
+          {/* Interactive filters (hidden in PDF) */}
+          <div className="pdf-hide">
+            <FiltersBar
+              emails={emails}
+              onApply={(email, from, to) => applyFilters(email, from, to, 1)}
+              defaultFrom={filters.from}
+              defaultTo={filters.to}
+            />
+          </div>
 
           {/* KPIs */}
           {loading ? (
             <LoadingSkeleton />
           ) : kpis ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-0 pdf-grid-3">
               <div className="avoid-break"><KpiCard title="Total Scenarios" value={kpis.totalScenarios} /></div>
               <div className="avoid-break"><KpiCard title="Total Processing Time (s)" value={kpis.totalProcessingTime} /></div>
               <div className="avoid-break"><KpiCard title="Avg Processing Time (s)" value={kpis.avgProcessingTime} /></div>
