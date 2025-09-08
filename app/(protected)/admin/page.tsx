@@ -10,6 +10,9 @@ import { ScenariosTable } from "@/components/ScenariosTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KPIData } from "@/lib/types";
+import DownloadPdfButton from "@/components/DownloadPdfButton";
+import PrintableHeader from "@/components/PrintableHeader";
+import FilterSummary from "@/components/FilterSummary";
 
 export default function AdminPage() {
   const { fromUTC, toUTC } = rangeLast30Sydney();
@@ -87,36 +90,52 @@ export default function AdminPage() {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Dashboard Overview
-          </h1>
-          <p className="text-muted-foreground">
-            Monitor and analyze your AI scenarios, user engagement, and system performance.
-          </p>
+        {/* Title row + PDF button (hidden during loading) */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Dashboard Overview
+            </h1>
+            <p className="text-muted-foreground">
+              Monitor and analyze your AI scenarios, user engagement, and system performance.
+            </p>
+          </div>
+          {!loading && <DownloadPdfButton targetId="print-area" />}
         </div>
 
-        <FiltersBar
-          emails={emails}
-          onApply={(email, from, to) => applyFilters(email, from, to, 1)}
-          defaultFrom={filters.from}
-          defaultTo={filters.to}
-        />
+        {/* === Printable area starts === */}
+        <section id="print-area" className="bg-white rounded-xl p-5 shadow-sm">
+          <PrintableHeader />
 
-        {loading ? (
-          <LoadingSkeleton />
-        ) : kpis ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <KpiCard title="Total Scenarios" value={kpis.totalScenarios} />
-            <KpiCard title="Total Processing Time (s)" value={kpis.totalProcessingTime} />
-            <KpiCard title="Avg Processing Time (s)" value={kpis.avgProcessingTime} />
-            <KpiCard title="Engagement Rate" value={kpis.engagementRate} />
-            <KpiCard title="Total Feedback" value={kpis.totalFeedback} />
-            <KpiCard title="Avg Feedback Score" value={kpis.avgFeedbackScore} />
-          </div>
-        ) : null}
+          {/* Read-only filter summary for the PDF */}
+          <FilterSummary email={filters.email} fromISO={filters.from} toISO={filters.to} />
 
-        <div className="grid grid-cols-1 gap-8">
+          {/* Interactive filters (kept as-is; they'll render fine in the PDF) */}
+          <FiltersBar
+            emails={emails}
+            onApply={(email, from, to) => applyFilters(email, from, to, 1)}
+            defaultFrom={filters.from}
+            defaultTo={filters.to}
+          />
+
+          {/* KPIs */}
+          {loading ? (
+            <LoadingSkeleton />
+          ) : kpis ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-0">
+              <div className="avoid-break"><KpiCard title="Total Scenarios" value={kpis.totalScenarios} /></div>
+              <div className="avoid-break"><KpiCard title="Total Processing Time (s)" value={kpis.totalProcessingTime} /></div>
+              <div className="avoid-break"><KpiCard title="Avg Processing Time (s)" value={kpis.avgProcessingTime} /></div>
+              <div className="avoid-break"><KpiCard title="Engagement Rate" value={kpis.engagementRate} /></div>
+              <div className="avoid-break"><KpiCard title="Total Feedback" value={kpis.totalFeedback} /></div>
+              <div className="avoid-break"><KpiCard title="Avg Feedback Score" value={kpis.avgFeedbackScore} /></div>
+            </div>
+          ) : null}
+        </section>
+        {/* === Printable area ends === */}
+
+        {/* Tables remain excluded from PDF for now */}
+        <div className="grid grid-cols-1 gap-8 mt-8">
           <Latest5Table rows={latest} />
           <ScenariosTable 
             rows={scenariosData.rows} 

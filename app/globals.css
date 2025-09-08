@@ -80,3 +80,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Ensure white export background when marked */
+[data-pdf-bg="true"] { background: #fff !important; }
+
+/* Prevent KPI cards/tables from splitting across pages */
+.avoid-break { break-inside: avoid; page-break-inside: avoid; }
