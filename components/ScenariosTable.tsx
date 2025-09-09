@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toSydneyDateTime } from "@/lib/time";
 import { ChevronLeft, ChevronRight, Database, Mail, Clock, Star, Brain } from "lucide-react";
+import { ChatDetailsModal } from "@/components/ChatDetailsModal";
 
 interface ScenariosTableProps {
   rows: any[];
@@ -16,6 +17,19 @@ interface ScenariosTableProps {
 }
 
 export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChange }: ScenariosTableProps) {
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleRowClick = (row: any) => {
+    setSelectedChat(row);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedChat(null);
+  };
+
   const totalPages = Math.ceil(total / pageSize);
   const startItem = ((currentPage - 1) * pageSize) + 1;
   const endItem = Math.min(currentPage * pageSize, total);
@@ -83,7 +97,11 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                 </thead>
                 <tbody className="divide-y divide-border">
                   {rows.map((r) => (
-                    <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                    <tr 
+                      key={r.id} 
+                      className="hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => handleRowClick(r)}
+                    >
                       <td className="p-4">
                         <Badge variant="outline" className="font-mono text-xs">
                           #{r.id}
@@ -172,6 +190,12 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
           </>
         )}
       </CardContent>
+      
+      <ChatDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        chatData={selectedChat}
+      />
     </Card>
   );
 }
