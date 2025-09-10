@@ -25,16 +25,15 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
   if (!chatData) return null;
 
   // Parse citations from JSON string
-  const parseCitations = (citationsArray: string | null): Citation[] => {
-    if (!citationsArray) return [];
+  const parseCitations = (usedcitationsArray: string | null): Citation[] => {
+    if (!usedcitationsArray) return [];
     try {
-      return JSON.parse(citationsArray);
+      return JSON.parse(usedcitationsArray);
     } catch {
       return [];
     }
   };
 
-  const citations = parseCitations(chatData.usedcitationsarray);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
