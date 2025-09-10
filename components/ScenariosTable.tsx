@@ -125,10 +125,10 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                         {getModelBadge(r.model)}
                       </td>
                       <td className="p-4">
-                        {r.processTime ? (
+                        {r.processtime ? (
                           <div className="flex items-center gap-2">
                             <Clock className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm font-mono">{r.processTime.toFixed(2)}s</span>
+                            <span className="text-sm font-mono">{r.processtime.toFixed(2)}s</span>
                           </div>
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>

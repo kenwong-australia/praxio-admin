@@ -34,7 +34,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     }
   };
 
-  const citations = parseCitations(chatData.usedCitationsArray);
+  const citations = parseCitations(chatData.usedcitationsarray);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
