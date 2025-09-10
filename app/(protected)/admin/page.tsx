@@ -50,8 +50,6 @@ export default function AdminPage() {
 
   async function applyFilters(email: string | null, from: string, to: string, page: number = currentPage) {
     setLoading(true);
-    console.log('applyFilters called with:', { email, from, to, page });
-    
     try {
       setFilters({ email, from, to });
       setCurrentPage(page);
@@ -62,12 +60,6 @@ export default function AdminPage() {
         getScenariosPage({ email, fromISO: from, toISO: to, page, pageSize })
       ]);
 
-      console.log('applyFilters results:', { 
-        kpis: k, 
-        latest: l?.length, 
-        scenarios: s?.rows?.length,
-        scenariosTotal: s?.total 
-      });
       setKpis(k);
       setLatest(l);
       setScenariosData(s);

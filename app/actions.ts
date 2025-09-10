@@ -100,9 +100,6 @@ export async function getKPIs(input: unknown) {
 export async function getLatest5(input: unknown) {
   try {
     const f = F.partial({ page: true, pageSize: true }).parse(input);
-    
-    console.log('getLatest5 - Parsed filters:', f);
-    
     let q = svc()
       .from('chat')
       .select('id,created_at,title,email,scenario,research,usedcitationsArray,questions,draft,processTime')
@@ -114,9 +111,6 @@ export async function getLatest5(input: unknown) {
     if (f.email) q = q.eq('email', f.email);
     
     const { data, error } = await q;
-    
-    console.log('getLatest5 - Query result:', { data: data?.length, error });
-    
     if (error) throw error;
     
     return data ?? [];
@@ -129,9 +123,6 @@ export async function getLatest5(input: unknown) {
 export async function getScenariosPage(input: unknown) {
   try {
     const f = F.parse(input);
-    
-    console.log('getScenariosPage - Parsed filters:', f);
-    
     const offset = (f.page - 1) * f.pageSize;
 
     let base = svc()
@@ -146,13 +137,6 @@ export async function getScenariosPage(input: unknown) {
       .order('created_at', { ascending: false })
       .range(offset, offset + f.pageSize - 1);
 
-    console.log('getScenariosPage - Query result:', { 
-      dataLength: data?.length, 
-      count, 
-      error,
-      offset,
-      pageSize: f.pageSize 
-    });
     if (error) throw error;
     
     return { rows: data ?? [], total: count ?? 0 };
