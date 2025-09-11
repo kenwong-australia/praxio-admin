@@ -131,8 +131,9 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
             </TabsContent>
 
             <TabsContent value="research" className="mt-4 flex-1 min-h-0">
-              <ScrollArea className="h-[60vh] pr-4">
-                <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
+              <ScrollArea className="h-[60vh]">
+                <div className="px-4 md:px-6 pr-4">
+                  <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
                   {chatData.scenario && (
                     <AccordionItem value="scenario" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
@@ -216,24 +217,27 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                       </AccordionContent>
                     </AccordionItem>
                   )}
-                </Accordion>
+                  </Accordion>
+                </div>
               </ScrollArea>
             </TabsContent>
 
             <TabsContent value="draft" className="mt-4 flex-1 min-h-0">
-              <ScrollArea className="h-[60vh] pr-4">
-                {chatData.draft ? (
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{chatData.draft}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <div className="text-center">
-                      <PenTool className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No draft content available</p>
+              <ScrollArea className="h-[60vh]">
+                <div className="px-4 md:px-6">
+                  {chatData.draft ? (
+                    <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                      <ReactMarkdown>{chatData.draft}</ReactMarkdown>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      <div className="text-center">
+                        <PenTool className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No draft content available</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </ScrollArea>
             </TabsContent>
           </div>
