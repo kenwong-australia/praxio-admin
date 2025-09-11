@@ -160,20 +160,32 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                   
                   {/* Page numbers */}
                   <div className="flex gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const page = Math.max(1, Math.min(currentPage - 2 + i, totalPages - 4 + i));
-                      return (
-                        <Button
-                          key={page}
-                          variant={page === currentPage ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => onPageChange(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
+                    {(() => {
+                      const maxVisible = 5;
+                      const half = Math.floor(maxVisible / 2);
+                      let start = Math.max(1, currentPage - half);
+                      let end = Math.min(totalPages, start + maxVisible - 1);
+                      
+                      // Adjust start if we're near the end
+                      if (end - start + 1 < maxVisible) {
+                        start = Math.max(1, end - maxVisible + 1);
+                      }
+                      
+                      return Array.from({ length: end - start + 1 }, (_, i) => {
+                        const page = start + i;
+                        return (
+                          <Button
+                            key={page}
+                            variant={page === currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onPageChange(page)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      });
+                    })()}
                   </div>
 
                   <Button
