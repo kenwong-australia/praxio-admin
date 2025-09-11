@@ -102,7 +102,7 @@ export async function getLatest5(input: unknown) {
     const f = F.partial({ page: true, pageSize: true }).parse(input);
     let q = svc()
       .from('chat')
-      .select('id,created_at,title,email,scenario,research,usedcitationsArray,questions,draft,processTime')
+      .select('id,created_at,title,email,scenario,research,usedcitationsArray,usedCitationsArray,questions,draft,processTime')
       .gte('created_at', f.fromISO!)
       .lte('created_at', f.toISO!)
       .order('created_at', { ascending: false })
@@ -112,6 +112,15 @@ export async function getLatest5(input: unknown) {
     
     const { data, error } = await q;
     if (error) throw error;
+    
+    // Debug: Log citations data for latest 5
+    console.log('=== CITATIONS DEBUG (getLatest5) ===');
+    data?.forEach((row, index) => {
+      console.log(`Latest ${index + 1} (ID: ${row.id}):`);
+      console.log('  usedcitationsArray:', row.usedcitationsArray);
+      console.log('  usedCitationsArray:', row.usedCitationsArray);
+    });
+    console.log('=== END LATEST5 DEBUG ===');
     
     return data ?? [];
   } catch (error) {
@@ -127,7 +136,7 @@ export async function getScenariosPage(input: unknown) {
 
     let base = svc()
       .from('chat')
-      .select('id,created_at,title,email,model,processTime,feedback,scenario,research,usedcitationsArray,questions,draft', { count: 'exact' })
+      .select('id,created_at,title,email,model,processTime,feedback,scenario,research,usedcitationsArray,usedCitationsArray,questions,draft', { count: 'exact' })
       .gte('created_at', f.fromISO)
       .lte('created_at', f.toISO);
 
@@ -138,6 +147,16 @@ export async function getScenariosPage(input: unknown) {
       .range(offset, offset + f.pageSize - 1);
 
     if (error) throw error;
+    
+    // Debug: Log citations data for first few rows
+    console.log('=== CITATIONS DEBUG (getScenariosPage) ===');
+    data?.slice(0, 3).forEach((row, index) => {
+      console.log(`Row ${index + 1} (ID: ${row.id}):`);
+      console.log('  usedcitationsArray:', row.usedcitationsArray);
+      console.log('  usedCitationsArray:', row.usedCitationsArray);
+      console.log('  Type check:', typeof row.usedcitationsArray, typeof row.usedCitationsArray);
+    });
+    console.log('=== END CITATIONS DEBUG ===');
     
     return { rows: data ?? [], total: count ?? 0 };
   } catch (error) {
