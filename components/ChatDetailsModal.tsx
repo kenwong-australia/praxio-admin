@@ -59,17 +59,17 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="mx-6 grid w-full grid-cols-3 h-auto">
+          <TabsList className="mx-6 grid w-full grid-cols-3 h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Hash className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="research" className="flex items-center gap-2 text-xs sm:text-sm">
+            <TabsTrigger value="research" className="flex items-center gap-1 text-xs sm:text-sm px-2">
               <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">Research & Analysis</span>
-              <span className="sm:hidden">Research</span>
+              <span className="hidden md:inline">Research & Analysis</span>
+              <span className="md:hidden">Research</span>
             </TabsTrigger>
-            <TabsTrigger value="draft" className="flex items-center gap-2">
+            <TabsTrigger value="draft" className="flex items-center gap-1 text-xs sm:text-sm px-2">
               <PenTool className="h-4 w-4" />
               Draft
             </TabsTrigger>
@@ -132,7 +132,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
             <TabsContent value="research" className="mt-4 flex-1 min-h-0">
               <ScrollArea className="h-[60vh] pr-4">
-                <Accordion type="multiple" className="space-y-2">
+                <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
                   {chatData.scenario && (
                     <AccordionItem value="scenario" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
