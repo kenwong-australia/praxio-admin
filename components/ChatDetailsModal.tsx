@@ -50,7 +50,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] w-[90vw] p-0">
+      <DialogContent className="w-[95vw] max-h-[90vh] max-w-[1200px] lg:max-w-[1400px] p-0 overflow-hidden rounded-xl">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-xl font-semibold flex items-center gap-2">
             <Hash className="h-5 w-5 text-blue-600" />
@@ -59,19 +59,19 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="mx-6 grid w-full grid-cols-3 h-auto gap-1">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsList className="mx-6 flex gap-1 overflow-x-auto max-w-full [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsTrigger value="overview" className="shrink min-w-0 flex items-center gap-2">
               <Hash className="h-4 w-4" />
-              Overview
+              <span className="truncate">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="research" className="flex items-center gap-1 text-xs sm:text-sm px-2">
+            <TabsTrigger value="research" className="shrink min-w-0 flex items-center gap-1">
               <Search className="h-4 w-4" />
-              <span className="hidden md:inline">Research & Analysis</span>
-              <span className="md:hidden">Research</span>
+              <span className="hidden md:inline truncate">Research & Analysis</span>
+              <span className="md:hidden truncate">Research</span>
             </TabsTrigger>
-            <TabsTrigger value="draft" className="flex items-center gap-1 text-xs sm:text-sm px-2">
+            <TabsTrigger value="draft" className="shrink min-w-0 flex items-center gap-1">
               <PenTool className="h-4 w-4" />
-              Draft
+              <span className="truncate">Draft</span>
             </TabsTrigger>
           </TabsList>
 
@@ -132,7 +132,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
             <TabsContent value="research" className="mt-4 flex-1 min-h-0">
               <ScrollArea className="h-[60vh]">
-                <div className="px-4 md:px-6 pr-4">
+                <div className="px-6">
                   <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
                   {chatData.scenario && (
                     <AccordionItem value="scenario" className="border rounded-lg px-4">
@@ -224,10 +224,10 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
             <TabsContent value="draft" className="mt-4 flex-1 min-h-0">
               <ScrollArea className="h-[60vh]">
-                <div className="px-4 md:px-6">
+                <div className="px-6">
                   {chatData.draft ? (
                     <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                      <ReactMarkdown>{chatData.draft}</ReactMarkdown>
+                      <ReactMarkdown>{chatData.draft ?? ''}</ReactMarkdown>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center h-32 text-muted-foreground">
