@@ -28,13 +28,25 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
   const parseCitations = (usedcitationsArray: string | null): Citation[] => {
     if (!usedcitationsArray) return [];
     try {
-      return JSON.parse(usedcitationsArray);
+      const parsed = JSON.parse(usedcitationsArray);
+      // Handle both array and object formats
+      if (Array.isArray(parsed)) {
+        return parsed.filter(item => item && typeof item === 'object' && item.title && item.url);
+      }
+      return [];
     } catch {
       return [];
     }
   };
 
-  const citations = parseCitations(chatData.usedcitationsArray);
+  const citations = parseCitations(chatData.usedcitationsArray || chatData.usedCitationsArray);
+  
+  // Debug log to help troubleshoot
+  console.log('Citations data:', {
+    raw: chatData.usedcitationsArray || chatData.usedCitationsArray,
+    parsed: citations,
+    length: citations.length
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -47,14 +59,15 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="mx-6 grid w-full grid-cols-3">
+          <TabsList className="mx-6 grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Hash className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="research" className="flex items-center gap-2">
+            <TabsTrigger value="research" className="flex items-center gap-2 text-xs sm:text-sm">
               <Search className="h-4 w-4" />
-              Research & Analysis
+              <span className="hidden sm:inline">Research & Analysis</span>
+              <span className="sm:hidden">Research</span>
             </TabsTrigger>
             <TabsTrigger value="draft" className="flex items-center gap-2">
               <PenTool className="h-4 w-4" />
