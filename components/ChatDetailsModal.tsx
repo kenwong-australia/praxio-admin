@@ -41,18 +41,6 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
   const citations = parseCitations(chatData.usedcitationsArray || chatData.usedCitationsArray);
   
-  // Enhanced debug logging
-  console.log('=== MODAL CITATIONS DEBUG ===');
-  console.log('Chat ID:', chatData.id);
-  console.log('Raw chatData keys:', Object.keys(chatData));
-  console.log('usedcitationsArray (snake_case):', chatData.usedcitationsArray);
-  console.log('usedCitationsArray (camelCase):', chatData.usedCitationsArray);
-  console.log('Type of usedcitationsArray:', typeof chatData.usedcitationsArray);
-  console.log('Type of usedCitationsArray:', typeof chatData.usedCitationsArray);
-  console.log('Parsed citations:', citations);
-  console.log('Citations length:', citations.length);
-  console.log('=== END MODAL DEBUG ===');
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-h-[90vh] max-w-[1200px] lg:max-w-[1400px] p-0 overflow-hidden rounded-xl">

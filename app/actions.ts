@@ -113,15 +113,6 @@ export async function getLatest5(input: unknown) {
     const { data, error } = await q;
     if (error) throw error;
     
-    // Debug: Log citations data for latest 5
-    console.log('=== CITATIONS DEBUG (getLatest5) ===');
-    data?.forEach((row, index) => {
-      console.log(`Latest ${index + 1} (ID: ${row.id}):`);
-      console.log('  usedcitationsArray:', row.usedcitationsArray);
-      console.log('  usedCitationsArray:', row.usedCitationsArray);
-    });
-    console.log('=== END LATEST5 DEBUG ===');
-    
     return data ?? [];
   } catch (error) {
     console.error('Error fetching latest 5:', error);
@@ -147,16 +138,6 @@ export async function getScenariosPage(input: unknown) {
       .range(offset, offset + f.pageSize - 1);
 
     if (error) throw error;
-    
-    // Debug: Log citations data for first few rows
-    console.log('=== CITATIONS DEBUG (getScenariosPage) ===');
-    data?.slice(0, 3).forEach((row, index) => {
-      console.log(`Row ${index + 1} (ID: ${row.id}):`);
-      console.log('  usedcitationsArray:', row.usedcitationsArray);
-      console.log('  usedCitationsArray:', row.usedCitationsArray);
-      console.log('  Type check:', typeof row.usedcitationsArray, typeof row.usedCitationsArray);
-    });
-    console.log('=== END CITATIONS DEBUG ===');
     
     return { rows: data ?? [], total: count ?? 0 };
   } catch (error) {
