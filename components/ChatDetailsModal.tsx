@@ -32,12 +32,22 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     
     // Supabase JSONB fields are already parsed by the client
     if (Array.isArray(usedcitationsArray)) {
-      return usedcitationsArray
-        .filter(item => item && typeof item === 'object' && item.url && item.fullreference)
+      console.log('🔍 Debug - Raw citations array:', usedcitationsArray);
+      console.log('🔍 Debug - Array length:', usedcitationsArray.length);
+      
+      const filtered = usedcitationsArray
+        .filter(item => {
+          const isValid = item && typeof item === 'object' && item.url && item.fullreference;
+          console.log('🔍 Debug - Citation item:', item, 'Valid:', isValid);
+          return isValid;
+        })
         .map(item => ({
           title: item.fullreference, // Use fullreference as the title
           url: item.url
         }));
+      
+      console.log('🔍 Debug - Filtered citations:', filtered);
+      return filtered;
     }
     
     // If it's a string, try to parse it (fallback for edge cases)
