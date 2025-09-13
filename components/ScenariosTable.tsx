@@ -112,7 +112,7 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-sm max-w-xs truncate">
-                          {r.title || 'Untitled'}
+                          {r.title?.trim() || 'Untitled'}
                         </div>
                       </td>
                       <td className="p-4">

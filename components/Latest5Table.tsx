@@ -65,7 +65,7 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-sm max-w-xs truncate">
-                          {r.title || 'Untitled'}
+                          {r.title?.trim() || 'Untitled'}
                         </div>
                       </td>
                       <td className="p-4">
@@ -76,7 +76,10 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                       </td>
                       <td className="p-4">
                         <div className="text-sm text-muted-foreground max-w-md truncate">
-                          {r.scenario ? r.scenario.substring(0, 100) + (r.scenario.length > 100 ? '...' : '') : 'No scenario'}
+                          {r.scenario?.trim() ? 
+                            r.scenario.substring(0, 100) + (r.scenario.length > 100 ? '...' : '') : 
+                            'No scenario'
+                          }
                         </div>
                       </td>
                     </tr>

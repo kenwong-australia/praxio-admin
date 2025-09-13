@@ -133,7 +133,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                 </div>
               </div>
 
-              {chatData.title && (
+              {chatData.title?.trim() && (
                 <div className="border-t pt-4">
                   <div className="flex items-center gap-3 mb-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
@@ -148,7 +148,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
               <ScrollArea className="h-[60vh]">
                 <div className="px-6">
                   <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
-                  {chatData.scenario && (
+                  {chatData.scenario?.trim() && (
                     <AccordionItem value="scenario" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     </AccordionItem>
                   )}
 
-                  {chatData.research && (
+                  {chatData.research?.trim() && (
                     <AccordionItem value="research" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     </AccordionItem>
                   )}
 
-                  {chatData.questions && (
+                  {chatData.questions?.trim() && (
                     <AccordionItem value="questions" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
