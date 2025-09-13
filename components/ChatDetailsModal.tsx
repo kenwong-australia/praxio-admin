@@ -18,7 +18,7 @@ interface ChatDetailsModalProps {
 
 interface Citation {
   title: string;
-  url: string;
+  url: string | null;
 }
 
 export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModalProps) {
@@ -32,22 +32,14 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     
     // Supabase JSONB fields are already parsed by the client
     if (Array.isArray(usedcitationsArray)) {
-      console.log('🔍 Debug - Raw citations array:', usedcitationsArray);
-      console.log('🔍 Debug - Array length:', usedcitationsArray.length);
-      
-      const filtered = usedcitationsArray
-        .filter(item => {
-          const isValid = item && typeof item === 'object' && item.url && item.fullreference;
-          console.log('🔍 Debug - Citation item:', item, 'Valid:', isValid);
-          return isValid;
-        })
+      return usedcitationsArray
+        .filter(item => item && 
+                      typeof item === 'object' && 
+                      item.fullreference?.trim())
         .map(item => ({
           title: item.fullreference, // Use fullreference as the title
-          url: item.url
+          url: item.url?.trim() || null // URL is optional for legislation references
         }));
-      
-      console.log('🔍 Debug - Filtered citations:', filtered);
-      return filtered;
     }
     
     // If it's a string, try to parse it (fallback for edge cases)
@@ -56,10 +48,12 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
         const parsed = JSON.parse(usedcitationsArray);
         if (Array.isArray(parsed)) {
           return parsed
-            .filter(item => item && typeof item === 'object' && item.url && item.fullreference)
+            .filter(item => item && 
+                          typeof item === 'object' && 
+                          item.fullreference?.trim())
             .map(item => ({
               title: item.fullreference, // Use fullreference as the title
-              url: item.url
+              url: item.url?.trim() || null // URL is optional for legislation references
             }));
         }
       } catch (error) {
@@ -202,22 +196,25 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         <div className="space-y-3">
                           {citations.map((citation, index) => (
                             <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                              <Badge variant="outline" className="text-xs font-mono shrink-0">
-                                [{index + 1}]
-                              </Badge>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm mb-1 line-clamp-2">
                                   {citation.title}
                                 </p>
-                                <a
-                                  href={citation.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
-                                >
-                                  <ExternalLink className="h-3 w-3 shrink-0" />
-                                  {citation.url}
-                                </a>
+                                {citation.url ? (
+                                  <a
+                                    href={citation.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
+                                  >
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                    {citation.url}
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">
+                                    Legislation reference
+                                  </span>
+                                )}
                               </div>
                             </div>
                           ))}
