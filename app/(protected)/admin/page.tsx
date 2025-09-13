@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KPIData } from "@/lib/types";
 import PdfDownloadButton from "@/components/PdfDownloadButton";
+import DocxDownloadButton from "@/components/DocxDownloadButton";
 import PrintableHeader from "@/components/PrintableHeader";
 import FilterSummary from "@/components/FilterSummary";
 
@@ -101,12 +102,20 @@ export default function AdminPage() {
             </p>
           </div>
           {!loading && (
-            <PdfDownloadButton
-              targetId="print-area"
-              filenamePrefix="praxio-admin-summary"
-              options={{ paper: { format: 'a4', orientation: 'portrait' }, fixedWidthPx: 794, hideSelectors: ['.pdf-hide'] }}
-              className="rounded-md px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
-            />
+            <div className="flex gap-2">
+              <PdfDownloadButton
+                targetId="print-area"
+                filenamePrefix="praxio-admin-summary"
+                options={{ paper: { format: 'a4', orientation: 'portrait' }, fixedWidthPx: 794, hideSelectors: ['.pdf-hide'] }}
+                className="rounded-md px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
+              />
+              <DocxDownloadButton
+                targetId="print-area"
+                filenamePrefix="praxio-admin-summary"
+                options={{ title: 'Admin Summary' }}
+                className="rounded-md px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-60"
+              />
+            </div>
           )}
         </div>
 
