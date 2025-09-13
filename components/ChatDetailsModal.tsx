@@ -24,41 +24,41 @@ interface Citation {
 export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModalProps) {
   if (!chatData) return null;
 
-  // Parse citations from JSON string
-  const parseCitations = (usedcitationsArray: string | null): Citation[] => {
+  // Parse citations from Supabase JSONB field (already parsed by client)
+  const parseCitations = (usedcitationsArray: any): Citation[] => {
     console.log('🔍 Debug - usedcitationsArray raw data:', usedcitationsArray);
     if (!usedcitationsArray) {
       console.log('❌ No usedcitationsArray data found');
       return [];
     }
-    try {
-      const parsed = JSON.parse(usedcitationsArray);
-      console.log('✅ Parsed citations data:', parsed);
-      // Handle both array and object formats
-      if (Array.isArray(parsed)) {
-        const filtered = parsed.filter(item => item && typeof item === 'object' && item.title && item.url);
-        console.log('✅ Filtered citations:', filtered);
-        return filtered;
-      }
-      console.log('❌ Citations data is not an array');
-      return [];
-    } catch (error) {
-      console.log('❌ JSON parsing error:', error);
-      return [];
+    
+    // Supabase JSONB fields are already parsed by the client
+    if (Array.isArray(usedcitationsArray)) {
+      const filtered = usedcitationsArray.filter(item => item && typeof item === 'object' && item.title && item.url);
+      console.log('✅ Filtered citations:', filtered);
+      return filtered;
     }
+    
+    // If it's a string, try to parse it (fallback for edge cases)
+    if (typeof usedcitationsArray === 'string') {
+      try {
+        const parsed = JSON.parse(usedcitationsArray);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter(item => item && typeof item === 'object' && item.title && item.url);
+          console.log('✅ Parsed and filtered citations from string:', filtered);
+          return filtered;
+        }
+      } catch (error) {
+        console.log('❌ JSON parsing error:', error);
+      }
+    }
+    
+    console.log('❌ Citations data is not in expected format');
+    return [];
   };
 
   const citations = parseCitations(chatData.usedcitationsArray || chatData.usedCitationsArray);
   console.log('🎯 Final citations result:', citations);
-  
-  // TODO: Remove this test data once real citations are working
-  const testCitations: Citation[] = [
-    { title: "Sample Research Article", url: "https://example.com/research1" },
-    { title: "Another Citation Source", url: "https://example.com/research2" }
-  ];
-  
-  // Use test data if no real citations found
-  const displayCitations = citations.length > 0 ? citations : testCitations;
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -178,22 +178,17 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     </AccordionItem>
                   )}
 
-                  {displayCitations.length > 0 && (
+                  {citations.length > 0 && (
                     <AccordionItem value="citations" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
                           <ExternalLink className="h-4 w-4 text-purple-600" />
-                          <span className="font-medium">Citations ({displayCitations.length})</span>
-                          {citations.length === 0 && (
-                            <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                              Test Data
-                            </span>
-                          )}
+                          <span className="font-medium">Citations ({citations.length})</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
                         <div className="space-y-3">
-                          {displayCitations.map((citation, index) => (
+                          {citations.map((citation, index) => (
                             <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                               <Badge variant="outline" className="text-xs font-mono shrink-0">
                                 [{index + 1}]
