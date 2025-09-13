@@ -172,7 +172,7 @@ export async function exportElementToDocx(data: DocxExportData, opts: DocxOption
                   }),
                   new TableCell({
                     children: [new Paragraph({
-                      children: [new TextRun({ text: String(kpi.value), size: 14 })],
+                      children: [new TextRun({ text: formatKpiValue(kpi.title, kpi.value), size: 14 })],
                     })],
                   }),
                 ],
@@ -235,6 +235,20 @@ function formatDateRange(fromISO: string, toISO: string): string {
   };
   
   return `${formatDate(from)} - ${formatDate(to)}`;
+}
+
+// Helper function to format KPI values (matches KpiCard formatting)
+function formatKpiValue(title: string, value: string | number): string {
+  if (typeof value === 'number') {
+    if (title.includes('Rate')) {
+      return `${value}%`;
+    } else if (title.includes('Time')) {
+      return `${value}s`;
+    } else {
+      return value.toLocaleString();
+    }
+  }
+  return String(value);
 }
 
 // Helper function to extract data from HTML element (similar to PDF approach)

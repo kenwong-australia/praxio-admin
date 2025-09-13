@@ -114,6 +114,29 @@ export default function AdminPage() {
                 filenamePrefix="praxio-admin-summary"
                 options={{ title: 'Admin Summary' }}
                 className="rounded-md px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-60"
+                data={{
+                  title: 'Admin Summary',
+                  timestamp: (() => {
+                    const d = new Date();
+                    const date = new Intl.DateTimeFormat(undefined, { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
+                    const time = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(d);
+                    return `As of ${date}, ${time}`;
+                  })(),
+                  filters: { 
+                    email: filters.email, 
+                    fromISO: filters.from, 
+                    toISO: filters.to 
+                  },
+                  kpis: kpis ? [
+                    { title: 'Total Scenarios', value: kpis.totalScenarios },
+                    { title: 'Total Processing Time (s)', value: kpis.totalProcessingTime },
+                    { title: 'Avg Processing Time (s)', value: kpis.avgProcessingTime },
+                    { title: 'Engagement Rate', value: kpis.engagementRate },
+                    { title: 'Total Feedback', value: kpis.totalFeedback },
+                    { title: 'Avg Feedback Score', value: kpis.avgFeedbackScore },
+                  ] : [],
+                  companyName: 'Praxio AI'
+                }}
               />
             </div>
           )}
