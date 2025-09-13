@@ -113,11 +113,6 @@ export async function getLatest5(input: unknown) {
     const { data, error } = await q;
     if (error) throw error;
     
-    // Debug: Log the first item to see what data structure we're getting
-    if (data && data.length > 0) {
-      console.log('🔍 Debug - Latest5 data sample:', data[0]);
-      console.log('🔍 Debug - usedcitationsArray in sample:', data[0].usedcitationsArray);
-    }
     
     return data ?? [];
   } catch (error) {
@@ -145,11 +140,6 @@ export async function getScenariosPage(input: unknown) {
 
     if (error) throw error;
     
-    // Debug: Log the first item to see what data structure we're getting
-    if (data && data.length > 0) {
-      console.log('🔍 Debug - ScenariosPage data sample:', data[0]);
-      console.log('🔍 Debug - usedcitationsArray in sample:', data[0].usedcitationsArray);
-    }
     
     return { rows: data ?? [], total: count ?? 0 };
   } catch (error) {

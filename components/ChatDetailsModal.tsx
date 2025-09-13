@@ -26,17 +26,18 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
   // Parse citations from Supabase JSONB field (already parsed by client)
   const parseCitations = (usedcitationsArray: any): Citation[] => {
-    console.log('🔍 Debug - usedcitationsArray raw data:', usedcitationsArray);
     if (!usedcitationsArray) {
-      console.log('❌ No usedcitationsArray data found');
       return [];
     }
     
     // Supabase JSONB fields are already parsed by the client
     if (Array.isArray(usedcitationsArray)) {
-      const filtered = usedcitationsArray.filter(item => item && typeof item === 'object' && item.title && item.url);
-      console.log('✅ Filtered citations:', filtered);
-      return filtered;
+      return usedcitationsArray
+        .filter(item => item && typeof item === 'object' && item.url && item.fullreference)
+        .map(item => ({
+          title: item.fullreference, // Use fullreference as the title
+          url: item.url
+        }));
     }
     
     // If it's a string, try to parse it (fallback for edge cases)
@@ -44,21 +45,22 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
       try {
         const parsed = JSON.parse(usedcitationsArray);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(item => item && typeof item === 'object' && item.title && item.url);
-          console.log('✅ Parsed and filtered citations from string:', filtered);
-          return filtered;
+          return parsed
+            .filter(item => item && typeof item === 'object' && item.url && item.fullreference)
+            .map(item => ({
+              title: item.fullreference, // Use fullreference as the title
+              url: item.url
+            }));
         }
       } catch (error) {
-        console.log('❌ JSON parsing error:', error);
+        // Silent fallback for parsing errors
       }
     }
     
-    console.log('❌ Citations data is not in expected format');
     return [];
   };
 
   const citations = parseCitations(chatData.usedcitationsArray || chatData.usedCitationsArray);
-  console.log('🎯 Final citations result:', citations);
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
