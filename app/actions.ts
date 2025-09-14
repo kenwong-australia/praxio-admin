@@ -102,7 +102,7 @@ export async function getLatest5(input: unknown) {
     const f = F.partial({ page: true, pageSize: true }).parse(input);
     let q = svc()
       .from('chat')
-      .select('id,created_at,title,email,scenario,research,usedcitationsArray,questions,draft,processTime')
+      .select('id,created_at,title,email,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
       .gte('created_at', f.fromISO!)
       .lte('created_at', f.toISO!)
       .order('created_at', { ascending: false })
@@ -128,7 +128,7 @@ export async function getScenariosPage(input: unknown) {
 
     let base = svc()
       .from('chat')
-      .select('id,created_at,title,email,model,processTime,feedback,scenario,research,usedcitationsArray,questions,draft', { count: 'exact' })
+      .select('id,created_at,title,email,model,processTime,feedback,scenario,research,usedcitationsArray,questions,draft,comment_selection,comment_additional', { count: 'exact' })
       .gte('created_at', f.fromISO)
       .lte('created_at', f.toISO);
 

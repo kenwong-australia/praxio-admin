@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toSydneyDateTime } from '@/lib/time';
-import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool } from 'lucide-react';
+import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface ChatDetailsModalProps {
@@ -90,6 +90,10 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
             <TabsTrigger value="draft" className="shrink min-w-0 flex items-center gap-1">
               <PenTool className="h-4 w-4" />
               <span className="truncate">Draft</span>
+            </TabsTrigger>
+            <TabsTrigger value="feedback" className="shrink min-w-0 flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              <span className="truncate">Feedback</span>
             </TabsTrigger>
           </TabsList>
 
@@ -258,6 +262,53 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                       </div>
                     </div>
                   )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="feedback" className="mt-4 flex-1 min-h-0">
+              <ScrollArea className="h-[60vh]">
+                <div className="px-6 space-y-6">
+                  {/* Feedback Rating */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-blue-600" />
+                      Feedback Rating
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      {chatData.feedback === 1 ? (
+                        <Badge className="bg-green-500 text-white">👍 Positive</Badge>
+                      ) : chatData.feedback === -1 ? (
+                        <Badge className="bg-red-500 text-white">👎 Negative</Badge>
+                      ) : (
+                        <Badge variant="outline">No feedback</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Comment Selection */}
+                  {chatData.comment_selection && chatData.comment_selection.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold">Selected Comments</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {chatData.comment_selection.map((comment: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-sm">
+                            {comment}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Comments */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Additional Comments</h3>
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm">
+                        {chatData.comment_additional?.trim() || 'No additional comments'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </ScrollArea>
             </TabsContent>
