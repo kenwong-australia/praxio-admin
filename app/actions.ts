@@ -153,6 +153,8 @@ export async function getScenariosPage(input: unknown) {
 // User management functions
 export async function getUsers(input: unknown) {
   try {
+    console.log('getUsers called with input:', input);
+    
     const f = z.object({
       search: z.string().optional(),
       role: z.string().optional(),
@@ -164,8 +166,12 @@ export async function getUsers(input: unknown) {
       pageSize: z.number().default(25),
     }).parse(input);
 
+    console.log('Parsed filters:', f);
+
     const db = getAdminDb();
     const usersRef = db.collection('users');
+    
+    console.log('Firebase DB initialized, usersRef created');
     
     let query: any = usersRef;
     
@@ -194,7 +200,10 @@ export async function getUsers(input: unknown) {
     
     // Pagination
     const offset = (f.page - 1) * f.pageSize;
+    console.log('Executing query with offset:', offset, 'limit:', f.pageSize);
+    
     const snapshot = await query.offset(offset).limit(f.pageSize).get();
+    console.log('Query executed, got', snapshot.docs.length, 'documents');
     
     const users = snapshot.docs.map((doc: any) => ({
       id: doc.id,
@@ -205,9 +214,12 @@ export async function getUsers(input: unknown) {
       stripe_plan_renewal_date: doc.data().stripe_plan_renewal_date?.toDate(),
     })) as unknown as User[];
     
+    console.log('Mapped users:', users.length);
+    
     // Get total count (this is expensive, so we'll estimate)
     const totalSnapshot = await usersRef.get();
     const total = totalSnapshot.size;
+    console.log('Total users in collection:', total);
     
     return { rows: users, total };
   } catch (error) {
@@ -218,13 +230,19 @@ export async function getUsers(input: unknown) {
 
 export async function getUserStats(input: unknown) {
   try {
+    console.log('getUserStats called with input:', input);
+    
     const f = z.object({
       fromISO: z.string().optional(),
       toISO: z.string().optional(),
     }).parse(input);
 
+    console.log('Parsed stats filters:', f);
+
     const db = getAdminDb();
     const usersRef = db.collection('users');
+    
+    console.log('Firebase DB initialized for stats, usersRef created');
     
     let query: any = usersRef;
     
