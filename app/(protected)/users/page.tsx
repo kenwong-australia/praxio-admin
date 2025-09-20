@@ -26,10 +26,13 @@ export default function UsersPage() {
   const loadUsers = async () => {
     setLoading(true);
     try {
+      console.log('Loading users with filters:', filters);
       const [usersResult, statsResult] = await Promise.all([
         getUsers(filters),
         getUserStats({ fromISO: filters.fromISO, toISO: filters.toISO }),
       ]);
+      console.log('Users result:', usersResult);
+      console.log('Stats result:', statsResult);
       setUsers(usersResult.rows);
       setTotal(usersResult.total);
       setStats(statsResult);
