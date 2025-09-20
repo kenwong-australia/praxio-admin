@@ -1,6 +1,8 @@
 'use server';
 import { svc } from '@/lib/supabase';
+import { getAdminDb } from '@/lib/firebase';
 import { z } from 'zod';
+import { User, UserFilters, UserStats } from '@/lib/types';
 
 const F = z.object({
   email: z.string().nullable(),
@@ -145,5 +147,165 @@ export async function getScenariosPage(input: unknown) {
   } catch (error) {
     console.error('Error fetching scenarios page:', error);
     return { rows: [], total: 0 };
+  }
+}
+
+// User management functions
+export async function getUsers(input: unknown) {
+  try {
+    const f = z.object({
+      search: z.string().optional(),
+      role: z.string().optional(),
+      plan: z.string().optional(),
+      state: z.string().optional(),
+      fromISO: z.string().optional(),
+      toISO: z.string().optional(),
+      page: z.number().default(1),
+      pageSize: z.number().default(25),
+    }).parse(input);
+
+    const db = getAdminDb();
+    const usersRef = db.collection('users');
+    
+    let query: any = usersRef;
+    
+    // Apply filters
+    if (f.search) {
+      query = query.where('email', '>=', f.search).where('email', '<=', f.search + '\uf8ff');
+    }
+    if (f.role) {
+      query = query.where('role', '==', f.role);
+    }
+    if (f.plan) {
+      query = query.where('selected_plan', '==', f.plan);
+    }
+    if (f.state) {
+      query = query.where('state', '==', f.state);
+    }
+    if (f.fromISO) {
+      query = query.where('created_time', '>=', new Date(f.fromISO));
+    }
+    if (f.toISO) {
+      query = query.where('created_time', '<=', new Date(f.toISO));
+    }
+    
+    // Order by created_time descending
+    query = query.orderBy('created_time', 'desc');
+    
+    // Pagination
+    const offset = (f.page - 1) * f.pageSize;
+    const snapshot = await query.offset(offset).limit(f.pageSize).get();
+    
+    const users = snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+      created_time: doc.data().created_time?.toDate(),
+      last_activity: doc.data().last_activity?.toDate(),
+      stripe_trial_end_date: doc.data().stripe_trial_end_date?.toDate(),
+      stripe_plan_renewal_date: doc.data().stripe_plan_renewal_date?.toDate(),
+    })) as unknown as User[];
+    
+    // Get total count (this is expensive, so we'll estimate)
+    const totalSnapshot = await usersRef.get();
+    const total = totalSnapshot.size;
+    
+    return { rows: users, total };
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return { rows: [], total: 0 };
+  }
+}
+
+export async function getUserStats(input: unknown) {
+  try {
+    const f = z.object({
+      fromISO: z.string().optional(),
+      toISO: z.string().optional(),
+    }).parse(input);
+
+    const db = getAdminDb();
+    const usersRef = db.collection('users');
+    
+    let query: any = usersRef;
+    
+    if (f.fromISO) {
+      query = query.where('created_time', '>=', new Date(f.fromISO));
+    }
+    if (f.toISO) {
+      query = query.where('created_time', '<=', new Date(f.toISO));
+    }
+    
+    const snapshot = await query.get();
+    const users = snapshot.docs.map((doc: any) => doc.data());
+    
+    const totalUsers = users.length;
+    const activeUsers = users.filter((user: any) => {
+      const lastActivity = user.last_activity?.toDate();
+      if (!lastActivity) return false;
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return lastActivity > thirtyDaysAgo;
+    }).length;
+    
+    const newSignups = users.filter((user: any) => {
+      const createdTime = user.created_time?.toDate();
+      if (!createdTime) return false;
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return createdTime > thirtyDaysAgo;
+    }).length;
+    
+    const paidUsers = users.filter((user: any) => 
+      user.stripe_subscription_status === 'active' || 
+      user.stripe_subscription_status === 'trialing'
+    ).length;
+    
+    const totalChats = users.reduce((sum: number, user: any) => sum + (user.number_chats || 0), 0);
+    const avgChatsPerUser = totalUsers > 0 ? totalChats / totalUsers : 0;
+    
+    const userEngagement = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
+    
+    return {
+      totalUsers,
+      activeUsers,
+      newSignups,
+      paidUsers,
+      avgChatsPerUser: Number(avgChatsPerUser.toFixed(2)),
+      userEngagement: Number(userEngagement.toFixed(1)),
+    } as UserStats;
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    return {
+      totalUsers: 0,
+      activeUsers: 0,
+      newSignups: 0,
+      paidUsers: 0,
+      avgChatsPerUser: 0,
+      userEngagement: 0,
+    } as UserStats;
+  }
+}
+
+export async function getUserDetails(uid: string) {
+  try {
+    const db = getAdminDb();
+    const userDoc = await db.collection('users').doc(uid).get();
+    
+    if (!userDoc.exists) {
+      return null;
+    }
+    
+    const userData = userDoc.data();
+    return {
+      id: userDoc.id,
+      ...userData,
+      created_time: userData?.created_time?.toDate(),
+      last_activity: userData?.last_activity?.toDate(),
+      stripe_trial_end_date: userData?.stripe_trial_end_date?.toDate(),
+      stripe_plan_renewal_date: userData?.stripe_plan_renewal_date?.toDate(),
+    } as unknown as User;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    return null;
   }
 }

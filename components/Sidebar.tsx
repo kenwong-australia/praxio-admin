@@ -36,12 +36,11 @@ export function Sidebar() {
           Dashboard
         </a>
         <a
-          href="#"
+          href="/users"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
         >
           <Users className="h-4 w-4" />
           Users
-          <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full">Soon</span>
         </a>
         <a
           href="#"
