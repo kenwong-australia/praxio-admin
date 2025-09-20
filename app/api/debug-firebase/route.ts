@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     // Test actual Firebase connection
     let firebaseTest = {
       connected: false,
-      error: null,
+      error: null as string | null,
       userCount: 0,
-      sampleUser: null,
+      sampleUser: null as any,
     };
     
     try {
