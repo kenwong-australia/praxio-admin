@@ -175,14 +175,14 @@ export default function UsersPage() {
             <div>
               <label className="text-sm font-medium">Role</label>
               <Select
-                value={filters.role || ''}
-                onValueChange={(value) => handleFilterChange('role', value || undefined)}
+                value={filters.role || 'all'}
+                onValueChange={(value) => handleFilterChange('role', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All roles</SelectItem>
+                  <SelectItem value="all">All roles</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="user">User</SelectItem>
                   <SelectItem value="premium">Premium</SelectItem>
@@ -193,14 +193,14 @@ export default function UsersPage() {
             <div>
               <label className="text-sm font-medium">Plan</label>
               <Select
-                value={filters.plan || ''}
-                onValueChange={(value) => handleFilterChange('plan', value || undefined)}
+                value={filters.plan || 'all'}
+                onValueChange={(value) => handleFilterChange('plan', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All plans" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All plans</SelectItem>
+                  <SelectItem value="all">All plans</SelectItem>
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="basic">Basic</SelectItem>
                   <SelectItem value="premium">Premium</SelectItem>
@@ -211,14 +211,14 @@ export default function UsersPage() {
             <div>
               <label className="text-sm font-medium">State</label>
               <Select
-                value={filters.state || ''}
-                onValueChange={(value) => handleFilterChange('state', value || undefined)}
+                value={filters.state || 'all'}
+                onValueChange={(value) => handleFilterChange('state', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All states" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All states</SelectItem>
+                  <SelectItem value="all">All states</SelectItem>
                   <SelectItem value="NSW">NSW</SelectItem>
                   <SelectItem value="VIC">VIC</SelectItem>
                   <SelectItem value="QLD">QLD</SelectItem>
