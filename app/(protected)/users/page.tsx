@@ -257,12 +257,11 @@ export default function UsersPage() {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Chats</TableHead>
+                    <TableHead>Email Verified</TableHead>
+                    <TableHead>ABN</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Frequency</TableHead>
                     <TableHead>Last Activity</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -289,25 +288,27 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{user.email}</div>
-                        {user.email_verified && (
-                          <Badge variant="outline" className="text-xs">Verified</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.email_verified ? (
+                          <Badge className="bg-green-500 text-white">Verified</Badge>
+                        ) : (
+                          <Badge variant="outline">Not Verified</Badge>
                         )}
                       </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{user.selected_plan || 'Free'}</Badge>
+                        <div className="text-sm font-medium">
+                          {user.abn_num || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{formatDate(user.created_time)}</div>
                       </TableCell>
                       <TableCell>{getStatusBadge(user)}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {user.city && user.state ? `${user.city}, ${user.state}` : 'N/A'}
+                          {user.selected_frequency?.trim() || 'N/A'}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium">{user.number_chats || 0}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDate(user.created_time)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{formatDate(user.last_activity)}</div>
