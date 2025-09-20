@@ -21,6 +21,10 @@ export async function GET(request: NextRequest) {
       NEXT_PUBLIC_FB_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN || 'NOT_SET',
       FIREBASE_PRIVATE_KEY_LENGTH: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
       NEXT_PUBLIC_FB_API_KEY_LENGTH: process.env.NEXT_PUBLIC_FB_API_KEY?.length || 0,
+      FIREBASE_PRIVATE_KEY_STARTS_WITH: process.env.FIREBASE_PRIVATE_KEY?.substring(0, 20) || 'NOT_SET',
+      FIREBASE_PRIVATE_KEY_ENDS_WITH: process.env.FIREBASE_PRIVATE_KEY?.substring(-20) || 'NOT_SET',
+      FIREBASE_PRIVATE_KEY_CONTAINS_NEWLINES: process.env.FIREBASE_PRIVATE_KEY?.includes('\n') || false,
+      FIREBASE_PRIVATE_KEY_CONTAINS_ESCAPED_NEWLINES: process.env.FIREBASE_PRIVATE_KEY?.includes('\\n') || false,
     };
     
     // Test actual Firebase connection
