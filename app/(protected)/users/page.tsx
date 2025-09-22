@@ -252,12 +252,13 @@ export default function UsersPage() {
             </div>
           ) : (
             <>
-              <Table>
+              <Table className="whitespace-nowrap">
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Email Verified</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>ABN</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Status</TableHead>
@@ -295,6 +296,9 @@ export default function UsersPage() {
                         ) : (
                           <Badge variant="outline">Not Verified</Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{user.phone_number || 'N/A'}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm font-medium">
