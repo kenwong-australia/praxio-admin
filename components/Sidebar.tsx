@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Settings, Users } from "lucide-react";
+import { BarChart3, Settings, Users, MessageSquare } from "lucide-react";
 import Image from 'next/image';
 import { SignOutButton } from '@/components/SignOutButton';
 
@@ -41,6 +41,13 @@ export function Sidebar() {
         >
           <Users className="h-4 w-4" />
           Users
+        </a>
+        <a
+          href="/chats"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Chats
         </a>
         <a
           href="#"
