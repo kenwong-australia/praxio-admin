@@ -21,7 +21,7 @@ export default function ChatsPage() {
   const pageSize = 25;
   const [loading, setLoading] = useState(true);
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const maxSelectable = 10;
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function ChatsPage() {
     }
   }
 
-  function toggleSelection(id: string) {
+  function toggleSelection(id: string | number) {
     setSelectedIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
       if (prev.length >= maxSelectable) return prev; // cap at 10
@@ -65,14 +65,24 @@ export default function ChatsPage() {
 
   async function download(kind: "pdf" | "docx") {
     if (!canDownload) return;
+    // Normalize IDs: convert numeric strings to numbers to match DB column type
+    const requestIds = selectedIds.map((v) => {
+      if (typeof v === 'number') return v;
+      return /^\d+$/.test(v) ? Number(v) : v;
+    });
 
     const res = await fetch(`/api/chats/export-${kind}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selectedIds, filename: `chats_selected_${new Date().toISOString()}` }),
+      body: JSON.stringify({ ids: requestIds, filename: `chats_selected_${new Date().toISOString()}` }),
     });
     if (!res.ok) {
-      alert("Failed to generate download");
+      try {
+        const msg = await res.text();
+        alert(msg || "Failed to generate download");
+      } catch {
+        alert("Failed to generate download");
+      }
       return;
     }
     const blob = await res.blob();

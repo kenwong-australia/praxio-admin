@@ -19,7 +19,14 @@ export async function POST(req: NextRequest) {
 
     const chats = (data ?? []).sort((a: any, b: any) => ids.indexOf(a.id) - ids.indexOf(b.id));
 
-    const PDFDocument = (await import('pdfkit')).default as any;
+    let PDFDocument: any;
+    try {
+      const mod: any = await import('pdfkit');
+      PDFDocument = mod.default ?? mod;
+    } catch (err) {
+      console.error('Failed to import pdfkit', err);
+      return new Response('PDF service unavailable', { status: 500 });
+    }
     const doc = new PDFDocument({ size: 'A4', margin: 48 });
 
     const chunks: Buffer[] = [];
