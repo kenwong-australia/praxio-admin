@@ -78,6 +78,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/html2pdf.js": "^0.10.0"
+    "@types/html2pdf.js": "^0.10.0",
+    "@types/pdfkit": "^0.17.3"
   }
 }
