@@ -92,10 +92,10 @@ export default function VBProcessingPage() {
         {/* Filters */}
         <Card className="p-4 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Select value={filters.component ?? undefined} onValueChange={(v) => setFilters((f) => ({ ...f, component: v || null }))}>
+            <Select value={filters.component ?? 'any'} onValueChange={(v) => setFilters((f) => ({ ...f, component: v === 'any' ? null : v }))}>
               <SelectTrigger><SelectValue placeholder="Component" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="ingest">ingest</SelectItem>
                 <SelectItem value="chunk">chunk</SelectItem>
                 <SelectItem value="embed">embed</SelectItem>
@@ -103,10 +103,10 @@ export default function VBProcessingPage() {
               </SelectContent>
             </Select>
 
-            <Select value={filters.level ?? undefined} onValueChange={(v) => setFilters((f) => ({ ...f, level: v || null }))}>
+            <Select value={filters.level ?? 'any'} onValueChange={(v) => setFilters((f) => ({ ...f, level: v === 'any' ? null : v }))}>
               <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="debug">debug</SelectItem>
                 <SelectItem value="info">info</SelectItem>
                 <SelectItem value="warn">warn</SelectItem>
