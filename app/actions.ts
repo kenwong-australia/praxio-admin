@@ -1,5 +1,5 @@
 'use server';
-import { svc } from '@/lib/supabase';
+import { svc, ingest } from '@/lib/supabase';
 import { getAdminDb } from '@/lib/firebase';
 import { z } from 'zod';
 import { User, UserFilters, UserStats } from '@/lib/types';
@@ -326,4 +326,103 @@ export async function getUserDetails(uid: string) {
     console.error('Error fetching user details:', error);
     return null;
   }
+}
+
+// ==========================
+// Document ingest (VB) logs
+// ==========================
+
+const VBFilters = z.object({
+  component: z.string().nullable().default(null),
+  level: z.string().nullable().default(null),
+  event: z.string().nullable().default(null),
+  topic: z.string().nullable().default(null),
+  fromISO: z.string(),
+  toISO: z.string(),
+  search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(10).max(100).default(25),
+});
+
+export type VBRunRow = {
+  run_id: string;
+  component: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  totals: any | null;
+};
+
+export type VBEventRow = {
+  id: number;
+  run_id: string | null;
+  timestamp: string | null;
+  component: string | null;
+  level: string | null;
+  event: string | null;
+  message: string | null;
+  topic: string | null;
+  file_id: string | null;
+  doc_id: string | null;
+  act_title: string | null;
+  act_short: string | null;
+  section: string | null;
+  url: string | null;
+  namespace: string | null;
+  payload: any | null;
+};
+
+export async function getVBRuns(input: unknown) {
+  const f = VBFilters.pick({ component: true, fromISO: true, toISO: true, page: true, pageSize: true }).parse(input);
+  const sb = ingest();
+  const from = f.fromISO;
+  const to = f.toISO;
+  const offset = (f.page - 1) * f.pageSize;
+
+  let query = sb
+    .from('runs')
+    .select('run_id,component,started_at,finished_at,totals', { count: 'exact' })
+    .gte('started_at', from)
+    .lte('started_at', to)
+    .order('started_at', { ascending: false });
+
+  if (f.component) query = query.eq('component', f.component);
+
+  const { data, error, count } = await query.range(offset, offset + f.pageSize - 1);
+  if (error) {
+    console.error('getVBRuns error', error);
+    return { rows: [] as VBRunRow[], total: 0 };
+  }
+  return { rows: (data ?? []) as VBRunRow[], total: count ?? 0 };
+}
+
+export async function getVBEvents(input: unknown) {
+  const f = VBFilters.parse(input);
+  const sb = ingest();
+  const offset = (f.page - 1) * f.pageSize;
+
+  let query = sb
+    .from('events')
+    .select('*', { count: 'exact' })
+    .gte('timestamp', f.fromISO)
+    .lte('timestamp', f.toISO)
+    .order('timestamp', { ascending: false });
+
+  if (f.component) query = query.eq('component', f.component);
+  if (f.level) query = query.eq('level', f.level);
+  if (f.event) query = query.eq('event', f.event);
+  if (f.topic) query = query.eq('topic', f.topic);
+  if (f.search && f.search.trim()) {
+    // do a case-insensitive search over message and url
+    const s = f.search.trim();
+    query = query.or(
+      `message.ilike.%${s}%,url.ilike.%${s}%`
+    );
+  }
+
+  const { data, error, count } = await query.range(offset, offset + f.pageSize - 1);
+  if (error) {
+    console.error('getVBEvents error', error);
+    return { rows: [] as VBEventRow[], total: 0 };
+  }
+  return { rows: (data ?? []) as VBEventRow[], total: count ?? 0 };
 }
