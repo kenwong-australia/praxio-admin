@@ -223,16 +223,16 @@ export async function getUsers(input: unknown) {
       const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
       const emails = Array.from(new Set((users.map(u => (u as any).email).filter(Boolean))));
 
-      let sbRows: { uid?: string; email?: string | null }[] = [];
+      let sbRows: { id?: string; email?: string | null }[] = [];
       if (uids.length > 0 || emails.length > 0) {
         const quote = (s: string) => `"${String(s).replace(/"/g, '\\"')}"`;
         const parts: string[] = [];
-        if (uids.length) parts.push(`uid.in.(${uids.map(quote).join(',')})`);
+        if (uids.length) parts.push(`id.in.(${uids.map(quote).join(',')})`);
         if (emails.length) parts.push(`email.in.(${emails.map(quote).join(',')})`);
 
         const { data, error } = await svc()
           .from('user')
-          .select('uid,email')
+          .select('id,email')
           .or(parts.join(','));
         if (error) {
           console.error('Supabase presence check error:', error);
@@ -241,12 +241,12 @@ export async function getUsers(input: unknown) {
         }
       }
 
-      const sbUidSet = new Set((sbRows ?? []).map(r => r.uid).filter(Boolean));
+      const sbIdSet = new Set((sbRows ?? []).map(r => r.id).filter(Boolean));
       const sbEmailSet = new Set((sbRows ?? []).map(r => (r.email ?? '').toLowerCase()).filter(Boolean));
 
       for (const u of users as any[]) {
         const emailLower = (u.email ?? '').toLowerCase();
-        u.in_supabase = sbUidSet.has(u.uid) || sbEmailSet.has(emailLower);
+        u.in_supabase = sbIdSet.has(u.uid) || sbEmailSet.has(emailLower);
       }
     } catch (e) {
       console.error('Supabase presence check failed:', e);
