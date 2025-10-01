@@ -2,9 +2,22 @@
 
 import { BarChart3, Settings, Users, MessageSquare, Database } from "lucide-react";
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { SignOutButton } from '@/components/SignOutButton';
 
 export function Sidebar() {
+  const pathname = usePathname();
+
+  const navClasses = (href: string) => {
+    const isActive = pathname === href || pathname.startsWith(`${href}/`);
+    return `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+      isActive
+        ? 'bg-blue-50 text-blue-700 font-medium'
+        : 'text-muted-foreground hover:bg-slate-100 hover:text-foreground'
+    }`;
+  };
+
   return (
     <aside className="w-64 min-h-screen bg-white shadow-xl border-r border-slate-200">
       <div className="p-6 border-b border-slate-200">
@@ -28,42 +41,27 @@ export function Sidebar() {
       </div>
       
       <nav className="p-4 space-y-2">
-        <a
-          href="/admin"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium transition-colors"
-        >
+        <Link href="/admin" className={navClasses('/admin')}>
           <BarChart3 className="h-4 w-4" />
           Dashboard
-        </a>
-        <a
-          href="/users"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-        >
+        </Link>
+        <Link href="/users" className={navClasses('/users')}>
           <Users className="h-4 w-4" />
           Users
-        </a>
-        <a
-          href="/chats"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-        >
+        </Link>
+        <Link href="/chats" className={navClasses('/chats')}>
           <MessageSquare className="h-4 w-4" />
           Chats
-        </a>
-        <a
-          href="/vb-processing"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-        >
+        </Link>
+        <Link href="/vb-processing" className={navClasses('/vb-processing')}>
           <Database className="h-4 w-4" />
           VB Processing
-        </a>
-        <a
-          href="#"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
-        >
+        </Link>
+        <Link href="#" className={navClasses('#')}>
           <Settings className="h-4 w-4" />
           Settings
           <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full">Soon</span>
-        </a>
+        </Link>
       </nav>
       
       <div className="mt-auto p-4">
