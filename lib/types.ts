@@ -58,6 +58,8 @@ export type User = {
   stripe_pending_frequency: string;
   has_received_welcome: boolean;
   client_template: string;
+  // Optional, computed at fetch time: whether this user exists in Supabase
+  in_supabase?: boolean;
 };
 
 export type UserFilters = {

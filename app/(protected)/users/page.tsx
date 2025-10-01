@@ -264,6 +264,7 @@ export default function UsersPage() {
                     <TableHead>Status</TableHead>
                     <TableHead>Frequency</TableHead>
                     <TableHead>Last Activity</TableHead>
+                    <TableHead>In Supabase?</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -316,6 +317,13 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{formatDate(user.last_activity)}</div>
+                      </TableCell>
+                      <TableCell>
+                        {user.in_supabase ? (
+                          <Badge className="bg-green-500 text-white">Yes</Badge>
+                        ) : (
+                          <Badge variant="outline">No</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

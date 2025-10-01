@@ -216,6 +216,42 @@ export async function getUsers(input: unknown) {
     
     console.log('Mapped users:', users.length);
     
+    // ==============================
+    // Supabase presence (per page)
+    // ==============================
+    try {
+      const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
+      const emails = Array.from(new Set((users.map(u => (u as any).email).filter(Boolean))));
+
+      let sbRows: { uid?: string; email?: string | null }[] = [];
+      if (uids.length > 0 || emails.length > 0) {
+        const quote = (s: string) => `"${String(s).replace(/"/g, '\\"')}"`;
+        const parts: string[] = [];
+        if (uids.length) parts.push(`uid.in.(${uids.map(quote).join(',')})`);
+        if (emails.length) parts.push(`email.in.(${emails.map(quote).join(',')})`);
+
+        const { data, error } = await svc()
+          .from('user')
+          .select('uid,email')
+          .or(parts.join(','));
+        if (error) {
+          console.error('Supabase presence check error:', error);
+        } else {
+          sbRows = data ?? [];
+        }
+      }
+
+      const sbUidSet = new Set((sbRows ?? []).map(r => r.uid).filter(Boolean));
+      const sbEmailSet = new Set((sbRows ?? []).map(r => (r.email ?? '').toLowerCase()).filter(Boolean));
+
+      for (const u of users as any[]) {
+        const emailLower = (u.email ?? '').toLowerCase();
+        u.in_supabase = sbUidSet.has(u.uid) || sbEmailSet.has(emailLower);
+      }
+    } catch (e) {
+      console.error('Supabase presence check failed:', e);
+    }
+    
     // Get total count (this is expensive, so we'll estimate)
     const totalSnapshot = await usersRef.get();
     const total = totalSnapshot.size;
