@@ -60,6 +60,8 @@ export type User = {
   client_template: string;
   // Optional, computed at fetch time: whether this user exists in Supabase
   in_supabase?: boolean;
+  // Optional, computed per page: number of chats in Supabase.chat for this user
+  supabase_chat_count?: number;
 };
 
 export type UserFilters = {

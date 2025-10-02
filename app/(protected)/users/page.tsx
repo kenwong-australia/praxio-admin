@@ -264,6 +264,7 @@ export default function UsersPage() {
                     <TableHead>Status</TableHead>
                     <TableHead>Frequency</TableHead>
                     <TableHead>Last Activity</TableHead>
+                    <TableHead>Chats</TableHead>
                     <TableHead>In Supabase?</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -317,6 +318,9 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{formatDate(user.last_activity)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium">{user.supabase_chat_count ?? 0}</div>
                       </TableCell>
                       <TableCell>
                         {user.in_supabase ? (

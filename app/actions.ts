@@ -251,6 +251,26 @@ export async function getUsers(input: unknown) {
     } catch (e) {
       console.error('Supabase presence check failed:', e);
     }
+
+    // ======================================
+    // Supabase chat counts (per page, RPC)
+    // ======================================
+    try {
+      const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
+      if (uids.length > 0) {
+        const { data, error } = await svc().rpc('get_chat_counts', { user_ids: uids });
+        if (error) {
+          console.error('get_chat_counts RPC error:', error);
+        } else {
+          const map = new Map<string, number>((data ?? []).map((r: any) => [r.user_id, Number(r.chat_count)]));
+          for (const u of users as any[]) {
+            u.supabase_chat_count = map.get(u.uid) ?? 0;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Supabase chat count fetch failed:', e);
+    }
     
     // Get total count (this is expensive, so we'll estimate)
     const totalSnapshot = await usersRef.get();
