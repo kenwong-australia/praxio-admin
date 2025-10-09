@@ -18,5 +18,13 @@ export const rangeLast30Sydney = () => {
 export const toSydneyDate = (iso: string) =>
   dayjs(iso).tz(SYD).format('DD/MM/YYYY');
 
-export const toSydneyDateTime = (iso: string) =>
-  dayjs(iso).tz(SYD).format('DD/MM/YYYY HH:mm');
+function sydneyAbbreviation(d: dayjs.Dayjs) {
+  // Australia/Sydney offset: +10h standard (AEST), +11h daylight (AEDT)
+  const offsetMinutes = d.utcOffset();
+  return offsetMinutes === 660 ? 'AEDT' : 'AEST';
+}
+
+export const toSydneyDateTime = (iso: string) => {
+  const d = dayjs(iso).tz(SYD);
+  return `${d.format('DD/MM/YYYY HH:mm')} ${sydneyAbbreviation(d)}`;
+};

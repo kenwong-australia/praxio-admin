@@ -82,6 +82,7 @@ export type UserStats = {
   paidUsers: number;
   avgChatsPerUser: number;
   userEngagement: number;
+  conversion?: number;
 };
 
 export type KPIData = {

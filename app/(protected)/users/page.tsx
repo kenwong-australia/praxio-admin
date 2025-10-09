@@ -106,37 +106,18 @@ export default function UsersPage() {
               <div className="text-2xl font-bold">{stats.totalUsers}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeUsers}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New Signups</CardTitle>
+              <CardTitle className="text-sm font-medium">Engagement</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.newSignups}</div>
+              <div className="text-2xl font-bold">{stats.userEngagement}%</div>
+              <div className="text-xs text-muted-foreground mt-1">Active Users / Total Users</div>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Paid Users</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.paidUsers}</div>
-            </CardContent>
-          </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Chats/User</CardTitle>
@@ -146,14 +127,35 @@ export default function UsersPage() {
               <div className="text-2xl font-bold">{stats.avgChatsPerUser}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Engagement</CardTitle>
+              <CardTitle className="text-sm font-medium">New Signups (30d)</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.userEngagement}%</div>
+              <div className="text-2xl font-bold">{stats.newSignups}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion (30d)</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.conversion ?? 0}%</div>
+              <div className="text-xs text-muted-foreground mt-1">Active New Signups / New Signups</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.paidUsers}</div>
             </CardContent>
           </Card>
         </div>
@@ -174,7 +176,6 @@ export default function UsersPage() {
                 onChange={(e) => handleFilterChange('search', e.target.value || undefined)}
               />
             </div>
-            
             <div>
               <label className="text-sm font-medium">Role</label>
               <Select
@@ -187,49 +188,40 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="all">All roles</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
-              <label className="text-sm font-medium">Plan</label>
+              <label className="text-sm font-medium">Plan (Frequency)</label>
               <Select
                 value={filters.plan || 'all'}
                 onValueChange={(value) => handleFilterChange('plan', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All plans" />
+                  <SelectValue placeholder="All frequencies" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All plans</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="N/A">N/A</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
             <div>
-              <label className="text-sm font-medium">State</label>
+              <label className="text-sm font-medium">Status</label>
               <Select
-                value={filters.state || 'all'}
-                onValueChange={(value) => handleFilterChange('state', value === 'all' ? undefined : value)}
+                value={(filters as any).status || 'all'}
+                onValueChange={(value) => handleFilterChange('status' as any, value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All states" />
+                  <SelectValue placeholder="All status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All states</SelectItem>
-                  <SelectItem value="NSW">NSW</SelectItem>
-                  <SelectItem value="VIC">VIC</SelectItem>
-                  <SelectItem value="QLD">QLD</SelectItem>
-                  <SelectItem value="WA">WA</SelectItem>
-                  <SelectItem value="SA">SA</SelectItem>
-                  <SelectItem value="TAS">TAS</SelectItem>
-                  <SelectItem value="ACT">ACT</SelectItem>
-                  <SelectItem value="NT">NT</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="trialing">Trialing</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
                 </SelectContent>
               </Select>
             </div>

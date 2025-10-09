@@ -159,7 +159,7 @@ export async function getUsers(input: unknown) {
       search: z.string().optional(),
       role: z.string().optional(),
       plan: z.string().optional(),
-      state: z.string().optional(),
+      status: z.string().optional(),
       fromISO: z.string().optional(),
       toISO: z.string().optional(),
       page: z.number().default(1),
@@ -183,10 +183,15 @@ export async function getUsers(input: unknown) {
       query = query.where('role', '==', f.role);
     }
     if (f.plan) {
-      query = query.where('selected_plan', '==', f.plan);
+      // Interpret as frequency filter
+      if (f.plan === 'N/A') {
+        query = query.where('selected_frequency', '==', '');
+      } else {
+        query = query.where('selected_frequency', '==', f.plan);
+      }
     }
-    if (f.state) {
-      query = query.where('state', '==', f.state);
+    if (f.status) {
+      query = query.where('stripe_subscription_status', '==', f.status);
     }
     if (f.fromISO) {
       query = query.where('created_time', '>=', new Date(f.fromISO));
@@ -288,10 +293,7 @@ export async function getUserStats(input: unknown) {
   try {
     console.log('getUserStats called with input:', input);
     
-    const f = z.object({
-      fromISO: z.string().optional(),
-      toISO: z.string().optional(),
-    }).parse(input);
+    const f = z.object({}).parse(input);
 
     console.log('Parsed stats filters:', f);
 
@@ -300,39 +302,35 @@ export async function getUserStats(input: unknown) {
     
     console.log('Firebase DB initialized for stats, usersRef created');
     
-    let query: any = usersRef;
-    
-    if (f.fromISO) {
-      query = query.where('created_time', '>=', new Date(f.fromISO));
-    }
-    if (f.toISO) {
-      query = query.where('created_time', '<=', new Date(f.toISO));
-    }
-    
-    const snapshot = await query.get();
+    const snapshot = await usersRef.get();
     const users = snapshot.docs.map((doc: any) => doc.data());
     
     const totalUsers = users.length;
-    const activeUsers = users.filter((user: any) => {
-      const lastActivity = user.last_activity?.toDate();
-      if (!lastActivity) return false;
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return lastActivity > thirtyDaysAgo;
-    }).length;
+    const activeUsers = users.filter((user: any) => !!user.last_activity?.toDate()).length;
     
-    const newSignups = users.filter((user: any) => {
-      const createdTime = user.created_time?.toDate();
-      if (!createdTime) return false;
-      const thirtyDaysAgo = new Date();
+    const newSignups = (() => {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime());
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return createdTime > thirtyDaysAgo;
-    }).length;
+      return users.filter((user: any) => {
+        const createdTime = user.created_time?.toDate();
+        return createdTime && createdTime > thirtyDaysAgo;
+      }).length;
+    })();
     
-    const paidUsers = users.filter((user: any) => 
-      user.stripe_subscription_status === 'active' || 
-      user.stripe_subscription_status === 'trialing'
-    ).length;
+    const paidUsers = users.filter((user: any) => user.stripe_subscription_status === 'active').length;
+
+    const conversion = (() => {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime());
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const signupsLast30 = users.filter((user: any) => {
+        const createdTime = user.created_time?.toDate();
+        return createdTime && createdTime > thirtyDaysAgo;
+      });
+      const activeAmongNew = signupsLast30.filter((u: any) => u.stripe_subscription_status === 'active').length;
+      return signupsLast30.length > 0 ? Number(((activeAmongNew / signupsLast30.length) * 100).toFixed(1)) : 0;
+    })();
     
     const totalChats = users.reduce((sum: number, user: any) => sum + (user.number_chats || 0), 0);
     const avgChatsPerUser = totalUsers > 0 ? totalChats / totalUsers : 0;
@@ -344,6 +342,7 @@ export async function getUserStats(input: unknown) {
       activeUsers,
       newSignups,
       paidUsers,
+      conversion,
       avgChatsPerUser: Number(avgChatsPerUser.toFixed(2)),
       userEngagement: Number(userEngagement.toFixed(1)),
     } as UserStats;
