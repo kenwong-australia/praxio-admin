@@ -333,7 +333,8 @@ export async function getUserStats(input: unknown) {
     })();
     
     const totalChats = users.reduce((sum: number, user: any) => sum + (user.number_chats || 0), 0);
-    const avgChatsPerUser = totalUsers > 0 ? totalChats / totalUsers : 0;
+    const usersWithChats = users.filter((user: any) => (user.number_chats || 0) > 0).length;
+    const avgChatsPerUser = usersWithChats > 0 ? totalChats / usersWithChats : 0;
     
     const userEngagement = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
     
