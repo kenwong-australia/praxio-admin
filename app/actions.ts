@@ -332,9 +332,23 @@ export async function getUserStats(input: unknown) {
       return signupsLast30.length > 0 ? Number(((activeAmongNew / signupsLast30.length) * 100).toFixed(1)) : 0;
     })();
     
-    const totalChats = users.reduce((sum: number, user: any) => sum + (user.number_chats || 0), 0);
-    const usersWithChats = users.filter((user: any) => (user.number_chats || 0) > 0).length;
-    const avgChatsPerUser = usersWithChats > 0 ? totalChats / usersWithChats : 0;
+    // Avg Chats/User: compute from Supabase (all-time): total chats / distinct users with chats
+    let avgChatsPerUser = 0;
+    try {
+      const { data, error } = await svc().rpc('chat_aggregate');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const totalChatsSb = Number((data[0] as any).total_chats) || 0;
+        const distinctUsersSb = Number((data[0] as any).distinct_users) || 0;
+        avgChatsPerUser = distinctUsersSb > 0 ? totalChatsSb / distinctUsersSb : 0;
+      } else if (error) {
+        console.error('chat_aggregate RPC error:', error);
+      }
+    } catch (e) {
+      console.error('Supabase avg chats aggregation failed, falling back to Firestore estimate:', e);
+      const totalChats = users.reduce((sum: number, user: any) => sum + (user.number_chats || 0), 0);
+      const usersWithChats = users.filter((user: any) => (user.number_chats || 0) > 0).length;
+      avgChatsPerUser = usersWithChats > 0 ? totalChats / usersWithChats : 0;
+    }
     
     const userEngagement = totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0;
     
