@@ -1,6 +1,6 @@
 'use server';
 import { svc, ingest } from '@/lib/supabase';
-import { getAdminDb } from '@/lib/firebase';
+import { getAdminDb, getAdminAuth } from '@/lib/firebase';
 import { z } from 'zod';
 import { User, UserFilters, UserStats } from '@/lib/types';
 
@@ -395,6 +395,42 @@ export async function getUserDetails(uid: string) {
   } catch (error) {
     console.error('Error fetching user details:', error);
     return null;
+  }
+}
+
+// ==========================
+// Admin: verify user email
+// ==========================
+export async function verifyEmailByEmail(input: { uid: string; email: string }) {
+  try {
+    const { uid, email } = input;
+    const auth = getAdminAuth();
+
+    // Look up by email from Auth, and verify UIDs match
+    const authUser = await auth.getUserByEmail(email);
+    if (authUser.uid !== uid) {
+      return { ok: false, error: 'UID mismatch between provided UID and Firebase Auth record for this email.' };
+    }
+
+    // Double-check Firestore has this UID and (optionally) matching email
+    const db = getAdminDb();
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return { ok: false, error: 'Firestore user not found for provided UID.' };
+    }
+    const fsEmail = (userDoc.data() as any)?.email;
+    if (fsEmail && fsEmail !== email) {
+      return { ok: false, error: 'Email mismatch between Firestore and the provided email.' };
+    }
+
+    // Flip Auth emailVerified and mirror in Firestore
+    await auth.updateUser(uid, { emailVerified: true });
+    await db.collection('users').doc(uid).set({ email_verified: true }, { merge: true });
+
+    return { ok: true, uid, email };
+  } catch (error: any) {
+    console.error('verifyEmailByEmail error:', error);
+    return { ok: false, error: error?.message || 'Unknown error' };
   }
 }
 

@@ -12,8 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Users, UserCheck, TrendingUp, DollarSign, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { verifyEmailByEmail } from '@/app/actions';
+import { useRouter } from 'next/navigation';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function UsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -288,7 +292,34 @@ export default function UsersPage() {
                         {user.email_verified ? (
                           <Badge className="bg-green-500 text-white">Verified</Badge>
                         ) : (
-                          <Badge variant="outline">Not Verified</Badge>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Badge variant="outline" className="cursor-pointer">Not Verified</Badge>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Mark email as verified?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will set the email verification for {user.email} to verified in Firebase Auth.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={async () => {
+                                    const res = await verifyEmailByEmail({ uid: user.uid, email: user.email });
+                                    if ((res as any)?.ok) {
+                                      router.refresh();
+                                    } else {
+                                      alert((res as any)?.error || 'Failed to verify email');
+                                    }
+                                  }}
+                                >
+                                  Confirm
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </TableCell>
                       <TableCell>
