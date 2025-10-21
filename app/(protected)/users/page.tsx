@@ -37,7 +37,24 @@ export default function UsersPage() {
       ]);
       console.log('Users result:', usersResult);
       console.log('Stats result:', statsResult);
-      setUsers(usersResult.rows);
+      // Apply a defensive client-side filter mirror to avoid any server/query edge cases
+      let rows = usersResult.rows as User[];
+      if ((filters as any).status) {
+        const s = String((filters as any).status).toLowerCase();
+        rows = rows.filter(u => (u.stripe_subscription_status || '').toLowerCase() === s);
+      }
+      if (filters.plan) {
+        const p = String(filters.plan);
+        if (p.toUpperCase() === 'N/A') {
+          rows = rows.filter(u => (u.selected_frequency || '') === '');
+        } else {
+          rows = rows.filter(u => (u.selected_frequency || '').toLowerCase() === p.toLowerCase());
+        }
+      }
+      if (filters.role) {
+        rows = rows.filter(u => (u.role || '') === filters.role);
+      }
+      setUsers(rows);
       setTotal(usersResult.total);
       setStats(statsResult);
     } catch (error) {
