@@ -425,14 +425,41 @@ export async function getUserDetails(uid: string) {
       return null;
     }
     
-    const userData = userDoc.data();
+    const userData = userDoc.data() || {};
+    const toDateSafe = (v: any) => (v && typeof v?.toDate === 'function') ? v.toDate() : undefined;
     return {
-      id: userDoc.id,
-      ...userData,
-      created_time: userData?.created_time?.toDate(),
-      last_activity: userData?.last_activity?.toDate(),
-      stripe_trial_end_date: userData?.stripe_trial_end_date?.toDate(),
-      stripe_plan_renewal_date: userData?.stripe_plan_renewal_date?.toDate(),
+      uid: String(userDoc.id),
+      email: typeof userData.email === 'string' ? userData.email : '',
+      display_name: typeof userData.display_name === 'string' ? userData.display_name : '',
+      photo_url: typeof userData.photo_url === 'string' ? userData.photo_url : '',
+      created_time: toDateSafe(userData.created_time) as any,
+      phone_number: typeof userData.phone_number === 'string' ? userData.phone_number : '',
+      email_verified: Boolean(userData.email_verified),
+      first_name: typeof userData.first_name === 'string' ? userData.first_name : '',
+      last_name: typeof userData.last_name === 'string' ? userData.last_name : '',
+      bio: typeof userData.bio === 'string' ? userData.bio : '',
+      company_name: typeof userData.company_name === 'string' ? userData.company_name : '',
+      abn_num: typeof userData.abn_num === 'string' ? userData.abn_num : '',
+      state: typeof userData.state === 'string' ? userData.state : '',
+      city: typeof userData.city === 'string' ? userData.city : '',
+      workspace: typeof userData.workspace === 'string' ? userData.workspace : '',
+      stripe_cust_id: typeof userData.stripe_cust_id === 'string' ? userData.stripe_cust_id : '',
+      selected_plan: typeof userData.selected_plan === 'string' ? userData.selected_plan : '',
+      selected_frequency: typeof userData.selected_frequency === 'string' ? userData.selected_frequency : '',
+      stripe_subscription_id: typeof userData.stripe_subscription_id === 'string' ? userData.stripe_subscription_id : '',
+      stripe_subscription_status: typeof userData.stripe_subscription_status === 'string' ? userData.stripe_subscription_status : '',
+      stripe_subscription_product_id: typeof userData.stripe_subscription_product_id === 'string' ? userData.stripe_subscription_product_id : '',
+      stripe_subscription_price_id: typeof userData.stripe_subscription_price_id === 'string' ? userData.stripe_subscription_price_id : '',
+      role: typeof userData.role === 'string' ? userData.role : 'regular',
+      stripe_trial_end_date: toDateSafe(userData.stripe_trial_end_date) as any,
+      stripe_plan_renewal_date: toDateSafe(userData.stripe_plan_renewal_date) as any,
+      latest_build: typeof userData.latest_build === 'string' ? userData.latest_build : '',
+      last_activity: toDateSafe(userData.last_activity) as any,
+      number_chats: typeof userData.number_chats === 'number' ? userData.number_chats : 0,
+      stripe_cancel_at_period_end: Boolean(userData.stripe_cancel_at_period_end),
+      stripe_pending_frequency: typeof userData.stripe_pending_frequency === 'string' ? userData.stripe_pending_frequency : '',
+      has_received_welcome: Boolean(userData.has_received_welcome),
+      client_template: typeof userData.client_template === 'string' ? userData.client_template : '',
     } as unknown as User;
   } catch (error) {
     console.error('Error fetching user details:', error);
