@@ -108,7 +108,7 @@ export default function UsersPage() {
     return <Badge className={colors[role] || 'bg-gray-500 text-white'}>{role}</Badge>;
   };
 
-  const totalPages = Math.ceil(total / filters.pageSize);
+  const totalPages = 1; // no pagination while fetching full dataset
 
   return (
     <div className="space-y-6">
@@ -379,32 +379,7 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Page {filters.page} of {totalPages}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(filters.page - 1)}
-                      disabled={filters.page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(filters.page + 1)}
-                      disabled={filters.page >= totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {/* Pagination hidden while showing full dataset */}
             </>
           )}
         </CardContent>

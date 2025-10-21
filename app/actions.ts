@@ -214,11 +214,9 @@ export async function getUsers(input: unknown) {
       query = query.orderBy('created_time', 'desc');
     }
     
-    // Pagination
-    const offset = (f.page - 1) * f.pageSize;
-    console.log('Executing query with offset:', offset, 'limit:', f.pageSize);
-    
-    const snapshot = await query.offset(offset).limit(f.pageSize).get();
+    // No pagination: fetch all matching users for now
+    console.log('Executing query without pagination (temporary full fetch)');
+    const snapshot = await query.get();
     console.log('Query executed, got', snapshot.docs.length, 'documents');
     
     const users = snapshot.docs.map((doc: any) => ({
@@ -288,7 +286,7 @@ export async function getUsers(input: unknown) {
       console.error('Supabase chat count fetch failed:', e);
     }
     
-    // Get total count (this is expensive, so we'll estimate)
+    // Total equals full collection size (unchanged)
     const totalSnapshot = await usersRef.get();
     const total = totalSnapshot.size;
     console.log('Total users in collection:', total);
