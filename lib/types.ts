@@ -68,6 +68,7 @@ export type UserFilters = {
   search?: string;
   role?: string;
   plan?: string;
+  status?: string;
   state?: string;
   fromISO?: string;
   toISO?: string;

@@ -183,15 +183,18 @@ export async function getUsers(input: unknown) {
       query = query.where('role', '==', f.role);
     }
     if (f.plan) {
-      // Interpret as frequency filter
-      if (f.plan === 'N/A') {
+      // Interpret as frequency filter (exact matches used in DB)
+      const p = (f.plan || '').trim();
+      if (p.toUpperCase() === 'N/A') {
         query = query.where('selected_frequency', '==', '');
       } else {
-        query = query.where('selected_frequency', '==', f.plan);
+        query = query.where('selected_frequency', '==', p.toLowerCase());
       }
     }
     if (f.status) {
-      query = query.where('stripe_subscription_status', '==', f.status);
+      // Exact matches used in DB
+      const s = (f.status || '').trim().toLowerCase();
+      query = query.where('stripe_subscription_status', '==', s);
     }
     if (f.fromISO) {
       query = query.where('created_time', '>=', new Date(f.fromISO));
