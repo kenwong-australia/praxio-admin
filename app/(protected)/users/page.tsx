@@ -15,6 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { verifyEmailByEmail } from '@/app/actions';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import CsvDownloadButton from '@/components/CsvDownloadButton';
 
 export default function UsersPage() {
   const router = useRouter();
@@ -259,10 +260,15 @@ export default function UsersPage() {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Users ({total})</CardTitle>
-          <CardDescription>
-            Showing {users.length} of {total} users
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Users ({total})</CardTitle>
+              <CardDescription>
+                Showing {users.length} of {total} users
+              </CardDescription>
+            </div>
+            <CsvDownloadButton rows={users} />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
