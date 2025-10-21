@@ -11,11 +11,26 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || undefined;
     const plan = searchParams.get('plan') || undefined;
     const status = searchParams.get('status') || undefined;
+    const summary = (searchParams.get('summary') || 'false') === 'true';
     const limitParam = Number(searchParams.get('limit') || '10');
     const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 50) : 10;
 
     const db = getAdminDb();
     const usersRef = db.collection('users');
+
+    if (summary) {
+      const snapshot = await usersRef.get();
+      const statuses: Record<string, number> = {};
+      const freqs: Record<string, number> = {};
+      snapshot.forEach((doc: any) => {
+        const d = doc.data();
+        const s = (d.stripe_subscription_status ?? '').toString();
+        const f = (d.selected_frequency ?? '').toString();
+        statuses[s] = (statuses[s] || 0) + 1;
+        freqs[f] = (freqs[f] || 0) + 1;
+      });
+      return NextResponse.json({ ok: true, summary: { statuses, frequencies: freqs } });
+    }
 
     const applied: string[] = [];
     let query: any = usersRef;
@@ -44,8 +59,14 @@ export async function GET(request: NextRequest) {
       query = query.where('stripe_subscription_status', '==', s);
     }
 
-    // Order newest first to match UI
-    query = query.orderBy('created_time', 'desc').limit(limit);
+    // Order rules to match server logic and avoid composite indexes
+    const hasEqualityFilters = Boolean(role || plan || status);
+    if (search) {
+      query = query.orderBy('email');
+    } else if (!hasEqualityFilters) {
+      query = query.orderBy('created_time', 'desc');
+    }
+    query = query.limit(limit);
 
     try {
       const snapshot = await query.get();
