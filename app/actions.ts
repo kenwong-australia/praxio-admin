@@ -226,7 +226,7 @@ export async function getUsers(input: unknown) {
       return undefined;
     };
 
-    const users = snapshot.docs.map((doc: any) => {
+    const users: User[] = snapshot.docs.map((doc: any): User => {
       const d = doc.data() || {};
       const u: Partial<User> & { uid: string } = {
         // Identity
@@ -267,8 +267,8 @@ export async function getUsers(input: unknown) {
     // Supabase presence (per page)
     // ==============================
     try {
-      const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
-      const emails = Array.from(new Set((users.map(u => (u as any).email).filter(Boolean))));
+      const uids = Array.from(new Set((users.map((u: User) => u.uid).filter(Boolean))));
+      const emails = Array.from(new Set((users.map((u: User) => u.email).filter(Boolean))));
 
       let sbRows: { id?: string; email?: string | null }[] = [];
       if (uids.length > 0 || emails.length > 0) {
@@ -291,9 +291,9 @@ export async function getUsers(input: unknown) {
       const sbIdSet = new Set((sbRows ?? []).map(r => r.id).filter(Boolean));
       const sbEmailSet = new Set((sbRows ?? []).map(r => (r.email ?? '').toLowerCase()).filter(Boolean));
 
-      for (const u of users as any[]) {
+      for (const u of users as User[]) {
         const emailLower = (u.email ?? '').toLowerCase();
-        u.in_supabase = sbIdSet.has(u.uid) || sbEmailSet.has(emailLower);
+        (u as any).in_supabase = sbIdSet.has(u.uid) || sbEmailSet.has(emailLower);
       }
     } catch (e) {
       console.error('Supabase presence check failed:', e);
