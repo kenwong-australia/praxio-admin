@@ -187,12 +187,12 @@ export default function UsersPage() {
                 onValueChange={(value) => handleFilterChange('role', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All roles" />
+                  <SelectValue placeholder="all roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="all">all roles</SelectItem>
+                  <SelectItem value="admin">admin</SelectItem>
+                  <SelectItem value="regular">regular</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -203,13 +203,13 @@ export default function UsersPage() {
                 onValueChange={(value) => handleFilterChange('plan', value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All frequencies" />
+                  <SelectValue placeholder="all frequencies" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="N/A">N/A</SelectItem>
+                  <SelectItem value="all">all</SelectItem>
+                  <SelectItem value="monthly">monthly</SelectItem>
+                  <SelectItem value="yearly">yearly</SelectItem>
+                  <SelectItem value="N/A">n/a</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,12 +220,12 @@ export default function UsersPage() {
                 onValueChange={(value) => handleFilterChange('status' as any, value === 'all' ? undefined : value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="All status" />
+                  <SelectValue placeholder="all status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="trialing">Trialing</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="all">all</SelectItem>
+                  <SelectItem value="trialing">trialing</SelectItem>
+                  <SelectItem value="active">active</SelectItem>
                 </SelectContent>
               </Select>
             </div>
