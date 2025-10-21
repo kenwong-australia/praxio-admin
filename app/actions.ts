@@ -219,14 +219,47 @@ export async function getUsers(input: unknown) {
     const snapshot = await query.get();
     console.log('Query executed, got', snapshot.docs.length, 'documents');
     
-    const users = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      created_time: doc.data().created_time?.toDate(),
-      last_activity: doc.data().last_activity?.toDate(),
-      stripe_trial_end_date: doc.data().stripe_trial_end_date?.toDate(),
-      stripe_plan_renewal_date: doc.data().stripe_plan_renewal_date?.toDate(),
-    })) as unknown as User[];
+    const toDateSafe = (v: any) => {
+      if (!v) return undefined;
+      if (v instanceof Date) return v;
+      if (typeof v?.toDate === 'function') return v.toDate();
+      return undefined;
+    };
+
+    const users = snapshot.docs.map((doc: any) => {
+      const d = doc.data() || {};
+      const u: Partial<User> & { uid: string } = {
+        // Identity
+        uid: String(doc.id),
+        id: String(doc.id),
+
+        // Core profile fields shown in UI
+        email: typeof d.email === 'string' ? d.email : '',
+        display_name: typeof d.display_name === 'string' ? d.display_name : '',
+        photo_url: typeof d.photo_url === 'string' ? d.photo_url : '',
+        first_name: typeof d.first_name === 'string' ? d.first_name : '',
+        last_name: typeof d.last_name === 'string' ? d.last_name : '',
+        phone_number: typeof d.phone_number === 'string' ? d.phone_number : '',
+        abn_num: typeof d.abn_num === 'string' ? d.abn_num : '',
+        company_name: typeof d.company_name === 'string' ? d.company_name : '',
+
+        // Dates (as JS Date objects)
+        created_time: toDateSafe(d.created_time) as any,
+        last_activity: toDateSafe(d.last_activity) as any,
+        stripe_trial_end_date: toDateSafe(d.stripe_trial_end_date) as any,
+        stripe_plan_renewal_date: toDateSafe(d.stripe_plan_renewal_date) as any,
+
+        // Billing / role
+        selected_frequency: typeof d.selected_frequency === 'string' ? d.selected_frequency : '',
+        stripe_subscription_status: typeof d.stripe_subscription_status === 'string' ? d.stripe_subscription_status : '',
+        role: typeof d.role === 'string' ? d.role : 'regular',
+        number_chats: typeof d.number_chats === 'number' ? d.number_chats : 0,
+        stripe_cancel_at_period_end: Boolean(d.stripe_cancel_at_period_end),
+        stripe_pending_frequency: typeof d.stripe_pending_frequency === 'string' ? d.stripe_pending_frequency : '',
+        client_template: typeof d.client_template === 'string' ? d.client_template : '',
+      };
+      return u as User;
+    });
     
     console.log('Mapped users:', users.length);
     
