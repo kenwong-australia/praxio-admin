@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getUsers, getUserStats } from '@/app/actions';
 import { User, UserFilters, UserStats } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,10 @@ export default function UsersPage() {
     pageSize: 25,
   });
 
+  const requestIdRef = useRef(0);
+
   const loadUsers = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       console.log('Loading users with filters:', filters);
@@ -35,20 +38,22 @@ export default function UsersPage() {
         getUsers(filters),
         getUserStats({ fromISO: filters.fromISO, toISO: filters.toISO }),
       ]);
+      // Only apply the latest request's result
+      if (requestId !== requestIdRef.current) return;
       console.log('Users result:', usersResult);
       console.log('Stats result:', statsResult);
       // Apply a defensive client-side filter mirror to avoid any server/query edge cases
       let rows = usersResult.rows as User[];
       if ((filters as any).status) {
-        const s = String((filters as any).status).toLowerCase();
-        rows = rows.filter(u => (u.stripe_subscription_status || '').toLowerCase() === s);
+        const s = String((filters as any).status).trim().toLowerCase();
+        rows = rows.filter(u => (u.stripe_subscription_status || '').toString().trim().toLowerCase() === s);
       }
       if (filters.plan) {
         const p = String(filters.plan);
         if (p.toUpperCase() === 'N/A') {
           rows = rows.filter(u => (u.selected_frequency || '') === '');
         } else {
-          rows = rows.filter(u => (u.selected_frequency || '').toLowerCase() === p.toLowerCase());
+          rows = rows.filter(u => (u.selected_frequency || '').toString().trim().toLowerCase() === p.toLowerCase());
         }
       }
       if (filters.role) {
