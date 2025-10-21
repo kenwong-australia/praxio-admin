@@ -231,7 +231,6 @@ export async function getUsers(input: unknown) {
       const u: Partial<User> & { uid: string } = {
         // Identity
         uid: String(doc.id),
-        id: String(doc.id),
 
         // Core profile fields shown in UI
         email: typeof d.email === 'string' ? d.email : '',
@@ -242,6 +241,7 @@ export async function getUsers(input: unknown) {
         phone_number: typeof d.phone_number === 'string' ? d.phone_number : '',
         abn_num: typeof d.abn_num === 'string' ? d.abn_num : '',
         company_name: typeof d.company_name === 'string' ? d.company_name : '',
+        email_verified: Boolean(d.email_verified),
 
         // Dates (as JS Date objects)
         created_time: toDateSafe(d.created_time) as any,
