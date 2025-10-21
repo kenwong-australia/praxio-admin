@@ -248,6 +248,7 @@ export default function UsersPage() {
                   <SelectItem value="all">all</SelectItem>
                   <SelectItem value="trialing">trialing</SelectItem>
                   <SelectItem value="active">active</SelectItem>
+                  <SelectItem value="canceled">canceled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
