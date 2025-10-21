@@ -203,8 +203,16 @@ export async function getUsers(input: unknown) {
       query = query.where('created_time', '<=', new Date(f.toISO));
     }
     
-    // Order by created_time descending
-    query = query.orderBy('created_time', 'desc');
+    // Order rules to avoid composite index requirements that blank the list:
+    // - If using a search range on email, Firestore requires orderBy on the same field
+    // - If any equality filters are present (role/plan/status), omit created_time ordering to avoid composite index for now
+    // - If no filters, order by created_time desc (default view)
+    const hasEqualityFilters = Boolean(f.role || f.plan || f.status);
+    if (f.search) {
+      query = query.orderBy('email');
+    } else if (!hasEqualityFilters) {
+      query = query.orderBy('created_time', 'desc');
+    }
     
     // Pagination
     const offset = (f.page - 1) * f.pageSize;
