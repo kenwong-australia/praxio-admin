@@ -226,7 +226,7 @@ export async function getUsers(input: unknown) {
       return undefined;
     };
 
-    const users: User[] = snapshot.docs.map((doc: any): User => {
+    let users: User[] = snapshot.docs.map((doc: any): User => {
       const d = doc.data() || {};
       const u: Partial<User> & { uid: string } = {
         // Identity
@@ -262,6 +262,17 @@ export async function getUsers(input: unknown) {
     });
     
     console.log('Mapped users:', users.length);
+    
+    // ==============================
+    // Filter: only show records with subscription status data
+    // ==============================
+    const filteredUsers = users.filter(user => {
+      const status = (user.stripe_subscription_status || '').trim();
+      return status.length > 0;
+    });
+    
+    console.log('Filtered users (with subscription status):', filteredUsers.length, '(removed', users.length - filteredUsers.length, 'records without status)');
+    users = filteredUsers;
     
     // ==============================
     // Supabase presence (per page)

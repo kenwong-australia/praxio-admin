@@ -88,16 +88,18 @@ export default function UsersPage() {
   };
 
   const getStatusBadge = (user: User) => {
-    if (user.stripe_subscription_status === 'active') {
+    const status = (user.stripe_subscription_status || '').trim().toLowerCase();
+    if (status === 'active') {
       return <Badge className="bg-green-500 text-white">Active</Badge>;
     }
-    if (user.stripe_subscription_status === 'trialing') {
+    if (status === 'trialing') {
       return <Badge className="bg-blue-500 text-white">Trial</Badge>;
     }
-    if (user.stripe_subscription_status === 'canceled') {
+    if (status === 'canceled') {
       return <Badge variant="destructive">Canceled</Badge>;
     }
-    return <Badge variant="outline">Free</Badge>;
+    // Show N/A for null, empty, or unknown statuses instead of "Free"
+    return <Badge variant="outline">N/A</Badge>;
   };
 
   const getRoleBadge = (role: string) => {
