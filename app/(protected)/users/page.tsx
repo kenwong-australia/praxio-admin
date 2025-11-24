@@ -295,7 +295,6 @@ export default function UsersPage() {
                     <TableHead>Joined</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Frequency</TableHead>
-                    <TableHead>Last Sign In</TableHead>
                     <TableHead>Last Chat</TableHead>
                     <TableHead>Chats</TableHead>
                     <TableHead>In Supabase?</TableHead>
@@ -377,10 +376,7 @@ export default function UsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{formatDateShort(user.last_activity)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDateShort(user.latest_chat_created_at)}</div>
+                        <div className="text-sm">{formatDate(user.latest_chat_created_at)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm font-medium">{user.supabase_chat_count ?? 0}</div>
