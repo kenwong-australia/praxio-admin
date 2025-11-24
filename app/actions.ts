@@ -329,6 +329,47 @@ export async function getUsers(input: unknown) {
     } catch (e) {
       console.error('Supabase chat count fetch failed:', e);
     }
+
+    // ======================================
+    // Latest chat created_at (per page, by email)
+    // ======================================
+    try {
+      const emails = Array.from(new Set((users.map(u => u.email).filter(Boolean))));
+      if (emails.length > 0) {
+        // Query Supabase chat table to get latest created_at per email
+        const { data, error } = await svc()
+          .from('chat')
+          .select('email,created_at')
+          .in('email', emails)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Latest chat date query error:', error);
+        } else {
+          // Group by email and get the latest created_at for each email
+          const emailToLatestChat = new Map<string, Date>();
+          for (const chat of (data ?? [])) {
+            if (!chat.email) continue;
+            const emailLower = String(chat.email).toLowerCase();
+            const chatDate = chat.created_at ? new Date(chat.created_at) : null;
+            if (!chatDate || isNaN(chatDate.getTime())) continue;
+            
+            const existing = emailToLatestChat.get(emailLower);
+            if (!existing || chatDate > existing) {
+              emailToLatestChat.set(emailLower, chatDate);
+            }
+          }
+          
+          // Map back to users
+          for (const u of users as any[]) {
+            const emailLower = (u.email || '').toLowerCase();
+            u.latest_chat_created_at = emailToLatestChat.get(emailLower);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Latest chat date fetch failed:', e);
+    }
     
     // Total equals full collection size (unchanged)
     const totalSnapshot = await usersRef.get();

@@ -62,6 +62,8 @@ export type User = {
   in_supabase?: boolean;
   // Optional, computed per page: number of chats in Supabase.chat for this user
   supabase_chat_count?: number;
+  // Optional, computed per page: latest chat created_at from Supabase.chat for this user
+  latest_chat_created_at?: Date;
 };
 
 export type UserFilters = {
