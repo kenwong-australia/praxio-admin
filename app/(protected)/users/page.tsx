@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CalendarDays, Users, UserCheck, TrendingUp, DollarSign, MessageSquare } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { verifyEmailByEmail } from '@/app/actions';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -85,6 +85,11 @@ export default function UsersPage() {
   const formatDate = (date: Date | undefined) => {
     if (!date) return 'N/A';
     return formatDistanceToNow(date, { addSuffix: true });
+  };
+
+  const formatDateShort = (date: Date | undefined) => {
+    if (!date) return 'N/A';
+    return format(date, 'dd/MM/yy');
   };
 
   const getStatusBadge = (user: User) => {
@@ -372,10 +377,10 @@ export default function UsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{formatDate(user.last_activity)}</div>
+                        <div className="text-sm">{formatDateShort(user.last_activity)}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{formatDate(user.latest_chat_created_at)}</div>
+                        <div className="text-sm">{formatDateShort(user.latest_chat_created_at)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm font-medium">{user.supabase_chat_count ?? 0}</div>
