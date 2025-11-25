@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Database, FileDown, FileText } from "lucide-react";
+import { ChatDetailsModal } from "@/components/ChatDetailsModal";
 
 export default function ChatsPage() {
   const { fromUTC, toUTC } = rangeLast30Sydney();
@@ -23,6 +24,8 @@ export default function ChatsPage() {
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const maxSelectable = 10;
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -60,6 +63,20 @@ export default function ChatsPage() {
       return [...prev, id];
     });
   }
+
+  const handleRowClick = (row: any, event: React.MouseEvent) => {
+    // Don't open modal if clicking on checkbox
+    if ((event.target as HTMLElement).closest('button, input[type="checkbox"]')) {
+      return;
+    }
+    setSelectedChat(row);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedChat(null);
+  };
 
   const canDownload = selectedIds.length > 0 && selectedIds.length <= maxSelectable;
 
@@ -157,8 +174,12 @@ export default function ChatsPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {rows.map((r) => (
-                      <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-3">
+                      <tr 
+                        key={r.id} 
+                        className="hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={(e) => handleRowClick(r, e)}
+                      >
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={selectedIds.includes(r.id)}
                             onCheckedChange={() => toggleSelection(r.id)}
@@ -199,6 +220,11 @@ export default function ChatsPage() {
           </CardContent>
         </Card>
       </div>
+      <ChatDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        chatData={selectedChat}
+      />
     </div>
   );
 }
