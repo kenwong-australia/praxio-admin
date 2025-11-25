@@ -150,6 +150,23 @@ export async function getScenariosPage(input: unknown) {
   }
 }
 
+export async function getConversationsByChatId(chatId: number) {
+  try {
+    const { data, error } = await svc()
+      .from('conversation')
+      .select('id,created_at,type,content,chat_id')
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: true }); // Oldest to newest
+    
+    if (error) throw error;
+    
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    return [];
+  }
+}
+
 // User management functions
 export async function getUsers(input: unknown) {
   try {

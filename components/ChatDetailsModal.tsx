@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toSydneyDateTime } from '@/lib/time';
-import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool, MessageSquare } from 'lucide-react';
+import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool, MessageSquare, MessageCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { getConversationsByChatId } from '@/app/actions';
+import { ConversationRow } from '@/lib/types';
 
 interface ChatDetailsModalProps {
   isOpen: boolean;
@@ -22,6 +24,29 @@ interface Citation {
 }
 
 export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModalProps) {
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+
+  // Fetch conversations when modal opens
+  useEffect(() => {
+    if (isOpen && chatData?.id) {
+      setLoadingConversations(true);
+      getConversationsByChatId(chatData.id)
+        .then((data) => {
+          setConversations(data);
+        })
+        .catch((error) => {
+          console.error('Error loading conversations:', error);
+          setConversations([]);
+        })
+        .finally(() => {
+          setLoadingConversations(false);
+        });
+    } else {
+      setConversations([]);
+    }
+  }, [isOpen, chatData?.id]);
+
   if (!chatData) return null;
 
   // Parse citations from Supabase JSONB field (already parsed by client)
@@ -90,6 +115,10 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
             <TabsTrigger value="draft" className="shrink min-w-0 flex items-center gap-1">
               <PenTool className="h-4 w-4" />
               <span className="truncate">Draft</span>
+            </TabsTrigger>
+            <TabsTrigger value="conversation" className="shrink min-w-0 flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              <span className="truncate">Conversation</span>
             </TabsTrigger>
             <TabsTrigger value="feedback" className="shrink min-w-0 flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
@@ -260,6 +289,55 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         <PenTool className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No draft content available</p>
                       </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="conversation" className="mt-4 flex-1 min-h-0">
+              <ScrollArea className="h-[60vh]">
+                <div className="px-6">
+                  {loadingConversations ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      <div className="text-center">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50 animate-pulse" />
+                        <p>Loading conversation...</p>
+                      </div>
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      <div className="text-center">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No conversation messages found</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {conversations.map((conv) => {
+                        const isUser = conv.type === 'user';
+                        return (
+                          <div
+                            key={conv.id}
+                            className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-lg p-4 ${
+                                isUser
+                                  ? 'bg-muted/50 text-left'
+                                  : 'bg-blue-50 text-right'
+                              }`}
+                            >
+                              <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
+                              </div>
+                              <div className={`mt-2 text-xs text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
+                                {toSydneyDateTime(conv.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
