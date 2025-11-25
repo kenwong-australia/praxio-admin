@@ -328,6 +328,9 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                                   : 'bg-blue-50 text-right'
                               }`}
                             >
+                              <div className={`text-xs font-medium text-muted-foreground mb-2 ${isUser ? 'text-left' : 'text-right'}`}>
+                                {isUser ? 'User' : 'Assistant'}
+                              </div>
                               <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
                                 <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
                               </div>
