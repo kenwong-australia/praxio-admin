@@ -7,6 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { CalendarIcon, FilterIcon, RotateCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { toSydneyDateInput } from "@/lib/time";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import tz from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(tz);
 
 export function FiltersBar({
   emails,
@@ -20,21 +27,26 @@ export function FiltersBar({
   defaultTo: string;
 }) {
   const [email, setEmail] = useState<string | null>(null);
-  const [from, setFrom] = useState(defaultFrom.split("T")[0]);
-  const [to, setTo] = useState(defaultTo.split("T")[0]);
+  // Convert UTC ISO strings to Sydney dates for display (YYYY-MM-DD format for date input)
+  const [from, setFrom] = useState(toSydneyDateInput(defaultFrom));
+  const [to, setTo] = useState(toSydneyDateInput(defaultTo));
 
   function apply() {
-    const fromISO = new Date(from + "T00:00:00Z").toISOString();
-    const toISO = new Date(to + "T23:59:59Z").toISOString();
+    // Convert Sydney date (YYYY-MM-DD) to UTC ISO string
+    // Interpret the date input as Sydney timezone start/end of day
+    const fromISO = dayjs.tz(from + "T00:00:00", 'Australia/Sydney').utc().toISOString();
+    const toISO = dayjs.tz(to + "T23:59:59", 'Australia/Sydney').utc().toISOString();
     onApply(email, fromISO, toISO);
   }
 
   function reset() {
     setEmail(null);
-    setFrom(defaultFrom.split("T")[0]);
-    setTo(defaultTo.split("T")[0]);
-    const fromISO = new Date(defaultFrom.split("T")[0] + "T00:00:00Z").toISOString();
-    const toISO = new Date(defaultTo.split("T")[0] + "T23:59:59Z").toISOString();
+    const resetFrom = toSydneyDateInput(defaultFrom);
+    const resetTo = toSydneyDateInput(defaultTo);
+    setFrom(resetFrom);
+    setTo(resetTo);
+    const fromISO = dayjs.tz(resetFrom + "T00:00:00", 'Australia/Sydney').utc().toISOString();
+    const toISO = dayjs.tz(resetTo + "T23:59:59", 'Australia/Sydney').utc().toISOString();
     onApply(null, fromISO, toISO);
   }
 
