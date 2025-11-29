@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Database, FileDown, FileText, Brain } from "lucide-react";
+import { Database, FileDown, FileText, Brain, Clock } from "lucide-react";
 import { ChatDetailsModal } from "@/components/ChatDetailsModal";
 
 export default function ChatsPage() {
@@ -192,6 +192,7 @@ export default function ChatsPage() {
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Model</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Research</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Questions</th>
+                      <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Process Time</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -222,6 +223,16 @@ export default function ChatsPage() {
                         </td>
                         <td className="p-3">
                           <div className="text-sm text-muted-foreground">{Array.isArray(r.questions) ? r.questions.length : 0}</div>
+                        </td>
+                        <td className="p-3">
+                          {r.processTime ? (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm font-mono">{r.processTime.toFixed(2)}s</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}

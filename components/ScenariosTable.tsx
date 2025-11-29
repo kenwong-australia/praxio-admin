@@ -93,8 +93,8 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Title</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Email</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Model</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Process Time</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Feedback</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Process Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -127,6 +127,9 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                         {getModelBadge(r.model)}
                       </td>
                       <td className="p-4">
+                        {getFeedbackBadge(r.feedback)}
+                      </td>
+                      <td className="p-4">
                         {r.processTime ? (
                           <div className="flex items-center gap-2">
                             <Clock className="h-3 w-3 text-muted-foreground" />
@@ -135,9 +138,6 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
-                      </td>
-                      <td className="p-4">
-                        {getFeedbackBadge(r.feedback)}
                       </td>
                     </tr>
                   ))}

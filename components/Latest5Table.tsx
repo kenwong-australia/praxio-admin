@@ -69,6 +69,7 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Email</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Scenario</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Model</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Process Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -107,6 +108,16 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                       </td>
                       <td className="p-4">
                         {getModelBadge(r.model)}
+                      </td>
+                      <td className="p-4">
+                        {r.processTime ? (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm font-mono">{r.processTime.toFixed(2)}s</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}
