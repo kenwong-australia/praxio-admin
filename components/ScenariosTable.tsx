@@ -48,10 +48,12 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
       'gpt-4': 'bg-purple-500 text-white',
       'gpt-3.5': 'bg-blue-500 text-white',
       'claude': 'bg-orange-500 text-white',
+      'test ai': 'bg-blue-500 text-white',
       'default': 'bg-gray-500 text-white'
     };
     
-    const colorClass = modelColors[model as keyof typeof modelColors] || modelColors.default;
+    const modelLower = model.toLowerCase();
+    const colorClass = modelColors[modelLower as keyof typeof modelColors] || modelColors.default;
     
     return (
       <Badge className={colorClass}>

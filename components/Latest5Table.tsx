@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toSydneyDateTime } from "@/lib/time";
-import { Clock, Mail } from "lucide-react";
+import { Clock, Mail, Brain } from "lucide-react";
 import { ChatDetailsModal } from "@/components/ChatDetailsModal";
 
 export function Latest5Table({ rows }: { rows: any[] }) {
@@ -19,6 +19,28 @@ export function Latest5Table({ rows }: { rows: any[] }) {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedChat(null);
+  };
+
+  const getModelBadge = (model: string | null) => {
+    if (!model) return <Badge variant="outline">Unknown</Badge>;
+    
+    const modelColors = {
+      'gpt-4': 'bg-purple-500 text-white',
+      'gpt-3.5': 'bg-blue-500 text-white',
+      'claude': 'bg-orange-500 text-white',
+      'test ai': 'bg-blue-500 text-white',
+      'default': 'bg-gray-500 text-white'
+    };
+    
+    const modelLower = model.toLowerCase();
+    const colorClass = modelColors[modelLower as keyof typeof modelColors] || modelColors.default;
+    
+    return (
+      <Badge className={colorClass}>
+        <Brain className="h-3 w-3 mr-1" />
+        {model}
+      </Badge>
+    );
   };
 
   return (
@@ -46,6 +68,7 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Title</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Email</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Scenario</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">Model</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -81,6 +104,9 @@ export function Latest5Table({ rows }: { rows: any[] }) {
                             'No scenario'
                           }
                         </div>
+                      </td>
+                      <td className="p-4">
+                        {getModelBadge(r.model)}
                       </td>
                     </tr>
                   ))}

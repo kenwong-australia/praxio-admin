@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Database, FileDown, FileText } from "lucide-react";
+import { Database, FileDown, FileText, Brain } from "lucide-react";
 import { ChatDetailsModal } from "@/components/ChatDetailsModal";
 
 export default function ChatsPage() {
@@ -76,6 +76,28 @@ export default function ChatsPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedChat(null);
+  };
+
+  const getModelBadge = (model: string | null) => {
+    if (!model) return <Badge variant="outline">Unknown</Badge>;
+    
+    const modelColors = {
+      'gpt-4': 'bg-purple-500 text-white',
+      'gpt-3.5': 'bg-blue-500 text-white',
+      'claude': 'bg-orange-500 text-white',
+      'test ai': 'bg-blue-500 text-white',
+      'default': 'bg-gray-500 text-white'
+    };
+    
+    const modelLower = model.toLowerCase();
+    const colorClass = modelColors[modelLower as keyof typeof modelColors] || modelColors.default;
+    
+    return (
+      <Badge className={colorClass}>
+        <Brain className="h-3 w-3 mr-1" />
+        {model}
+      </Badge>
+    );
   };
 
   const canDownload = selectedIds.length > 0 && selectedIds.length <= maxSelectable;
@@ -167,9 +189,9 @@ export default function ChatsPage() {
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Created</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Title</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Scenario</th>
+                      <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Model</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Research</th>
                       <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Questions</th>
-                      <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Client Draft</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -193,13 +215,13 @@ export default function ChatsPage() {
                           <div className="text-sm text-muted-foreground max-w-md truncate">{r.scenario?.trim() || "—"}</div>
                         </td>
                         <td className="p-3">
+                          {getModelBadge(r.model)}
+                        </td>
+                        <td className="p-3">
                           <div className="text-sm text-muted-foreground max-w-md truncate">{r.research?.trim() || "—"}</div>
                         </td>
                         <td className="p-3">
                           <div className="text-sm text-muted-foreground">{Array.isArray(r.questions) ? r.questions.length : 0}</div>
-                        </td>
-                        <td className="p-3">
-                          <Badge variant={r.draft ? "default" : "outline"}>{r.draft ? "Present" : "—"}</Badge>
                         </td>
                       </tr>
                     ))}
