@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Settings, Users, MessageSquare, Database } from "lucide-react";
+import { BarChart3, Settings, Users, MessageSquare, Database, Sparkles } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -52,6 +52,10 @@ export function Sidebar() {
         <Link href="/chats" className={navClasses('/chats')}>
           <MessageSquare className="h-4 w-4" />
           Chats
+        </Link>
+        <Link href="/praxio" className={navClasses('/praxio')}>
+          <Sparkles className="h-4 w-4" />
+          Praxio
         </Link>
         <Link href="/vb-processing" className={navClasses('/vb-processing')}>
           <Database className="h-4 w-4" />
