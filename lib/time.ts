@@ -28,6 +28,7 @@ function sydneyAbbreviation(d: dayjs.Dayjs) {
 }
 
 export const toSydneyDateTime = (iso: string) => {
-  const d = dayjs(iso).tz(SYD);
+  // Ensure the ISO string is parsed as UTC first, then convert to Sydney timezone
+  const d = dayjs.utc(iso).tz(SYD);
   return `${d.format('DD/MM/YYYY HH:mm')} ${sydneyAbbreviation(d)}`;
 };
