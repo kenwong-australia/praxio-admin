@@ -148,8 +148,8 @@ export default function PraxioPage() {
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={60}>
-          <div className="h-full flex flex-col bg-white">
-            {/* Conversation Display Area - Top */}
+          <div className="h-full flex flex-col bg-white relative">
+            {/* Conversation Display Area - Scrollable */}
             {selectedChat && (
               <ScrollArea className="flex-1">
                 <div className="p-6">
@@ -172,9 +172,9 @@ export default function PraxioPage() {
               </ScrollArea>
             )}
 
-            {/* Prompt Input Area - Centered in middle */}
-            <div className={`flex items-center justify-center p-6 ${selectedChat ? 'border-t border-slate-200' : ''} bg-white`}>
-              <div className="w-full max-w-4xl">
+            {/* Prompt Input Area - Centered vertically in middle */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-full max-w-4xl px-6 pointer-events-auto">
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">
                     <textarea
@@ -186,20 +186,19 @@ export default function PraxioPage() {
                         e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
                       }}
                       placeholder="Enter your scenario here..."
-                      className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto"
+                      className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
                       rows={1}
                       onKeyDown={(e) => {
-                        // Prevent Enter from submitting
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                        }
+                        // Allow Enter to create new lines - only button click submits
+                        // No prevention needed - let Enter work normally for new lines
                       }}
                     />
                   </div>
                   <Button
                     onClick={handleRunResearch}
                     disabled={!prompt.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-[44px] shrink-0"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-[44px] shrink-0 flex-shrink-0"
+                    style={{ minHeight: '44px' }}
                   >
                     Run Research
                   </Button>
@@ -207,15 +206,14 @@ export default function PraxioPage() {
               </div>
             </div>
 
-            {/* Conversation Display Area - Bottom (for new research results) */}
-            {selectedChat && (
-              <ScrollArea className="flex-1 border-t border-slate-200">
-                <div className="p-6">
-                  <div className="max-w-4xl mx-auto">
-                    {/* Additional conversation/research results can go here */}
-                  </div>
+            {/* Empty state when no chat selected - hidden behind prompt */}
+            {!selectedChat && (
+              <div className="flex-1 flex items-center justify-center pointer-events-none">
+                <div className="text-center text-muted-foreground">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">Select a chat from Previous Research to view conversation</p>
                 </div>
-              </ScrollArea>
+              </div>
             )}
           </div>
         </ResizablePanel>
