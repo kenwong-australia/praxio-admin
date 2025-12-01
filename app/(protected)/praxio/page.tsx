@@ -365,8 +365,10 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
-                                <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
+                              <div className="max-h-[400px] overflow-y-auto pr-2">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                  <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
+                                </div>
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -384,8 +386,10 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                                <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
+                              <div className="max-h-[400px] overflow-y-auto pr-2">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                  <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
+                                </div>
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -403,31 +407,33 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className="space-y-3">
-                                {citations.map((citation, index) => (
-                                  <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-sm mb-1 line-clamp-2">
-                                        {citation.title}
-                                      </p>
-                                      {citation.url ? (
-                                        <a
-                                          href={citation.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
-                                        >
-                                          <ExternalLink className="h-3 w-3 shrink-0" />
-                                          {citation.url}
-                                        </a>
-                                      ) : (
-                                        <span className="text-xs text-muted-foreground italic">
-                                          Legislation reference
-                                        </span>
-                                      )}
+                              <div className="max-h-[400px] overflow-y-auto pr-2">
+                                <div className="space-y-3">
+                                  {citations.map((citation, index) => (
+                                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm mb-1 line-clamp-2">
+                                          {citation.title}
+                                        </p>
+                                        {citation.url ? (
+                                          <a
+                                            href={citation.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
+                                          >
+                                            <ExternalLink className="h-3 w-3 shrink-0" />
+                                            {citation.url}
+                                          </a>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground italic">
+                                            Legislation reference
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -455,8 +461,10 @@ export default function PraxioPage() {
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="pt-2">
-                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
-                                  <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
+                                <div className="max-h-[400px] overflow-y-auto pr-2">
+                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                    <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
+                                  </div>
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
