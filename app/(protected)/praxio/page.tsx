@@ -72,11 +72,16 @@ export default function PraxioPage() {
   // Fetch chats from Supabase when user email is available
   useEffect(() => {
     async function loadChats() {
-      if (!userEmail) return; // Wait for user email
+      if (!userEmail) {
+        console.log('PraxioPage: Waiting for user email...');
+        return; // Wait for user email
+      }
       
+      console.log('PraxioPage: Loading chats for user:', userEmail);
       setLoadingChats(true);
       try {
         const data = await getPraxioChats(userEmail);
+        console.log('PraxioPage: Received chats:', data.length);
         setChats(data.map((chat: any) => ({
           id: chat.id,
           title: chat.title || `Chat #${chat.id}`,

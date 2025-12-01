@@ -186,20 +186,26 @@ export async function getChatById(chatId: number) {
 
 export async function getPraxioChats(userEmail: string | null) {
   try {
-    let query = svc()
+    if (!userEmail) {
+      console.warn('getPraxioChats called without userEmail');
+      return [];
+    }
+    
+    console.log('getPraxioChats filtering by email:', userEmail);
+    
+    const { data, error } = await svc()
       .from('chat')
-      .select('id,created_at,title')
+      .select('id,created_at,title,email')
+      .eq('email', userEmail)
       .order('created_at', { ascending: false })
       .limit(100); // Limit to most recent 100 chats
     
-    // Filter by user email if provided
-    if (userEmail) {
-      query = query.eq('email', userEmail);
+    if (error) {
+      console.error('Supabase query error:', error);
+      throw error;
     }
     
-    const { data, error } = await query;
-    
-    if (error) throw error;
+    console.log(`getPraxioChats found ${data?.length || 0} chats for ${userEmail}`);
     
     return data ?? [];
   } catch (error) {
