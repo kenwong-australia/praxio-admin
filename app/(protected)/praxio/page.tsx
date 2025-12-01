@@ -60,6 +60,7 @@ export default function PraxioPage() {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const [leftAccordionValue, setLeftAccordionValue] = useState<string>('research');
+  const [rightAccordionValue, setRightAccordionValue] = useState<string>('questions');
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -156,6 +157,14 @@ export default function PraxioPage() {
       conversationEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [conversations]);
+
+  // Reset accordion states to initial values when a new chat is selected
+  useEffect(() => {
+    if (selectedChat?.id) {
+      setLeftAccordionValue('research');
+      setRightAccordionValue('questions');
+    }
+  }, [selectedChat?.id]);
 
   const handleChatClick = (chat: ChatItem) => {
     setSelectedChat(chat);
@@ -456,7 +465,14 @@ export default function PraxioPage() {
                       <div className="p-6 pb-4">
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
-                          <Accordion type="single" collapsible className="w-full" defaultValue="questions">
+                          <Accordion 
+                            type="single" 
+                            collapsible 
+                            className="w-full" 
+                            value={rightAccordionValue}
+                            onValueChange={setRightAccordionValue}
+                            defaultValue="questions"
+                          >
                             <AccordionItem value="questions" className="border rounded-lg px-4">
                               <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-2">
