@@ -184,13 +184,20 @@ export async function getChatById(chatId: number) {
   }
 }
 
-export async function getPraxioChats() {
+export async function getPraxioChats(userEmail: string | null) {
   try {
-    const { data, error } = await svc()
+    let query = svc()
       .from('chat')
       .select('id,created_at,title')
       .order('created_at', { ascending: false })
       .limit(100); // Limit to most recent 100 chats
+    
+    // Filter by user email if provided
+    if (userEmail) {
+      query = query.eq('email', userEmail);
+    }
+    
+    const { data, error } = await query;
     
     if (error) throw error;
     

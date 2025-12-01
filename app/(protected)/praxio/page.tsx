@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -48,17 +50,33 @@ export default function PraxioPage() {
   const [loadingChatData, setLoadingChatData] = useState(false);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatItem[]>([]);
 
-  // Fetch chats from Supabase on mount
+  // Get authenticated user email
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    const unsub = onAuthStateChanged(auth, (user: User | null) => {
+      if (user?.email) {
+        setUserEmail(user.email);
+      } else {
+        setUserEmail(null);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // Fetch chats from Supabase when user email is available
   useEffect(() => {
     async function loadChats() {
+      if (!userEmail) return; // Wait for user email
+      
       setLoadingChats(true);
       try {
-        const data = await getPraxioChats();
+        const data = await getPraxioChats(userEmail);
         setChats(data.map((chat: any) => ({
           id: chat.id,
           title: chat.title || `Chat #${chat.id}`,
@@ -72,7 +90,7 @@ export default function PraxioPage() {
       }
     }
     loadChats();
-  }, []);
+  }, [userEmail]);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
