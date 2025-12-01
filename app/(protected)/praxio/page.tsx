@@ -377,7 +377,7 @@ export default function PraxioPage() {
 
                       {/* Research */}
                       {fullChatData.research?.trim() && (
-                        <Accordion type="single" collapsible className="w-full">
+                        <Accordion type="single" collapsible className="w-full" defaultValue="research">
                           <AccordionItem value="research" className="border rounded-lg px-4">
                             <AccordionTrigger className="hover:no-underline">
                               <div className="flex items-center gap-2">
@@ -386,7 +386,7 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className="max-h-[400px] overflow-y-auto pr-2">
+                              <div className="max-h-[600px] overflow-y-auto pr-2">
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
                                   <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                                 </div>
@@ -452,7 +452,7 @@ export default function PraxioPage() {
                       <div className="p-6 pb-4">
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
-                          <Accordion type="single" collapsible className="w-full">
+                          <Accordion type="single" collapsible className="w-full" defaultValue="questions">
                             <AccordionItem value="questions" className="border rounded-lg px-4">
                               <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center gap-2">
