@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId } from '@/app/actions';
+import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 
 // Mock data structure - will be replaced with real data later
@@ -55,6 +56,9 @@ export default function PraxioPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatItem[]>([]);
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const conversationEndRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -124,6 +128,33 @@ export default function PraxioPage() {
       setFullChatData(null);
     }
   }, [selectedChat?.id]);
+
+  // Fetch conversations when a chat is selected
+  useEffect(() => {
+    if (selectedChat?.id) {
+      setLoadingConversations(true);
+      getConversationsByChatId(selectedChat.id)
+        .then((data) => {
+          setConversations(data);
+        })
+        .catch((error) => {
+          console.error('Error loading conversations:', error);
+          setConversations([]);
+        })
+        .finally(() => {
+          setLoadingConversations(false);
+        });
+    } else {
+      setConversations([]);
+    }
+  }, [selectedChat?.id]);
+
+  // Auto-scroll to bottom when conversations update
+  useEffect(() => {
+    if (conversationEndRef.current && conversations.length > 0) {
+      conversationEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [conversations]);
 
   const handleChatClick = (chat: ChatItem) => {
     setSelectedChat(chat);
@@ -322,76 +353,85 @@ export default function PraxioPage() {
                 {/* Left Column - Scenario, Research, Citations */}
                 <ResizablePanel defaultSize={50}>
                   <ScrollArea className="h-full">
-                    <div className="p-6 space-y-6">
+                    <div className="p-6 space-y-4">
                       {/* Scenario */}
                       {fullChatData.scenario?.trim() && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            Scenario
-                          </h3>
-                          <div className="prose prose-sm max-w-none">
-                            <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
-                          </div>
-                        </div>
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="scenario" className="border rounded-lg px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium">Scenario</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-2">
+                              <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       )}
 
                       {/* Research */}
                       {fullChatData.research?.trim() && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                            <Search className="h-5 w-5 text-green-600" />
-                            Research
-                          </h3>
-                          <div className="prose prose-sm max-w-none">
-                            <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
-                          </div>
-                        </div>
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="research" className="border rounded-lg px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                              <div className="flex items-center gap-2">
+                                <Search className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">Research</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-2">
+                              <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       )}
 
                       {/* Citations */}
                       {citations.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                            <ExternalLink className="h-5 w-5 text-purple-600" />
-                            Citations ({citations.length})
-                          </h3>
-                          <Accordion type="single" collapsible className="w-full">
-                            <AccordionItem value="citations" className="border rounded-lg px-4">
-                              <AccordionTrigger className="hover:no-underline">
-                                <span className="font-medium">View Citations</span>
-                              </AccordionTrigger>
-                              <AccordionContent className="pt-2">
-                                <div className="space-y-3">
-                                  {citations.map((citation, index) => (
-                                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm mb-1 line-clamp-2">
-                                          {citation.title}
-                                        </p>
-                                        {citation.url ? (
-                                          <a
-                                            href={citation.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
-                                          >
-                                            <ExternalLink className="h-3 w-3 shrink-0" />
-                                            {citation.url}
-                                          </a>
-                                        ) : (
-                                          <span className="text-xs text-muted-foreground italic">
-                                            Legislation reference
-                                          </span>
-                                        )}
-                                      </div>
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="citations" className="border rounded-lg px-4">
+                            <AccordionTrigger className="hover:no-underline">
+                              <div className="flex items-center gap-2">
+                                <ExternalLink className="h-4 w-4 text-purple-600" />
+                                <span className="font-medium">Citations ({citations.length})</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-2">
+                              <div className="space-y-3">
+                                {citations.map((citation, index) => (
+                                  <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-sm mb-1 line-clamp-2">
+                                        {citation.title}
+                                      </p>
+                                      {citation.url ? (
+                                        <a
+                                          href={citation.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
+                                        >
+                                          <ExternalLink className="h-3 w-3 shrink-0" />
+                                          {citation.url}
+                                        </a>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground italic">
+                                          Legislation reference
+                                        </span>
+                                      )}
                                     </div>
-                                  ))}
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
-                          </Accordion>
-                        </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       )}
                     </div>
                   </ScrollArea>
@@ -399,59 +439,121 @@ export default function PraxioPage() {
 
                 <ResizableHandle withHandle />
 
-                {/* Right Column - Questions, Prompt Box */}
+                {/* Right Column - Questions, Conversation Widget */}
                 <ResizablePanel defaultSize={50}>
                   <div className="h-full flex flex-col">
-                    <ScrollArea className="flex-1">
-                      <div className="p-6">
+                    <ScrollArea className="flex-shrink-0">
+                      <div className="p-6 pb-4">
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
-                          <div className="mb-6">
-                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                              <HelpCircle className="h-5 w-5 text-orange-600" />
-                              Questions to refine research
-                            </h3>
-                            <div className="prose prose-sm max-w-none">
-                              <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
-                            </div>
-                          </div>
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="questions" className="border rounded-lg px-4">
+                              <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-center gap-2">
+                                  <HelpCircle className="h-4 w-4 text-orange-600" />
+                                  <span className="font-medium">Questions to refine research</span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="pt-2">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                  <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         )}
                       </div>
                     </ScrollArea>
 
-                    {/* Prompt Box - Fixed at bottom of right column */}
-                    <div className="border-t border-slate-200 p-6 bg-white">
-                      <div className="flex gap-3">
-                        <div className="flex-1 relative">
-                          <textarea
-                            value={prompt}
-                            onChange={(e) => {
-                              setPrompt(e.target.value);
-                              // Auto-resize textarea
-                              e.target.style.height = 'auto';
-                              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-                            }}
-                            placeholder="Add further details here..."
-                            className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
-                            rows={1}
-                            onKeyDown={(e) => {
-                              // Allow Enter to create new lines - only button click submits
-                            }}
-                          />
+                    {/* Conversation Widget - Messages + Prompt Box */}
+                    <div className="flex-1 flex flex-col border-t border-slate-200 bg-white min-h-0">
+                      {/* Conversation Messages */}
+                      <ScrollArea className="flex-1">
+                        <div className="p-6">
+                          {loadingConversations ? (
+                            <div className="flex items-center justify-center h-32 text-muted-foreground">
+                              <div className="text-center">
+                                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50 animate-pulse" />
+                                <p className="text-sm">Loading conversation...</p>
+                              </div>
+                            </div>
+                          ) : conversations.length === 0 ? (
+                            <div className="flex items-center justify-center h-32 text-muted-foreground">
+                              <div className="text-center">
+                                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">No conversation messages yet</p>
+                                <p className="text-xs mt-1">Start a conversation below</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {conversations.map((conv) => {
+                                const isUser = conv.type === 'user';
+                                return (
+                                  <div
+                                    key={conv.id}
+                                    className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
+                                  >
+                                    <div
+                                      className={`max-w-[80%] rounded-lg p-4 ${
+                                        isUser
+                                          ? 'bg-muted/50 text-left'
+                                          : 'bg-blue-50 text-right'
+                                      }`}
+                                    >
+                                      <div className={`text-xs font-medium text-muted-foreground mb-2 ${isUser ? 'text-left' : 'text-right'}`}>
+                                        {isUser ? 'User' : 'Assistant'}
+                                      </div>
+                                      <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                        <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
+                                      </div>
+                                      <div className={`mt-2 text-xs text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
+                                        {toSydneyDateTime(conv.created_at)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              <div ref={conversationEndRef} />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-start">
-                          <Button
-                            onClick={handleRunResearch}
-                            disabled={!prompt.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
-                            style={{ 
-                              height: '44px',
-                              minHeight: '44px',
-                              marginTop: '0px'
-                            }}
-                          >
-                            Run Research
-                          </Button>
+                      </ScrollArea>
+
+                      {/* Prompt Box - Fixed at bottom */}
+                      <div className="border-t border-slate-200 p-6 bg-white">
+                        <div className="flex gap-3">
+                          <div className="flex-1 relative">
+                            <textarea
+                              value={prompt}
+                              onChange={(e) => {
+                                setPrompt(e.target.value);
+                                // Auto-resize textarea
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                              }}
+                              placeholder="Add further details here..."
+                              className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                              rows={1}
+                              onKeyDown={(e) => {
+                                // Allow Enter to create new lines - only button click submits
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-start">
+                            <Button
+                              onClick={handleRunResearch}
+                              disabled={!prompt.trim()}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
+                              style={{ 
+                                height: '44px',
+                                minHeight: '44px',
+                                marginTop: '0px'
+                              }}
+                            >
+                              Run Research
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>

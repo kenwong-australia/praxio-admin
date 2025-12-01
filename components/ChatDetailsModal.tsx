@@ -194,7 +194,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
-                        <div className="prose prose-sm max-w-none">
+                        <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
                           <ReactMarkdown>{chatData.scenario}</ReactMarkdown>
                         </div>
                       </AccordionContent>
@@ -210,7 +210,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
-                        <div className="prose prose-sm max-w-none">
+                        <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
                           <ReactMarkdown>{chatData.research}</ReactMarkdown>
                         </div>
                       </AccordionContent>
@@ -265,7 +265,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
-                        <div className="prose prose-sm max-w-none">
+                        <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
                           <ReactMarkdown>{chatData.questions}</ReactMarkdown>
                         </div>
                       </AccordionContent>
