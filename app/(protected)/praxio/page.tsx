@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Search as SearchIcon } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById } from '@/app/actions';
+import { getChatById, getPraxioChats } from '@/app/actions';
 import ReactMarkdown from 'react-markdown';
 
 // Mock data structure - will be replaced with real data later
@@ -46,17 +46,33 @@ export default function PraxioPage() {
   const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
   const [fullChatData, setFullChatData] = useState<FullChatData | null>(null);
   const [loadingChatData, setLoadingChatData] = useState(false);
+  const [chats, setChats] = useState<ChatItem[]>([]);
+  const [loadingChats, setLoadingChats] = useState(true);
   const [prompt, setPrompt] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatItem[]>([]);
 
-  // Mock data - will be replaced with real API calls
-  const mockChats: ChatItem[] = [
-    { id: 1, title: 'CGT and income tax on 200,000 taxable income', created_at: '2025-11-30T12:26:00.000Z' },
-    { id: 2, title: 'CGT and tax on sale of vacant land', created_at: '2025-11-29T10:15:00.000Z' },
-    { id: 3, title: 'Income tax on 200,000 taxable income 2025-26', created_at: '2025-11-28T14:30:00.000Z' },
-  ];
+  // Fetch chats from Supabase on mount
+  useEffect(() => {
+    async function loadChats() {
+      setLoadingChats(true);
+      try {
+        const data = await getPraxioChats();
+        setChats(data.map((chat: any) => ({
+          id: chat.id,
+          title: chat.title || `Chat #${chat.id}`,
+          created_at: chat.created_at
+        })));
+      } catch (error) {
+        console.error('Error loading chats:', error);
+        setChats([]);
+      } finally {
+        setLoadingChats(false);
+      }
+    }
+    loadChats();
+  }, []);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
@@ -103,9 +119,9 @@ export default function PraxioPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Mock search - will be replaced with real search
+    // Search through loaded chats
     if (query.trim()) {
-      const results = mockChats.filter(chat => 
+      const results = chats.filter(chat => 
         chat.title.toLowerCase().includes(query.toLowerCase())
       );
       setSearchResults(results);
@@ -200,7 +216,16 @@ export default function PraxioPage() {
             {/* Chat List */}
             <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
-                {mockChats.map((chat) => (
+                {loadingChats ? (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    Loading chats...
+                  </div>
+                ) : chats.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    No previous research found
+                  </div>
+                ) : (
+                  chats.map((chat) => (
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
@@ -247,7 +272,8 @@ export default function PraxioPage() {
                       </DropdownMenu>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </ScrollArea>
           </div>

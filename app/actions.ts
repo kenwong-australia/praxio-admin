@@ -184,6 +184,23 @@ export async function getChatById(chatId: number) {
   }
 }
 
+export async function getPraxioChats() {
+  try {
+    const { data, error } = await svc()
+      .from('chat')
+      .select('id,created_at,title')
+      .order('created_at', { ascending: false })
+      .limit(100); // Limit to most recent 100 chats
+    
+    if (error) throw error;
+    
+    return data ?? [];
+  } catch (error) {
+    console.error('Error fetching Praxio chats:', error);
+    return [];
+  }
+}
+
 // User management functions
 export async function getUsers(input: unknown) {
   try {
