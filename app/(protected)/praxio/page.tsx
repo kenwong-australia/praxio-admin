@@ -62,9 +62,16 @@ export default function PraxioPage() {
   useEffect(() => {
     if (selectedChat?.id) {
       setLoadingChatData(true);
+      setFullChatData(null); // Clear previous data
       getChatById(selectedChat.id)
         .then((data) => {
-          setFullChatData(data);
+          console.log('Chat data fetched:', data);
+          if (data) {
+            setFullChatData(data);
+          } else {
+            console.warn('No chat data returned for ID:', selectedChat.id);
+            setFullChatData(null);
+          }
         })
         .catch((error) => {
           console.error('Error loading chat data:', error);
@@ -250,8 +257,16 @@ export default function PraxioPage() {
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={60}>
-          {selectedChat && fullChatData ? (
-            // When chat is selected: Show split columns
+          {selectedChat && loadingChatData ? (
+            // Loading state
+            <div className="h-full flex items-center justify-center bg-white">
+              <div className="text-center text-muted-foreground">
+                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+                <p className="text-lg">Loading chat data...</p>
+              </div>
+            </div>
+          ) : selectedChat && !loadingChatData && fullChatData ? (
+            // When chat is selected and data loaded: Show split columns
             <div className="h-full flex flex-col bg-white">
               <ResizablePanelGroup direction="horizontal" className="flex-1">
                 {/* Left Column - Scenario, Research, Citations */}
@@ -394,12 +409,19 @@ export default function PraxioPage() {
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>
-          ) : selectedChat && loadingChatData ? (
-            // Loading state
+          ) : selectedChat && !loadingChatData && !fullChatData ? (
+            // Error/No data state - chat selected but data not found
             <div className="h-full flex items-center justify-center bg-white">
               <div className="text-center text-muted-foreground">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-                <p className="text-lg">Loading chat data...</p>
+                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg mb-2">Chat data not found</p>
+                <p className="text-sm mb-4">Chat ID: {selectedChat.id}</p>
+                <Button
+                  onClick={handleNewResearch}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Start New Research
+                </Button>
               </div>
             </div>
           ) : (
