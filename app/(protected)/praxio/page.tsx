@@ -172,10 +172,20 @@ export default function PraxioPage() {
               </ScrollArea>
             )}
 
+            {/* Empty state when no chat selected - positioned above prompt */}
+            {!selectedChat && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="text-center text-muted-foreground mb-40">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">Select a chat from Previous Research to view conversation</p>
+                </div>
+              </div>
+            )}
+
             {/* Prompt Input Area - Centered vertically in middle */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-full max-w-4xl px-6 pointer-events-auto">
-                <div className="flex items-end gap-3">
+                <div className="flex gap-3">
                   <div className="flex-1 relative">
                     <textarea
                       value={prompt}
@@ -194,27 +204,23 @@ export default function PraxioPage() {
                       }}
                     />
                   </div>
-                  <Button
-                    onClick={handleRunResearch}
-                    disabled={!prompt.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-[44px] shrink-0 flex-shrink-0"
-                    style={{ minHeight: '44px' }}
-                  >
-                    Run Research
-                  </Button>
+                  <div className="flex items-start">
+                    <Button
+                      onClick={handleRunResearch}
+                      disabled={!prompt.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
+                      style={{ 
+                        height: '44px',
+                        minHeight: '44px',
+                        marginTop: '0px'
+                      }}
+                    >
+                      Run Research
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Empty state when no chat selected - hidden behind prompt */}
-            {!selectedChat && (
-              <div className="flex-1 flex items-center justify-center pointer-events-none">
-                <div className="text-center text-muted-foreground">
-                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">Select a chat from Previous Research to view conversation</p>
-                </div>
-              </div>
-            )}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
