@@ -172,55 +172,106 @@ export default function PraxioPage() {
               </ScrollArea>
             )}
 
-            {/* Empty state when no chat selected - positioned above prompt */}
+            {/* Empty state when no chat selected */}
             {!selectedChat && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-center text-muted-foreground mb-40">
-                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">Select a chat from Previous Research to view conversation</p>
+              <>
+                {/* Icon above prompt */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center text-muted-foreground mb-40">
+                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  </div>
+                </div>
+
+                {/* Prompt Input Area - Centered vertically in middle */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-full max-w-4xl px-6 pointer-events-auto">
+                    <div className="flex gap-3">
+                      <div className="flex-1 relative">
+                        <textarea
+                          value={prompt}
+                          onChange={(e) => {
+                            setPrompt(e.target.value);
+                            // Auto-resize textarea
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                          }}
+                          placeholder="Enter your scenario here..."
+                          className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                          rows={1}
+                          onKeyDown={(e) => {
+                            // Allow Enter to create new lines - only button click submits
+                            // No prevention needed - let Enter work normally for new lines
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-start">
+                        <Button
+                          onClick={handleRunResearch}
+                          disabled={!prompt.trim()}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
+                          style={{ 
+                            height: '44px',
+                            minHeight: '44px',
+                            marginTop: '0px'
+                          }}
+                        >
+                          Run Research
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text below prompt box */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center text-muted-foreground mt-40">
+                    <p className="text-lg">Or select from Previous Research to view the conversation</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Prompt Input Area - When chat is selected */}
+            {selectedChat && (
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pointer-events-none">
+                <div className="w-full max-w-4xl px-6 pb-6 pointer-events-auto">
+                  <div className="flex gap-3">
+                    <div className="flex-1 relative">
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => {
+                          setPrompt(e.target.value);
+                          // Auto-resize textarea
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                        }}
+                        placeholder="Enter your scenario here..."
+                        className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                        rows={1}
+                        onKeyDown={(e) => {
+                          // Allow Enter to create new lines - only button click submits
+                          // No prevention needed - let Enter work normally for new lines
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-start">
+                      <Button
+                        onClick={handleRunResearch}
+                        disabled={!prompt.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
+                        style={{ 
+                          height: '44px',
+                          minHeight: '44px',
+                          marginTop: '0px'
+                        }}
+                      >
+                        Run Research
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-
-            {/* Prompt Input Area - Centered vertically in middle */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-full max-w-4xl px-6 pointer-events-auto">
-                <div className="flex gap-3">
-                  <div className="flex-1 relative">
-                    <textarea
-                      value={prompt}
-                      onChange={(e) => {
-                        setPrompt(e.target.value);
-                        // Auto-resize textarea
-                        e.target.style.height = 'auto';
-                        e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-                      }}
-                      placeholder="Enter your scenario here..."
-                      className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
-                      rows={1}
-                      onKeyDown={(e) => {
-                        // Allow Enter to create new lines - only button click submits
-                        // No prevention needed - let Enter work normally for new lines
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-start">
-                    <Button
-                      onClick={handleRunResearch}
-                      disabled={!prompt.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
-                      style={{ 
-                        height: '44px',
-                        minHeight: '44px',
-                        marginTop: '0px'
-                      }}
-                    >
-                      Run Research
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
