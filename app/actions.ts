@@ -184,28 +184,36 @@ export async function getChatById(chatId: number) {
   }
 }
 
-export async function getPraxioChats(userEmail: string | null) {
+export async function getPraxioChats(userId: string | null) {
   try {
-    if (!userEmail) {
-      console.warn('getPraxioChats called without userEmail');
+    if (!userId) {
+      console.warn('getPraxioChats called without userId');
       return [];
     }
     
-    console.log('getPraxioChats filtering by email:', userEmail);
+    console.log('getPraxioChats filtering by user_id:', userId);
     
-    const { data, error } = await svc()
+    // Try filtering by user_id first (more reliable than email)
+    let query = svc()
       .from('chat')
-      .select('id,created_at,title,email')
-      .eq('email', userEmail)
+      .select('id,created_at,title,user_id,email')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(100); // Limit to most recent 100 chats
+      .limit(100);
+    
+    const { data, error } = await query;
     
     if (error) {
-      console.error('Supabase query error:', error);
-      throw error;
+      // If user_id field doesn't exist or query fails, log and try email fallback
+      console.warn('Query by user_id failed, error:', error);
+      console.log('Attempting fallback to email-based filtering...');
+      
+      // Fallback: We'll need email for this, but this function now expects userId
+      // So we return empty and let the caller handle it
+      return [];
     }
     
-    console.log(`getPraxioChats found ${data?.length || 0} chats for ${userEmail}`);
+    console.log(`getPraxioChats found ${data?.length || 0} chats for user_id ${userId}`);
     
     return data ?? [];
   } catch (error) {

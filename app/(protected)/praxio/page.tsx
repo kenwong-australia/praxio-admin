@@ -50,37 +50,38 @@ export default function PraxioPage() {
   const [loadingChatData, setLoadingChatData] = useState(false);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatItem[]>([]);
 
-  // Get authenticated user email
+  // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsub = onAuthStateChanged(auth, (user: User | null) => {
-      if (user?.email) {
-        setUserEmail(user.email);
+      if (user?.uid) {
+        setUserId(user.uid);
+        console.log('PraxioPage: Authenticated user UID:', user.uid);
       } else {
-        setUserEmail(null);
+        setUserId(null);
       }
     });
     return () => unsub();
   }, []);
 
-  // Fetch chats from Supabase when user email is available
+  // Fetch chats from Supabase when user ID is available
   useEffect(() => {
     async function loadChats() {
-      if (!userEmail) {
-        console.log('PraxioPage: Waiting for user email...');
-        return; // Wait for user email
+      if (!userId) {
+        console.log('PraxioPage: Waiting for user ID...');
+        return; // Wait for user ID
       }
       
-      console.log('PraxioPage: Loading chats for user:', userEmail);
+      console.log('PraxioPage: Loading chats for user_id:', userId);
       setLoadingChats(true);
       try {
-        const data = await getPraxioChats(userEmail);
+        const data = await getPraxioChats(userId);
         console.log('PraxioPage: Received chats:', data.length);
         setChats(data.map((chat: any) => ({
           id: chat.id,
@@ -95,7 +96,7 @@ export default function PraxioPage() {
       }
     }
     loadChats();
-  }, [userEmail]);
+  }, [userId]);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
