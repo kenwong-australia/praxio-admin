@@ -59,7 +59,7 @@ export default function PraxioPage() {
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const conversationEndRef = useRef<HTMLDivElement>(null);
-  const [leftAccordionValue, setLeftAccordionValue] = useState<string>('research');
+  const [leftAccordionValue, setLeftAccordionValue] = useState<string[]>(['research']);
   const [rightAccordionValue, setRightAccordionValue] = useState<string>('questions');
 
   // Get authenticated user UID (Firebase user ID)
@@ -161,7 +161,7 @@ export default function PraxioPage() {
   // Reset accordion states to initial values when a new chat is selected
   useEffect(() => {
     if (selectedChat?.id) {
-      setLeftAccordionValue('research');
+      setLeftAccordionValue(['research']);
       setRightAccordionValue('questions');
     }
   }, [selectedChat?.id]);
@@ -365,12 +365,11 @@ export default function PraxioPage() {
                   <ScrollArea className="h-full">
                     <div className="p-6 space-y-4">
                       <Accordion 
-                        type="single" 
-                        collapsible 
+                        type="multiple" 
                         className="w-full space-y-4" 
                         value={leftAccordionValue}
                         onValueChange={setLeftAccordionValue}
-                        defaultValue="research"
+                        defaultValue={['research']}
                       >
                         {/* Scenario */}
                         {fullChatData.scenario?.trim() && (
@@ -401,7 +400,7 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className={`overflow-y-auto pr-2 ${leftAccordionValue === 'scenario' ? 'max-h-[600px]' : 'max-h-[800px]'}`}>
+                              <div className={`overflow-y-auto pr-2 ${leftAccordionValue.includes('scenario') ? 'max-h-[600px]' : 'max-h-[800px]'}`}>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
                                   <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                                 </div>
