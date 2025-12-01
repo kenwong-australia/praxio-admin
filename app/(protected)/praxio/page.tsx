@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, MoreVertical, MessageCircle } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Search as SearchIcon } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
+import { getChatById } from '@/app/actions';
+import ReactMarkdown from 'react-markdown';
 
 // Mock data structure - will be replaced with real data later
 interface ChatItem {
@@ -17,8 +20,32 @@ interface ChatItem {
   created_at: string;
 }
 
+interface FullChatData {
+  id: number;
+  created_at: string;
+  title: string | null;
+  email: string | null;
+  model: string | null;
+  scenario: string | null;
+  research: string | null;
+  usedcitationsArray: any;
+  questions: string | null;
+  draft: string | null;
+  processTime: number | null;
+  feedback: number | null;
+  comment_selection: string[] | null;
+  comment_additional: string | null;
+}
+
+interface Citation {
+  title: string;
+  url: string | null;
+}
+
 export default function PraxioPage() {
   const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
+  const [fullChatData, setFullChatData] = useState<FullChatData | null>(null);
+  const [loadingChatData, setLoadingChatData] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,8 +58,34 @@ export default function PraxioPage() {
     { id: 3, title: 'Income tax on 200,000 taxable income 2025-26', created_at: '2025-11-28T14:30:00.000Z' },
   ];
 
+  // Fetch full chat data when a chat is selected
+  useEffect(() => {
+    if (selectedChat?.id) {
+      setLoadingChatData(true);
+      getChatById(selectedChat.id)
+        .then((data) => {
+          setFullChatData(data);
+        })
+        .catch((error) => {
+          console.error('Error loading chat data:', error);
+          setFullChatData(null);
+        })
+        .finally(() => {
+          setLoadingChatData(false);
+        });
+    } else {
+      setFullChatData(null);
+    }
+  }, [selectedChat?.id]);
+
   const handleChatClick = (chat: ChatItem) => {
     setSelectedChat(chat);
+  };
+
+  const handleNewResearch = () => {
+    setSelectedChat(null);
+    setFullChatData(null);
+    setPrompt('');
   };
 
   const handleRunResearch = () => {
@@ -69,6 +122,46 @@ export default function PraxioPage() {
     console.log('Archive chat:', chatId);
   };
 
+  // Parse citations from Supabase JSONB field (same logic as ChatDetailsModal)
+  const parseCitations = (usedcitationsArray: any): Citation[] => {
+    if (!usedcitationsArray) {
+      return [];
+    }
+    
+    if (Array.isArray(usedcitationsArray)) {
+      return usedcitationsArray
+        .filter(item => item && 
+                      typeof item === 'object' && 
+                      item.fullreference?.trim())
+        .map(item => ({
+          title: item.fullreference,
+          url: item.url?.trim() || null
+        }));
+    }
+    
+    if (typeof usedcitationsArray === 'string') {
+      try {
+        const parsed = JSON.parse(usedcitationsArray);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .filter(item => item && 
+                          typeof item === 'object' && 
+                          item.fullreference?.trim())
+            .map(item => ({
+              title: item.fullreference,
+              url: item.url?.trim() || null
+            }));
+        }
+      } catch (error) {
+        // Silent fallback for parsing errors
+      }
+    }
+    
+    return [];
+  };
+
+  const citations = fullChatData ? parseCitations(fullChatData.usedcitationsArray || fullChatData.usedcitationsArray) : [];
+
   return (
     <div className="h-screen flex flex-col">
       <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -76,16 +169,25 @@ export default function PraxioPage() {
         <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
           <div className="h-full flex flex-col bg-white border-r border-slate-200">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Previous Research</h2>
+            <div className="p-4 border-b border-slate-200">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSearchOpen(true)}
-                className="h-8 w-8"
+                onClick={handleNewResearch}
+                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Search className="h-4 w-4" />
+                <Sparkles className="h-4 w-4 mr-2" />
+                New Research
               </Button>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Previous Research</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSearchOpen(true)}
+                  className="h-8 w-8"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Chat List */}
@@ -148,93 +250,171 @@ export default function PraxioPage() {
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={60}>
-          <div className="h-full flex flex-col bg-white relative">
-            {/* Conversation Display Area - Scrollable */}
-            {selectedChat && (
-              <ScrollArea className="flex-1">
-                <div className="p-6">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="mb-6">
-                      <h3 className="text-xl font-semibold mb-2">{selectedChat.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {toSydneyDateTime(selectedChat.created_at)}
-                      </p>
+          {selectedChat && fullChatData ? (
+            // When chat is selected: Show split columns
+            <div className="h-full flex flex-col bg-white">
+              <ResizablePanelGroup direction="horizontal" className="flex-1">
+                {/* Left Column - Scenario, Research, Citations */}
+                <ResizablePanel defaultSize={50}>
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-6">
+                      {/* Scenario */}
+                      {fullChatData.scenario?.trim() && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                            Scenario
+                          </h3>
+                          <div className="prose prose-sm max-w-none">
+                            <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Research */}
+                      {fullChatData.research?.trim() && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                            <Search className="h-5 w-5 text-green-600" />
+                            Research
+                          </h3>
+                          <div className="prose prose-sm max-w-none">
+                            <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Citations */}
+                      {citations.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                            <ExternalLink className="h-5 w-5 text-purple-600" />
+                            Citations ({citations.length})
+                          </h3>
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="citations" className="border rounded-lg px-4">
+                              <AccordionTrigger className="hover:no-underline">
+                                <span className="font-medium">View Citations</span>
+                              </AccordionTrigger>
+                              <AccordionContent className="pt-2">
+                                <div className="space-y-3">
+                                  {citations.map((citation, index) => (
+                                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm mb-1 line-clamp-2">
+                                          {citation.title}
+                                        </p>
+                                        {citation.url ? (
+                                          <a
+                                            href={citation.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
+                                          >
+                                            <ExternalLink className="h-3 w-3 shrink-0" />
+                                            {citation.url}
+                                          </a>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground italic">
+                                            Legislation reference
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-4">
-                      {/* Conversation will be displayed here */}
-                      <div className="text-center text-muted-foreground py-12">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Conversation will be displayed here</p>
+                  </ScrollArea>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
+
+                {/* Right Column - Questions, Prompt Box */}
+                <ResizablePanel defaultSize={50}>
+                  <div className="h-full flex flex-col">
+                    <ScrollArea className="flex-1">
+                      <div className="p-6">
+                        {/* Questions */}
+                        {fullChatData.questions?.trim() && (
+                          <div className="mb-6">
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                              <HelpCircle className="h-5 w-5 text-orange-600" />
+                              Questions to refine research
+                            </h3>
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+
+                    {/* Prompt Box - Fixed at bottom of right column */}
+                    <div className="border-t border-slate-200 p-6 bg-white">
+                      <div className="flex gap-3">
+                        <div className="flex-1 relative">
+                          <textarea
+                            value={prompt}
+                            onChange={(e) => {
+                              setPrompt(e.target.value);
+                              // Auto-resize textarea
+                              e.target.style.height = 'auto';
+                              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                            }}
+                            placeholder="Add further details here..."
+                            className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                            rows={1}
+                            onKeyDown={(e) => {
+                              // Allow Enter to create new lines - only button click submits
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-start">
+                          <Button
+                            onClick={handleRunResearch}
+                            disabled={!prompt.trim()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
+                            style={{ 
+                              height: '44px',
+                              minHeight: '44px',
+                              marginTop: '0px'
+                            }}
+                          >
+                            Run Research
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+          ) : selectedChat && loadingChatData ? (
+            // Loading state
+            <div className="h-full flex items-center justify-center bg-white">
+              <div className="text-center text-muted-foreground">
+                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+                <p className="text-lg">Loading chat data...</p>
+              </div>
+            </div>
+          ) : (
+            // Empty state - No chat selected
+            <div className="h-full flex flex-col bg-white relative">
+              {/* Icon above prompt */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center text-muted-foreground mb-40">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 </div>
-              </ScrollArea>
-            )}
+              </div>
 
-            {/* Empty state when no chat selected */}
-            {!selectedChat && (
-              <>
-                {/* Icon above prompt */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center text-muted-foreground mb-40">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  </div>
-                </div>
-
-                {/* Prompt Input Area - Centered vertically in middle */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-full max-w-4xl px-6 pointer-events-auto">
-                    <div className="flex gap-3">
-                      <div className="flex-1 relative">
-                        <textarea
-                          value={prompt}
-                          onChange={(e) => {
-                            setPrompt(e.target.value);
-                            // Auto-resize textarea
-                            e.target.style.height = 'auto';
-                            e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-                          }}
-                          placeholder="Enter your scenario here..."
-                          className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
-                          rows={1}
-                          onKeyDown={(e) => {
-                            // Allow Enter to create new lines - only button click submits
-                            // No prevention needed - let Enter work normally for new lines
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-start">
-                        <Button
-                          onClick={handleRunResearch}
-                          disabled={!prompt.trim()}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
-                          style={{ 
-                            height: '44px',
-                            minHeight: '44px',
-                            marginTop: '0px'
-                          }}
-                        >
-                          Run Research
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Text below prompt box */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center text-muted-foreground mt-40">
-                    <p className="text-lg">Or select from Previous Research to view the conversation</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Prompt Input Area - When chat is selected */}
-            {selectedChat && (
-              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pointer-events-none">
-                <div className="w-full max-w-4xl px-6 pb-6 pointer-events-auto">
+              {/* Prompt Input Area - Centered vertically in middle */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-full max-w-4xl px-6 pointer-events-auto">
                   <div className="flex gap-3">
                     <div className="flex-1 relative">
                       <textarea
@@ -250,7 +430,6 @@ export default function PraxioPage() {
                         rows={1}
                         onKeyDown={(e) => {
                           // Allow Enter to create new lines - only button click submits
-                          // No prevention needed - let Enter work normally for new lines
                         }}
                       />
                     </div>
@@ -271,8 +450,15 @@ export default function PraxioPage() {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Text below prompt box */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center text-muted-foreground mt-40">
+                  <p className="text-lg">Or select from Previous Research to view the conversation</p>
+                </div>
+              </div>
+            </div>
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
 
@@ -325,4 +511,3 @@ export default function PraxioPage() {
     </div>
   );
 }
-

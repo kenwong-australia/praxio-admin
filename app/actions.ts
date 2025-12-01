@@ -167,6 +167,23 @@ export async function getConversationsByChatId(chatId: number) {
   }
 }
 
+export async function getChatById(chatId: number) {
+  try {
+    const { data, error } = await svc()
+      .from('chat')
+      .select('id,created_at,title,email,model,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
+      .eq('id', chatId)
+      .single();
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching chat by ID:', error);
+    return null;
+  }
+}
+
 // User management functions
 export async function getUsers(input: unknown) {
   try {
