@@ -284,6 +284,57 @@ export async function updateChatDraft(chatId: number, draft: string) {
   }
 }
 
+export async function sendDraftEmail(email: string, htmlContent: string, draft: string, research: string | null, citations: string) {
+  try {
+    const loopsApiKey = process.env.LOOPS_API_KEY;
+    
+    if (!loopsApiKey) {
+      console.error('LOOPS_API_KEY not configured');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const response = await fetch('https://app.loops.so/api/v1/transactional', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${loopsApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        transactionalId: 'cmahge5fe0tykzun2jp2e96gf',
+        email,
+        dataVariables: {
+          draft: htmlContent, // Send compiled HTML as draft
+          research: research || '',
+          citations: citations || '',
+        },
+      }),
+    });
+
+    const raw = await response.text();
+    let json;
+    try {
+      json = JSON.parse(raw);
+    } catch (_) {
+      // If response is not JSON, continue with raw text
+    }
+
+    if (!response.ok) {
+      console.error('Loops.so API error:', { status: response.status, body: raw });
+      return { success: false, error: `Email service error: ${response.status}` };
+    }
+
+    if (json?.success !== true) {
+      console.error('Loops.so API returned non-success:', json);
+      return { success: false, error: json?.message || 'Email service returned error' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending draft email:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
 // User management functions
 export async function getUsers(input: unknown) {
   try {

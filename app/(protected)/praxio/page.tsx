@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2 } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail } from '@/app/actions';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
@@ -784,17 +784,37 @@ export default function PraxioPage() {
     const compiledContent = getCompiledOutput();
     const htmlContent = markdownToHtml(compiledContent);
     
-    // Mock API call - will be replaced with actual loops.so API
+    // Prepare data for loops.so template
+    const draftHtml = markdownToHtml(draftContent);
+    const researchHtml = compileOptions.includeResearch && fullChatData?.research 
+      ? markdownToHtml(fullChatData.research) 
+      : '';
+    const citationsText = compileOptions.includeCitations && citations.length > 0
+      ? citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n')
+      : '';
+    
     try {
-      // TODO: Replace with actual loops.so API call
-      console.log('Sending email to:', fullChatData.email);
-      console.log('HTML content:', htmlContent);
+      const result = await sendDraftEmail(
+        fullChatData.email,
+        htmlContent, // Compiled HTML as main content
+        draftHtml,   // Draft section HTML
+        researchHtml, // Research section HTML (if included)
+        citationsText  // Citations as text
+      );
       
-      toast.success('Email Sent (Mock)', {
-        description: `Email would be sent to ${fullChatData.email}`,
-        duration: 2000,
-      });
+      if (result.success) {
+        toast.success('Email Sent', {
+          description: `Email sent successfully to ${fullChatData.email}`,
+          duration: 2000,
+        });
+      } else {
+        toast.error('Email Failed', {
+          description: result.error || 'Could not send email. Please try again.',
+          duration: 3000,
+        });
+      }
     } catch (error) {
+      console.error('Error sending email:', error);
       toast.error('Email Failed', {
         description: 'Could not send email. Please try again.',
         duration: 3000,
