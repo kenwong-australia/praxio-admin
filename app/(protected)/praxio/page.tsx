@@ -1822,7 +1822,7 @@ export default function PraxioPage() {
 
       {/* Create Client Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-        <DialogContent className="w-[80vw] max-w-[1200px] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="w-[80vw] max-w-[1200px] h-[800px] max-h-[800px] overflow-hidden flex flex-col p-0">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
@@ -1850,8 +1850,8 @@ export default function PraxioPage() {
 
           <Tabs value={draftStep} onValueChange={(v) => setDraftStep(v as 'edit' | 'compile' | 'share')} className="flex-1 flex flex-col min-h-0">
             <TabsContent value="edit" className="flex-1 min-h-0 mt-0">
-              <div className="p-6 flex flex-col">
-                <div className="flex-1 min-h-[700px]">
+              <div className="p-6 flex flex-col h-full">
+                <div className="flex-1 flex flex-col min-h-0">
                   <style jsx global>{`
                     .w-md-editor {
                       height: 100% !important;
@@ -1868,12 +1868,12 @@ export default function PraxioPage() {
                       display: none !important;
                     }
                   `}</style>
-                  <div className="h-full border rounded-lg overflow-hidden">
-                    <div className="h-full p-6 overflow-y-auto bg-white prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                  <div className="flex-1 min-h-0 border rounded-lg overflow-y-auto mb-4">
+                    <div className="p-6 bg-white prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
                       <ReactMarkdown>{draftContent || '*Start typing your draft in the editor below...*'}</ReactMarkdown>
                     </div>
                   </div>
-                  <div className="mt-4">
+                  <div className="flex-shrink-0">
                     <MDEditor
                       value={draftContent}
                       onChange={(value) => setDraftContent(value || '')}
