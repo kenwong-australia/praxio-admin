@@ -8,9 +8,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId } from '@/app/actions';
 import { ConversationRow } from '@/lib/types';
@@ -62,6 +62,8 @@ export default function PraxioPage() {
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const [leftAccordionValue, setLeftAccordionValue] = useState<string[]>(['research']);
   const [rightAccordionValue, setRightAccordionValue] = useState<string>('questions');
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [downloadSection, setDownloadSection] = useState<{ type: string; content: string; title: string } | null>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -319,6 +321,203 @@ export default function PraxioPage() {
     }
   };
 
+  // Format filename: Title_section_date
+  const formatFilename = (title: string, section: string, date: Date): string => {
+    const sanitize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const cleanTitle = sanitize(title || 'Untitled');
+    const cleanSection = sanitize(section);
+    return `${cleanTitle}_${cleanSection}_${dateStr}`;
+  };
+
+  // Handle download icon click
+  const handleDownloadClick = (sectionType: string, content: string, sectionTitle: string) => {
+    setDownloadSection({ type: sectionType, content, title: sectionTitle });
+    setDownloadDialogOpen(true);
+  };
+
+  // Download as PDF
+  const downloadAsPdf = async () => {
+    if (!downloadSection || !fullChatData) return;
+    
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const chatDate = new Date(fullChatData.created_at);
+      const filename = formatFilename(fullChatData.title || 'Untitled', downloadSection.title, chatDate);
+      
+      // Create a temporary container with formatted content
+      const container = document.createElement('div');
+      container.style.padding = '40px';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.color = '#000';
+      
+      // Format content based on section type
+      let contentHtml = '';
+      if (downloadSection.type === 'citations') {
+        // Format citations as HTML list
+        const citationsList = citations.map((citation) => {
+          const urlPart = citation.url 
+            ? `<a href="${citation.url}" style="color: #0066cc;">${citation.url}</a>`
+            : '<em style="color: #666;">Legislation reference</em>';
+          return `<li style="margin-bottom: 10px;"><strong>${citation.title}</strong><br>${urlPart}</li>`;
+        }).join('');
+        contentHtml = `<ul style="list-style: none; padding-left: 0;">${citationsList}</ul>`;
+      } else {
+        contentHtml = markdownToHtml(downloadSection.content);
+      }
+      
+      // Add title and date
+      container.innerHTML = `
+        <h1 style="font-size: 24px; margin-bottom: 10px; font-weight: bold;">${fullChatData.title || 'Untitled'}</h1>
+        <p style="font-size: 12px; color: #666; margin-bottom: 20px;">${toSydneyDateTime(fullChatData.created_at)}</p>
+        <h2 style="font-size: 18px; margin-bottom: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px;">${downloadSection.title}</h2>
+        <div style="font-size: 12px; line-height: 1.6;">${contentHtml}</div>
+      `;
+      
+      document.body.appendChild(container);
+      
+      await html2pdf()
+        .set({
+          margin: [10, 10, 10, 10],
+          filename: `${filename}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        })
+        .from(container)
+        .save();
+      
+      document.body.removeChild(container);
+      setDownloadDialogOpen(false);
+      toast.success('Download Started', {
+        description: 'PDF download has started',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('PDF download failed', error);
+      toast.error('Download Failed', {
+        description: 'Could not generate PDF. Please try again.',
+        duration: 3000,
+      });
+    }
+  };
+
+  // Download as DOCX
+  const downloadAsDocx = async () => {
+    if (!downloadSection || !fullChatData) return;
+    
+    try {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+      const chatDate = new Date(fullChatData.created_at);
+      const filename = formatFilename(fullChatData.title || 'Untitled', downloadSection.title, chatDate);
+      
+      // Convert markdown to plain text with basic formatting
+      const sections: any[] = [
+        new Paragraph({
+          children: [new TextRun({ text: fullChatData.title || 'Untitled', bold: true, size: 32 })],
+          heading: HeadingLevel.TITLE,
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Generated: ${toSydneyDateTime(fullChatData.created_at)}`, italics: true, size: 20 })],
+        }),
+        new Paragraph({ children: [new TextRun({ text: '' })] }),
+        new Paragraph({
+          children: [new TextRun({ text: downloadSection.title, bold: true, size: 28 })],
+          heading: HeadingLevel.HEADING_1,
+        }),
+        new Paragraph({ children: [new TextRun({ text: '' })] }),
+      ];
+
+      // Process content into paragraphs
+      if (downloadSection.type === 'citations') {
+        // Format citations as list
+        for (const citation of citations) {
+          sections.push(new Paragraph({
+            children: [new TextRun({ text: citation.title, bold: true, size: 22 })],
+          }));
+          if (citation.url) {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: citation.url, size: 20, color: '0066CC' })],
+            }));
+          } else {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: 'Legislation reference', italics: true, size: 20 })],
+            }));
+          }
+          sections.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
+        }
+      } else {
+        // Process markdown content into paragraphs
+        const content = downloadSection.content;
+        const lines = content.split('\n');
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            sections.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
+            continue;
+          }
+          
+          // Headers
+          if (trimmed.startsWith('### ')) {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: trimmed.substring(4), bold: true, size: 24 })],
+              heading: HeadingLevel.HEADING_3,
+            }));
+          } else if (trimmed.startsWith('## ')) {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: trimmed.substring(3), bold: true, size: 26 })],
+              heading: HeadingLevel.HEADING_2,
+            }));
+          } else if (trimmed.startsWith('# ')) {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: trimmed.substring(2), bold: true, size: 28 })],
+              heading: HeadingLevel.HEADING_1,
+            }));
+          } else if (trimmed.match(/^[\*\-\+] |^\d+\. /)) {
+            // List items
+            const listText = trimmed.replace(/^[\*\-\+] |^\d+\. /, '');
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: `• ${listText}`, size: 22 })],
+            }));
+          } else {
+            // Regular paragraph
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: trimmed, size: 22 })],
+            }));
+          }
+        }
+      }
+
+      const doc = new Document({
+        sections: [{ children: sections }],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setDownloadDialogOpen(false);
+      toast.success('Download Started', {
+        description: 'DOCX download has started',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('DOCX download failed', error);
+      toast.error('Download Failed', {
+        description: 'Could not generate DOCX. Please try again.',
+        duration: 3000,
+      });
+    }
+  };
+
   const handleChatClick = (chat: ChatItem) => {
     setSelectedChat(chat);
   };
@@ -533,17 +732,30 @@ export default function PraxioPage() {
                                   <FileText className="h-4 w-4 text-blue-600" />
                                   <span className="font-medium">Scenario</span>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    copyToClipboard(fullChatData.scenario || '');
-                                  }}
-                                >
-                                  <Copy className="h-3.5 w-3.5" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard(fullChatData.scenario || '');
+                                    }}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownloadClick('scenario', fullChatData.scenario || '', 'Scenario');
+                                    }}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -565,17 +777,30 @@ export default function PraxioPage() {
                                   <Search className="h-4 w-4 text-green-600" />
                                   <span className="font-medium">Research</span>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    copyToClipboard(fullChatData.research || '');
-                                  }}
-                                >
-                                  <Copy className="h-3.5 w-3.5" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard(fullChatData.research || '');
+                                    }}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownloadClick('research', fullChatData.research || '', 'Research');
+                                    }}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -597,17 +822,33 @@ export default function PraxioPage() {
                                   <ExternalLink className="h-4 w-4 text-purple-600" />
                                   <span className="font-medium">Citations ({citations.length})</span>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    copyToClipboard('', 'citations');
-                                  }}
-                                >
-                                  <Copy className="h-3.5 w-3.5" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard('', 'citations');
+                                    }}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const citationsText = citations.map(c => 
+                                        `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`
+                                      ).join('\n');
+                                      handleDownloadClick('citations', citationsText, 'Citations');
+                                    }}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -671,17 +912,30 @@ export default function PraxioPage() {
                                     <HelpCircle className="h-4 w-4 text-orange-600" />
                                     <span className="font-medium">Questions to refine research</span>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      copyToClipboard(fullChatData.questions || '');
-                                    }}
-                                  >
-                                    <Copy className="h-3.5 w-3.5" />
-                                  </Button>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyToClipboard(fullChatData.questions || '');
+                                      }}
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadClick('questions', fullChatData.questions || '', 'Questions');
+                                      }}
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="pt-2">
@@ -911,6 +1165,36 @@ export default function PraxioPage() {
                 </div>
               )}
             </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Download Dialog */}
+      <Dialog open={downloadDialogOpen} onOpenChange={setDownloadDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Download {downloadSection?.title}</DialogTitle>
+            <DialogDescription>
+              Choose a format to download this section
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              onClick={downloadAsPdf}
+              className="w-full justify-start"
+              variant="outline"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Download as PDF
+            </Button>
+            <Button
+              onClick={downloadAsDocx}
+              className="w-full justify-start"
+              variant="outline"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Download as DOCX
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
