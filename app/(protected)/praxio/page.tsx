@@ -300,7 +300,9 @@ export default function PraxioPage() {
     if (!markdown) return '';
     
     // RTF header with font and color tables
-    let rtf = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Arial;}} {\\colortbl ;\\red0\\green0\\blue0;\\red0\\green102\\blue204;}\\f0\\fs24 ';
+    // Font 0: Arial (default), Font 1: Courier New (for code)
+    // Color 1: Black, Color 2: Blue (for links)
+    let rtf = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0\\fnil\\fcharset0 Arial;}{\\f1\\fnil\\fcharset0 Courier New;}} {\\colortbl ;\\red0\\green0\\blue0;\\red0\\green102\\blue204;}\\f0\\fs24 ';
     
     // Escape RTF special characters
     const escapeRtf = (text: string): string => {
@@ -308,32 +310,75 @@ export default function PraxioPage() {
         .replace(/\\/g, '\\\\')
         .replace(/{/g, '\\{')
         .replace(/}/g, '\\}')
-        .replace(/\n/g, '\\par ');
+        .replace(/\r\n/g, ' ')
+        .replace(/\n/g, ' ');
     };
     
-    let html = markdown;
+    let text = markdown;
+    const rtfParts: string[] = [];
     
-    // Process code blocks
-    html = html.replace(/```[\s\S]*?```/g, (match) => {
+    // Process code blocks first
+    text = text.replace(/```[\s\S]*?```/g, (match) => {
       const code = match.replace(/```/g, '').trim();
-      return `<pre>${escapeRtf(code)}</pre>`;
+      const escaped = escapeRtf(code);
+      const idx = rtfParts.length;
+      rtfParts.push(`{\\f1\\fs20 ${escaped}}`);
+      return `__CODEBLOCK${idx}__`;
     });
     
-    // Headers
-    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    // Process headers
+    text = text.replace(/^#### (.*$)/gim, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__H4${escaped}__/H4__`;
+    });
+    text = text.replace(/^### (.*$)/gim, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__H3${escaped}__/H3__`;
+    });
+    text = text.replace(/^## (.*$)/gim, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__H2${escaped}__/H2__`;
+    });
+    text = text.replace(/^# (.*$)/gim, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__H1${escaped}__/H1__`;
+    });
     
-    // Horizontal rules
-    html = html.replace(/^---$/gim, '<hr>');
-    html = html.replace(/^\*\*\*$/gim, '<hr>');
+    // Process horizontal rules
+    text = text.replace(/^---$/gim, '__HR__');
+    text = text.replace(/^\*\*\*$/gim, '__HR__');
+    
+    // Process links (before bold/italic to avoid conflicts)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+      const escapedText = escapeRtf(linkText);
+      const escapedUrl = url.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      return `__LINK${escapedText}__URL${escapedUrl}__/LINK__`;
+    });
+    
+    // Process bold and italic
+    text = text.replace(/\*\*\*(.*?)\*\*\*/g, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__BI${escaped}__/BI__`;
+    });
+    text = text.replace(/\*\*(.*?)\*\*/g, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__B${escaped}__/B__`;
+    });
+    text = text.replace(/\*(.*?)\*/g, (match, content) => {
+      const escaped = escapeRtf(content);
+      return `__I${escaped}__/I__`;
+    });
+    
+    // Process inline code
+    text = text.replace(/`([^`]+)`/g, (match, code) => {
+      const escaped = escapeRtf(code);
+      return `__CODE${escaped}__/CODE__`;
+    });
     
     // Process lists
-    const lines = html.split('\n');
+    const lines = text.split('\n');
     const processedLines: string[] = [];
     let inList = false;
-    let listType: 'ul' | 'ol' | null = null;
     let listCounter = 0;
     
     for (let i = 0; i < lines.length; i++) {
@@ -342,85 +387,56 @@ export default function PraxioPage() {
       const orderedMatch = line.match(/^\d+\. (.+)$/);
       
       if (unorderedMatch) {
-        if (!inList || listType !== 'ul') {
-          if (inList && listType) {
-            processedLines.push('}');
-          }
-          processedLines.push('{\\pntext\\f0\\\'B7\\tab}');
-          inList = true;
-          listType = 'ul';
+        if (!inList) {
+          processedLines.push('\\par ');
         }
-        processedLines.push(`{\\pntext\\f0\\\'B7\\tab}${escapeRtf(unorderedMatch[1])}\\par `);
+        inList = true;
+        const content = escapeRtf(unorderedMatch[1]);
+        processedLines.push(`\\bullet ${content}\\par `);
       } else if (orderedMatch) {
-        if (!inList || listType !== 'ol') {
-          if (inList && listType) {
-            processedLines.push('}');
-          }
+        if (!inList) {
           listCounter = 1;
-          inList = true;
-          listType = 'ol';
+        } else {
+          listCounter++;
         }
-        processedLines.push(`{\\pntext\\f0 ${listCounter}.\\tab}${escapeRtf(orderedMatch[1])}\\par `);
-        listCounter++;
+        inList = true;
+        const content = escapeRtf(orderedMatch[1]);
+        processedLines.push(`${listCounter}. ${content}\\par `);
       } else {
-        if (inList && listType) {
-          processedLines.push('}');
+        if (inList) {
           inList = false;
-          listType = null;
           listCounter = 0;
         }
-        if (line.trim()) {
-          processedLines.push(line);
+        if (line.trim() && !line.match(/^__/)) {
+          processedLines.push(escapeRtf(line.trim()) + '\\par ');
         }
       }
     }
     
-    if (inList && listType) {
-      processedLines.push('}');
-    }
+    text = processedLines.join('');
     
-    html = processedLines.join('\\par ');
-    
-    // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-      return `{\\field{\\*\\fldinst{HYPERLINK "${url}"}}{\\fldrslt{\\ul\\cf2 ${escapeRtf(text)}}}}}`;
+    // Replace placeholders with RTF formatting
+    text = text.replace(/__CODEBLOCK(\d+)__/g, (match, idx) => {
+      return rtfParts[parseInt(idx)] || '';
     });
     
-    // Bold and italic
-    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '{\\b{\\i $1}}');
-    html = html.replace(/\*\*(.*?)\*\*/g, '{\\b $1}');
-    html = html.replace(/\*(.*?)\*/g, '{\\i $1}');
+    text = text.replace(/__H1(.*?)__\/H1__/g, '{\\b\\fs32 $1}\\par ');
+    text = text.replace(/__H2(.*?)__\/H2__/g, '{\\b\\fs28 $1}\\par ');
+    text = text.replace(/__H3(.*?)__\/H3__/g, '{\\b\\fs24 $1}\\par ');
+    text = text.replace(/__H4(.*?)__\/H4__/g, '{\\b\\fs20 $1}\\par ');
     
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '{\\f1\\fs20 $1}');
+    text = text.replace(/__HR__/g, '{\\pard\\brdrb\\brdrs\\brdrw10\\brsp20 \\par}\\pard ');
     
-    // Headers with formatting
-    html = html.replace(/<h1>(.*?)<\/h1>/g, '{\\b\\fs32 $1}\\par ');
-    html = html.replace(/<h2>(.*?)<\/h2>/g, '{\\b\\fs28 $1}\\par ');
-    html = html.replace(/<h3>(.*?)<\/h3>/g, '{\\b\\fs24 $1}\\par ');
-    html = html.replace(/<h4>(.*?)<\/h4>/g, '{\\b\\fs20 $1}\\par ');
-    
-    // Horizontal rules
-    html = html.replace(/<hr>/g, '{\\pard\\brdrb\\brdrs\\brdrw10\\brsp20 \\par}\\pard ');
-    
-    // Code blocks
-    html = html.replace(/<pre>(.*?)<\/pre>/g, (match, code) => {
-      return `{\\f1\\fs20\\par ${code}\\par }`;
+    text = text.replace(/__LINK(.*?)__URL(.*?)__\/LINK__/g, (match, linkText, url) => {
+      return `{\\field{\\*\\fldinst{HYPERLINK "${url}"}}{\\fldrslt{\\ul\\cf2 ${linkText}}}}}`;
     });
     
-    // Paragraphs
-    html = html.split('\\par ').filter(p => p.trim()).map(para => {
-      const trimmed = para.trim();
-      if (!trimmed || trimmed.startsWith('{') && trimmed.includes('\\b\\fs')) {
-        return trimmed;
-      }
-      return `${trimmed}\\par `;
-    }).join('');
+    text = text.replace(/__BI(.*?)__\/BI__/g, '{\\b{\\i $1}}');
+    text = text.replace(/__B(.*?)__\/B__/g, '{\\b $1}');
+    text = text.replace(/__I(.*?)__\/I__/g, '{\\i $1}');
+    text = text.replace(/__CODE(.*?)__\/CODE__/g, '{\\f1\\fs20 $1}');
     
-    // Clean up any remaining HTML tags
-    html = html.replace(/<[^>]+>/g, '');
-    
-    rtf += html;
+    rtf += text;
     rtf += '}';
     
     return rtf;
@@ -2059,3 +2075,4 @@ export default function PraxioPage() {
     </div>
   );
 }
+
