@@ -20,6 +20,8 @@ import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
+import { remark } from 'remark';
+import remarkHtml from 'remark-html';
 
 // Mock data structure - will be replaced with real data later
 interface ChatItem {
@@ -193,108 +195,45 @@ export default function PraxioPage() {
   }, [selectedChat?.id]);
 
   // Convert markdown to HTML for clipboard (with inline styles for email/Word compatibility)
+  // Uses remark (same parser as ReactMarkdown) for consistency
   const markdownToHtml = (markdown: string): string => {
     if (!markdown) return '';
     
-    let html = markdown;
-    
-    // Escape HTML entities first
-    const escapeHtml = (text: string) => {
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    };
-    
-    // Code blocks (handle first to avoid processing content inside)
-    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      const escaped = escapeHtml(code.trim());
-      return `<pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; overflow-x: auto;"><code style="font-family: 'Courier New', monospace;">${escaped}</code></pre>`;
-    });
-    
-    // Headers (process in order from largest to smallest) with inline styles
-    html = html.replace(/^#### (.*$)/gim, '<h4 style="font-size: 16px; font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #333;">$1</h4>');
-    html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 18px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #333;">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 style="font-size: 20px; font-weight: bold; margin-top: 24px; margin-bottom: 12px; color: #222; border-bottom: 2px solid #ddd; padding-bottom: 4px;">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 style="font-size: 24px; font-weight: bold; margin-top: 28px; margin-bottom: 16px; color: #000;">$1</h1>');
-    
-    // Horizontal rules
-    html = html.replace(/^---$/gim, '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">');
-    html = html.replace(/^\*\*\*$/gim, '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">');
-    
-    // Process lists (ordered and unordered) with inline styles
-    const lines = html.split('\n');
-    const processedLines: string[] = [];
-    let inList = false;
-    let listType: 'ul' | 'ol' | null = null;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const unorderedMatch = line.match(/^[\*\-\+] (.+)$/);
-      const orderedMatch = line.match(/^\d+\. (.+)$/);
+    try {
+      // Use remark to parse markdown (same as ReactMarkdown) and convert to HTML
+      const processor = remark().use(remarkHtml);
+      const html = processor.processSync(markdown).toString();
       
-      if (unorderedMatch) {
-        if (!inList || listType !== 'ul') {
-          if (inList && listType) {
-            processedLines.push(`</${listType}>`);
-          }
-          processedLines.push('<ul style="margin: 12px 0; padding-left: 24px; list-style-type: disc;">');
-          inList = true;
-          listType = 'ul';
-        }
-        processedLines.push(`<li style="margin: 6px 0; line-height: 1.6;">${unorderedMatch[1]}</li>`);
-      } else if (orderedMatch) {
-        if (!inList || listType !== 'ol') {
-          if (inList && listType) {
-            processedLines.push(`</${listType}>`);
-          }
-          processedLines.push('<ol style="margin: 12px 0; padding-left: 24px;">');
-          inList = true;
-          listType = 'ol';
-        }
-        processedLines.push(`<li style="margin: 6px 0; line-height: 1.6;">${orderedMatch[1]}</li>`);
-      } else {
-        if (inList && listType) {
-          processedLines.push(`</${listType}>`);
-          inList = false;
-          listType = null;
-        }
-        if (line.trim()) {
-          processedLines.push(line);
-        }
-      }
+      // Add inline styles for email/Word compatibility
+      let styledHtml = html
+        // Headers with inline styles
+        .replace(/<h1>/g, '<h1 style="font-size: 24px; font-weight: bold; margin-top: 28px; margin-bottom: 16px; color: #000;">')
+        .replace(/<h2>/g, '<h2 style="font-size: 20px; font-weight: bold; margin-top: 24px; margin-bottom: 12px; color: #222; border-bottom: 2px solid #ddd; padding-bottom: 4px;">')
+        .replace(/<h3>/g, '<h3 style="font-size: 18px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #333;">')
+        .replace(/<h4>/g, '<h4 style="font-size: 16px; font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #333;">')
+        // Paragraphs with inline styles
+        .replace(/<p>/g, '<p style="margin: 12px 0; line-height: 1.6; color: #333;">')
+        // Lists with inline styles
+        .replace(/<ul>/g, '<ul style="margin: 12px 0; padding-left: 24px; list-style-type: disc;">')
+        .replace(/<ol>/g, '<ol style="margin: 12px 0; padding-left: 24px;">')
+        .replace(/<li>/g, '<li style="margin: 6px 0; line-height: 1.6;">')
+        // Links with inline styles
+        .replace(/<a href=/g, '<a style="color: #0066cc; text-decoration: underline;" href=')
+        // Code blocks with inline styles
+        .replace(/<pre>/g, '<pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; font-family: \'Courier New\', monospace; font-size: 12px; line-height: 1.5; overflow-x: auto;">')
+        .replace(/<code>/g, '<code style="background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: \'Courier New\', monospace; font-size: 90%;">')
+        // Horizontal rules with inline styles
+        .replace(/<hr>/g, '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">')
+        // Bold and italic with inline styles
+        .replace(/<strong>/g, '<strong style="font-weight: bold;">')
+        .replace(/<em>/g, '<em style="font-style: italic;">');
+      
+      return styledHtml;
+    } catch (error) {
+      console.error('Error converting markdown to HTML:', error);
+      // Fallback to plain text if conversion fails
+      return markdown.replace(/\n/g, '<br>');
     }
-    
-    if (inList && listType) {
-      processedLines.push(`</${listType}>`);
-    }
-    
-    html = processedLines.join('\n');
-    
-    // Links with inline styles
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>');
-    
-    // Bold and italic (process bold first, then italic) with inline styles
-    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong style="font-weight: bold;"><em style="font-style: italic;">$1</em></strong>');
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold;">$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em style="font-style: italic;">$1</em>');
-    
-    // Inline code with inline styles
-    html = html.replace(/`([^`]+)`/g, '<code style="background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: \'Courier New\', monospace; font-size: 90%;">$1</code>');
-    
-    // Convert remaining line breaks to paragraphs with inline styles
-    html = html.split('\n\n').map(para => {
-      const trimmed = para.trim();
-      if (!trimmed) return '';
-      // Don't wrap if already a block element
-      if (/^<(h[1-6]|ul|ol|pre|hr)/.test(trimmed)) {
-        return trimmed;
-      }
-      return `<p style="margin: 12px 0; line-height: 1.6; color: #333;">${trimmed.replace(/\n/g, '<br>')}</p>`;
-    }).filter(p => p).join('\n');
-    
-    // Wrap in a div with base styles for better email/Word compatibility
-    return `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${html}</div>`;
   };
 
   // Convert markdown to RTF (Rich Text Format) for Word/Google Docs
