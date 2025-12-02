@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId } from '@/app/actions';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
 
 // Mock data structure - will be replaced with real data later
 interface ChatItem {
@@ -165,6 +166,158 @@ export default function PraxioPage() {
       setRightAccordionValue('questions');
     }
   }, [selectedChat?.id]);
+
+  // Convert markdown to HTML for clipboard
+  const markdownToHtml = (markdown: string): string => {
+    if (!markdown) return '';
+    
+    let html = markdown;
+    
+    // Code blocks (handle first to avoid processing content inside)
+    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      const escaped = code.trim()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return `<pre><code>${escaped}</code></pre>`;
+    });
+    
+    // Headers (process in order from largest to smallest)
+    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Horizontal rules
+    html = html.replace(/^---$/gim, '<hr>');
+    html = html.replace(/^\*\*\*$/gim, '<hr>');
+    
+    // Process lists (ordered and unordered)
+    const lines = html.split('\n');
+    const processedLines: string[] = [];
+    let inList = false;
+    let listType: 'ul' | 'ol' | null = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const unorderedMatch = line.match(/^[\*\-\+] (.+)$/);
+      const orderedMatch = line.match(/^\d+\. (.+)$/);
+      
+      if (unorderedMatch) {
+        if (!inList || listType !== 'ul') {
+          if (inList && listType) {
+            processedLines.push(`</${listType}>`);
+          }
+          processedLines.push('<ul>');
+          inList = true;
+          listType = 'ul';
+        }
+        processedLines.push(`<li>${unorderedMatch[1]}</li>`);
+      } else if (orderedMatch) {
+        if (!inList || listType !== 'ol') {
+          if (inList && listType) {
+            processedLines.push(`</${listType}>`);
+          }
+          processedLines.push('<ol>');
+          inList = true;
+          listType = 'ol';
+        }
+        processedLines.push(`<li>${orderedMatch[1]}</li>`);
+      } else {
+        if (inList && listType) {
+          processedLines.push(`</${listType}>`);
+          inList = false;
+          listType = null;
+        }
+        if (line.trim()) {
+          processedLines.push(line);
+        }
+      }
+    }
+    
+    if (inList && listType) {
+      processedLines.push(`</${listType}>`);
+    }
+    
+    html = processedLines.join('\n');
+    
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    
+    // Bold and italic (process bold first, then italic)
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Inline code (after processing other formatting)
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Convert remaining line breaks
+    html = html.split('\n\n').map(para => {
+      const trimmed = para.trim();
+      if (!trimmed) return '';
+      // Don't wrap if already a block element
+      if (/^<(h[1-6]|ul|ol|pre|hr)/.test(trimmed)) {
+        return trimmed;
+      }
+      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+    }).filter(p => p).join('\n');
+    
+    return html;
+  };
+
+  // Copy content to clipboard as HTML
+  const copyToClipboard = async (content: string, contentType: 'markdown' | 'citations' = 'markdown') => {
+    try {
+      let htmlContent = '';
+      let plainText = '';
+
+      if (contentType === 'citations') {
+        // Format citations as HTML list
+        const citationsList = citations.map((citation, index) => {
+          const urlPart = citation.url 
+            ? `<a href="${citation.url}" target="_blank">${citation.url}</a>`
+            : '<em>Legislation reference</em>';
+          return `<li><strong>${citation.title}</strong><br>${urlPart}</li>`;
+        }).join('');
+        htmlContent = `<ul>${citationsList}</ul>`;
+        plainText = citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n');
+      } else {
+        // Convert markdown to HTML
+        htmlContent = markdownToHtml(content);
+        plainText = content;
+      }
+
+      // Use Clipboard API with HTML format
+      const clipboardItem = new ClipboardItem({
+        'text/html': new Blob([htmlContent], { type: 'text/html' }),
+        'text/plain': new Blob([plainText], { type: 'text/plain' })
+      });
+
+      await navigator.clipboard.write([clipboardItem]);
+      toast.success('Content Copied', {
+        description: 'Content has been copied to your clipboard',
+        duration: 2000,
+      });
+    } catch (error) {
+      // Fallback to plain text if HTML copy fails
+      try {
+        await navigator.clipboard.writeText(contentType === 'citations' 
+          ? citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n')
+          : content
+        );
+        toast.success('Content Copied', {
+          description: 'Content has been copied to your clipboard',
+          duration: 2000,
+        });
+      } catch (err) {
+        toast.error('Failed to copy', {
+          description: 'Please try again',
+          duration: 2000,
+        });
+      }
+    }
+  };
 
   const handleChatClick = (chat: ChatItem) => {
     setSelectedChat(chat);
@@ -375,9 +528,22 @@ export default function PraxioPage() {
                         {fullChatData.scenario?.trim() && (
                           <AccordionItem value="scenario" className="border rounded-lg px-4">
                             <AccordionTrigger className="hover:no-underline">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-blue-600" />
-                                <span className="font-medium">Scenario</span>
+                              <div className="flex items-center justify-between w-full pr-2">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-blue-600" />
+                                  <span className="font-medium">Scenario</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(fullChatData.scenario || '');
+                                  }}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -394,9 +560,22 @@ export default function PraxioPage() {
                         {fullChatData.research?.trim() && (
                           <AccordionItem value="research" className="border rounded-lg px-4">
                             <AccordionTrigger className="hover:no-underline">
-                              <div className="flex items-center gap-2">
-                                <Search className="h-4 w-4 text-green-600" />
-                                <span className="font-medium">Research</span>
+                              <div className="flex items-center justify-between w-full pr-2">
+                                <div className="flex items-center gap-2">
+                                  <Search className="h-4 w-4 text-green-600" />
+                                  <span className="font-medium">Research</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(fullChatData.research || '');
+                                  }}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -413,9 +592,22 @@ export default function PraxioPage() {
                         {citations.length > 0 && (
                           <AccordionItem value="citations" className="border rounded-lg px-4">
                             <AccordionTrigger className="hover:no-underline">
-                              <div className="flex items-center gap-2">
-                                <ExternalLink className="h-4 w-4 text-purple-600" />
-                                <span className="font-medium">Citations ({citations.length})</span>
+                              <div className="flex items-center justify-between w-full pr-2">
+                                <div className="flex items-center gap-2">
+                                  <ExternalLink className="h-4 w-4 text-purple-600" />
+                                  <span className="font-medium">Citations ({citations.length})</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard('', 'citations');
+                                  }}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
@@ -474,9 +666,22 @@ export default function PraxioPage() {
                           >
                             <AccordionItem value="questions" className="border rounded-lg px-4">
                               <AccordionTrigger className="hover:no-underline">
-                                <div className="flex items-center gap-2">
-                                  <HelpCircle className="h-4 w-4 text-orange-600" />
-                                  <span className="font-medium">Questions to refine research</span>
+                                <div className="flex items-center justify-between w-full pr-2">
+                                  <div className="flex items-center gap-2">
+                                    <HelpCircle className="h-4 w-4 text-orange-600" />
+                                    <span className="font-medium">Questions to refine research</span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      copyToClipboard(fullChatData.questions || '');
+                                    }}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="pt-2">

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Sidebar } from '@/components/Sidebar';
+import { Toaster } from '@/components/ui/sonner';
 
 // Optional: small screen shown to non-admins
 function NotAuthorized({ onDone }: { onDone: () => void }) {
@@ -94,6 +95,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
+      <Toaster />
     </div>
   );
 }
