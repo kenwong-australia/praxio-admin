@@ -797,6 +797,7 @@ export default function PraxioPage() {
   const handleConfirmDelete = async () => {
     if (!deleteChatId) return;
     
+    const chatTitle = deleteChatTitle; // Capture before clearing
     const result = await deleteChat(deleteChatId);
     if (result.success) {
       setDeleteDialogOpen(false);
@@ -809,12 +810,12 @@ export default function PraxioPage() {
       }
       await refreshChats();
       toast.success('Chat Deleted', {
-        description: 'The chat has been permanently deleted',
+        description: `"${chatTitle}" has been permanently deleted`,
         duration: 4000,
       });
     } else {
       toast.error('Delete Failed', {
-        description: result.error || 'Could not delete chat. Please try again.',
+        description: result.error || `Could not delete "${chatTitle}". Please try again.`,
         duration: 4000,
       });
     }
@@ -832,6 +833,7 @@ export default function PraxioPage() {
   const handleConfirmArchive = async () => {
     if (!archiveChatId) return;
     
+    const chatTitle = archiveChatTitle; // Capture before clearing
     const result = await archiveChat(archiveChatId);
     if (result.success) {
       setArchiveDialogOpen(false);
@@ -844,12 +846,12 @@ export default function PraxioPage() {
       }
       await refreshChats();
       toast.success('Chat Archived', {
-        description: 'The chat has been archived (this can be reversed later)',
+        description: `"${chatTitle}" has been archived (this can be reversed later)`,
         duration: 4000,
       });
     } else {
       toast.error('Archive Failed', {
-        description: result.error || 'Could not archive chat. Please try again.',
+        description: result.error || `Could not archive "${chatTitle}". Please try again.`,
         duration: 4000,
       });
     }
