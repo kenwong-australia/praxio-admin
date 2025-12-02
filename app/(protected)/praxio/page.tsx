@@ -1879,7 +1879,7 @@ export default function PraxioPage() {
                       onChange={(value) => setDraftContent(value || '')}
                       preview="edit"
                       hideToolbar={false}
-                      visibleDragBar={false}
+                      visibleDragbar={false}
                       data-color-mode="light"
                       height={200}
                     />
