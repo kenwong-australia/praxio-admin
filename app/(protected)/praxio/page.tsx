@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats, getConversationsByChatId } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat } from '@/app/actions';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
@@ -64,6 +64,15 @@ export default function PraxioPage() {
   const [rightAccordionValue, setRightAccordionValue] = useState<string>('questions');
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [downloadSection, setDownloadSection] = useState<{ type: string; content: string; title: string } | null>(null);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameChatId, setRenameChatId] = useState<number | null>(null);
+  const [renameTitle, setRenameTitle] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteChatId, setDeleteChatId] = useState<number | null>(null);
+  const [deleteChatTitle, setDeleteChatTitle] = useState('');
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [archiveChatId, setArchiveChatId] = useState<number | null>(null);
+  const [archiveChatTitle, setArchiveChatTitle] = useState('');
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -547,19 +556,126 @@ export default function PraxioPage() {
     }
   };
 
+  // Refresh chat list
+  const refreshChats = async () => {
+    if (!userId) return;
+    setLoadingChats(true);
+    try {
+      const data = await getPraxioChats(userId);
+      setChats(data.map((chat: any) => ({
+        id: chat.id,
+        title: chat.title || `Chat #${chat.id}`,
+        created_at: chat.created_at
+      })));
+    } catch (error) {
+      console.error('Error refreshing chats:', error);
+    } finally {
+      setLoadingChats(false);
+    }
+  };
+
   const handleRename = (chatId: number) => {
-    // Will be wired up later
-    console.log('Rename chat:', chatId);
+    const chat = chats.find(c => c.id === chatId);
+    if (chat) {
+      setRenameChatId(chatId);
+      setRenameTitle(chat.title);
+      setRenameDialogOpen(true);
+    }
+  };
+
+  const handleConfirmRename = async () => {
+    if (!renameChatId || !renameTitle.trim()) return;
+    
+    const result = await updateChatTitle(renameChatId, renameTitle.trim());
+    if (result.success) {
+      setRenameDialogOpen(false);
+      setRenameChatId(null);
+      setRenameTitle('');
+      await refreshChats();
+      // Update selected chat if it's the one being renamed
+      if (selectedChat?.id === renameChatId) {
+        setSelectedChat({ ...selectedChat, title: renameTitle.trim() });
+      }
+      toast.success('Chat Renamed', {
+        description: 'The chat title has been updated',
+        duration: 2000,
+      });
+    } else {
+      toast.error('Rename Failed', {
+        description: result.error || 'Could not rename chat. Please try again.',
+        duration: 3000,
+      });
+    }
   };
 
   const handleDelete = (chatId: number) => {
-    // Will be wired up later
-    console.log('Delete chat:', chatId);
+    const chat = chats.find(c => c.id === chatId);
+    if (chat) {
+      setDeleteChatId(chatId);
+      setDeleteChatTitle(chat.title);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteChatId) return;
+    
+    const result = await deleteChat(deleteChatId);
+    if (result.success) {
+      setDeleteDialogOpen(false);
+      setDeleteChatId(null);
+      setDeleteChatTitle('');
+      // Clear selection if deleted chat was selected
+      if (selectedChat?.id === deleteChatId) {
+        setSelectedChat(null);
+        setFullChatData(null);
+      }
+      await refreshChats();
+      toast.success('Chat Deleted', {
+        description: 'The chat has been permanently deleted',
+        duration: 2000,
+      });
+    } else {
+      toast.error('Delete Failed', {
+        description: result.error || 'Could not delete chat. Please try again.',
+        duration: 3000,
+      });
+    }
   };
 
   const handleArchive = (chatId: number) => {
-    // Will be wired up later
-    console.log('Archive chat:', chatId);
+    const chat = chats.find(c => c.id === chatId);
+    if (chat) {
+      setArchiveChatId(chatId);
+      setArchiveChatTitle(chat.title);
+      setArchiveDialogOpen(true);
+    }
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!archiveChatId) return;
+    
+    const result = await archiveChat(archiveChatId);
+    if (result.success) {
+      setArchiveDialogOpen(false);
+      setArchiveChatId(null);
+      setArchiveChatTitle('');
+      // Clear selection if archived chat was selected
+      if (selectedChat?.id === archiveChatId) {
+        setSelectedChat(null);
+        setFullChatData(null);
+      }
+      await refreshChats();
+      toast.success('Chat Archived', {
+        description: 'The chat has been archived (this can be reversed later)',
+        duration: 2000,
+      });
+    } else {
+      toast.error('Archive Failed', {
+        description: result.error || 'Could not archive chat. Please try again.',
+        duration: 3000,
+      });
+    }
   };
 
   // Parse citations from Supabase JSONB field (same logic as ChatDetailsModal)
@@ -1194,6 +1310,108 @@ export default function PraxioPage() {
             >
               <FileText className="h-4 w-4 mr-2" />
               Download as DOCX
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Chat</DialogTitle>
+            <DialogDescription>
+              Enter a new title for this chat
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <Input
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.target.value)}
+              placeholder="Enter chat title..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleConfirmRename();
+                }
+              }}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRenameDialogOpen(false);
+                  setRenameChatId(null);
+                  setRenameTitle('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmRename}
+                disabled={!renameTitle.trim()}
+              >
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Chat</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteChatTitle}"? This action cannot be reversed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setDeleteChatId(null);
+                setDeleteChatTitle('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Archive Confirmation Dialog */}
+      <Dialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Archive Chat</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to archive "{archiveChatTitle}"? This can be reversed later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setArchiveDialogOpen(false);
+                setArchiveChatId(null);
+                setArchiveChatTitle('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmArchive}
+            >
+              Archive
             </Button>
           </div>
         </DialogContent>

@@ -194,10 +194,12 @@ export async function getPraxioChats(userId: string | null) {
     console.log('getPraxioChats filtering by user_id:', userId);
     
     // Try filtering by user_id first (more reliable than email)
+    // Only get non-archived chats (archive is false or null)
     let query = svc()
       .from('chat')
       .select('id,created_at,title,user_id,email')
       .eq('user_id', userId)
+      .or('archive.is.null,archive.eq.false') // Only get non-archived chats
       .order('created_at', { ascending: false })
       .limit(100);
     
@@ -219,6 +221,51 @@ export async function getPraxioChats(userId: string | null) {
   } catch (error) {
     console.error('Error fetching Praxio chats:', error);
     return [];
+  }
+}
+
+export async function updateChatTitle(chatId: number, newTitle: string) {
+  try {
+    const { error } = await svc()
+      .from('chat')
+      .update({ title: newTitle.trim() })
+      .eq('id', chatId);
+    
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating chat title:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function deleteChat(chatId: number) {
+  try {
+    const { error } = await svc()
+      .from('chat')
+      .delete()
+      .eq('id', chatId);
+    
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function archiveChat(chatId: number) {
+  try {
+    const { error } = await svc()
+      .from('chat')
+      .update({ archive: true })
+      .eq('id', chatId);
+    
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error archiving chat:', error);
+    return { success: false, error: String(error) };
   }
 }
 
