@@ -1881,13 +1881,13 @@ export default function PraxioPage() {
 
       {/* Create Client Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-        <DialogContent className="w-[80vw] max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="w-[80vw] max-w-[1200px] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle>Create Client Draft</DialogTitle>
                 <DialogDescription>
-                  Edit your draft and compile it with selected sections
+                  Edit the draft directly below and then move to compile it with supporting sections
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -1908,19 +1908,13 @@ export default function PraxioPage() {
           </DialogHeader>
 
           <Tabs value={draftStep} onValueChange={(v) => setDraftStep(v as 'edit' | 'compile' | 'share')} className="flex-1 flex flex-col min-h-0">
-            <TabsList className="mx-6 mt-4">
-              <TabsTrigger value="edit">Edit Draft</TabsTrigger>
-              <TabsTrigger value="compile" disabled={!draftContent.trim()}>Compile Output</TabsTrigger>
-              <TabsTrigger value="share" disabled={!draftContent.trim()}>Share</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="edit" className="flex-1 min-h-0 mt-0">
-              <div className="p-6 h-full flex flex-col">
+              <div className="p-6 flex flex-col">
                 <textarea
                   value={draftContent}
                   onChange={(e) => setDraftContent(e.target.value)}
                   placeholder="Enter your client draft here... (Markdown supported)"
-                  className="flex-1 w-full p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  className="h-[600px] w-full p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 />
                 <div className="mt-4 flex justify-end gap-2">
                   <Button
@@ -1931,7 +1925,7 @@ export default function PraxioPage() {
                       setDraftStep('edit');
                     }}
                   >
-                    Close
+                    Back
                   </Button>
                   <Button
                     onClick={() => {
@@ -2066,7 +2060,7 @@ export default function PraxioPage() {
                       setDraftStep('edit');
                     }}
                   >
-                    Close
+                    Back
                   </Button>
                 </div>
               </div>
