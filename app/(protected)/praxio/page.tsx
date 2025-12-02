@@ -190,32 +190,37 @@ export default function PraxioPage() {
     }
   }, [selectedChat?.id]);
 
-  // Convert markdown to HTML for clipboard
+  // Convert markdown to HTML for clipboard (with inline styles for email/Word compatibility)
   const markdownToHtml = (markdown: string): string => {
     if (!markdown) return '';
     
     let html = markdown;
     
-    // Code blocks (handle first to avoid processing content inside)
-    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      const escaped = code.trim()
+    // Escape HTML entities first
+    const escapeHtml = (text: string) => {
+      return text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-      return `<pre><code>${escaped}</code></pre>`;
+    };
+    
+    // Code blocks (handle first to avoid processing content inside)
+    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      const escaped = escapeHtml(code.trim());
+      return `<pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; overflow-x: auto;"><code style="font-family: 'Courier New', monospace;">${escaped}</code></pre>`;
     });
     
-    // Headers (process in order from largest to smallest)
-    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    // Headers (process in order from largest to smallest) with inline styles
+    html = html.replace(/^#### (.*$)/gim, '<h4 style="font-size: 16px; font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #333;">$1</h4>');
+    html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 18px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #333;">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 style="font-size: 20px; font-weight: bold; margin-top: 24px; margin-bottom: 12px; color: #222; border-bottom: 2px solid #ddd; padding-bottom: 4px;">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 style="font-size: 24px; font-weight: bold; margin-top: 28px; margin-bottom: 16px; color: #000;">$1</h1>');
     
     // Horizontal rules
-    html = html.replace(/^---$/gim, '<hr>');
-    html = html.replace(/^\*\*\*$/gim, '<hr>');
+    html = html.replace(/^---$/gim, '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">');
+    html = html.replace(/^\*\*\*$/gim, '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">');
     
-    // Process lists (ordered and unordered)
+    // Process lists (ordered and unordered) with inline styles
     const lines = html.split('\n');
     const processedLines: string[] = [];
     let inList = false;
@@ -231,21 +236,21 @@ export default function PraxioPage() {
           if (inList && listType) {
             processedLines.push(`</${listType}>`);
           }
-          processedLines.push('<ul>');
+          processedLines.push('<ul style="margin: 12px 0; padding-left: 24px; list-style-type: disc;">');
           inList = true;
           listType = 'ul';
         }
-        processedLines.push(`<li>${unorderedMatch[1]}</li>`);
+        processedLines.push(`<li style="margin: 6px 0; line-height: 1.6;">${unorderedMatch[1]}</li>`);
       } else if (orderedMatch) {
         if (!inList || listType !== 'ol') {
           if (inList && listType) {
             processedLines.push(`</${listType}>`);
           }
-          processedLines.push('<ol>');
+          processedLines.push('<ol style="margin: 12px 0; padding-left: 24px;">');
           inList = true;
           listType = 'ol';
         }
-        processedLines.push(`<li>${orderedMatch[1]}</li>`);
+        processedLines.push(`<li style="margin: 6px 0; line-height: 1.6;">${orderedMatch[1]}</li>`);
       } else {
         if (inList && listType) {
           processedLines.push(`</${listType}>`);
@@ -264,18 +269,18 @@ export default function PraxioPage() {
     
     html = processedLines.join('\n');
     
-    // Links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    // Links with inline styles
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>');
     
-    // Bold and italic (process bold first, then italic)
-    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Bold and italic (process bold first, then italic) with inline styles
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong style="font-weight: bold;"><em style="font-style: italic;">$1</em></strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold;">$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em style="font-style: italic;">$1</em>');
     
-    // Inline code (after processing other formatting)
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Inline code with inline styles
+    html = html.replace(/`([^`]+)`/g, '<code style="background-color: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: \'Courier New\', monospace; font-size: 90%;">$1</code>');
     
-    // Convert remaining line breaks
+    // Convert remaining line breaks to paragraphs with inline styles
     html = html.split('\n\n').map(para => {
       const trimmed = para.trim();
       if (!trimmed) return '';
@@ -283,37 +288,181 @@ export default function PraxioPage() {
       if (/^<(h[1-6]|ul|ol|pre|hr)/.test(trimmed)) {
         return trimmed;
       }
-      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+      return `<p style="margin: 12px 0; line-height: 1.6; color: #333;">${trimmed.replace(/\n/g, '<br>')}</p>`;
     }).filter(p => p).join('\n');
     
-    return html;
+    // Wrap in a div with base styles for better email/Word compatibility
+    return `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${html}</div>`;
   };
 
-  // Copy content to clipboard as HTML
+  // Convert markdown to RTF (Rich Text Format) for Word/Google Docs
+  const markdownToRtf = (markdown: string): string => {
+    if (!markdown) return '';
+    
+    // RTF header with font and color tables
+    let rtf = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Arial;}} {\\colortbl ;\\red0\\green0\\blue0;\\red0\\green102\\blue204;}\\f0\\fs24 ';
+    
+    // Escape RTF special characters
+    const escapeRtf = (text: string): string => {
+      return text
+        .replace(/\\/g, '\\\\')
+        .replace(/{/g, '\\{')
+        .replace(/}/g, '\\}')
+        .replace(/\n/g, '\\par ');
+    };
+    
+    let html = markdown;
+    
+    // Process code blocks
+    html = html.replace(/```[\s\S]*?```/g, (match) => {
+      const code = match.replace(/```/g, '').trim();
+      return `<pre>${escapeRtf(code)}</pre>`;
+    });
+    
+    // Headers
+    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Horizontal rules
+    html = html.replace(/^---$/gim, '<hr>');
+    html = html.replace(/^\*\*\*$/gim, '<hr>');
+    
+    // Process lists
+    const lines = html.split('\n');
+    const processedLines: string[] = [];
+    let inList = false;
+    let listType: 'ul' | 'ol' | null = null;
+    let listCounter = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const unorderedMatch = line.match(/^[\*\-\+] (.+)$/);
+      const orderedMatch = line.match(/^\d+\. (.+)$/);
+      
+      if (unorderedMatch) {
+        if (!inList || listType !== 'ul') {
+          if (inList && listType) {
+            processedLines.push('}');
+          }
+          processedLines.push('{\\pntext\\f0\\\'B7\\tab}');
+          inList = true;
+          listType = 'ul';
+        }
+        processedLines.push(`{\\pntext\\f0\\\'B7\\tab}${escapeRtf(unorderedMatch[1])}\\par `);
+      } else if (orderedMatch) {
+        if (!inList || listType !== 'ol') {
+          if (inList && listType) {
+            processedLines.push('}');
+          }
+          listCounter = 1;
+          inList = true;
+          listType = 'ol';
+        }
+        processedLines.push(`{\\pntext\\f0 ${listCounter}.\\tab}${escapeRtf(orderedMatch[1])}\\par `);
+        listCounter++;
+      } else {
+        if (inList && listType) {
+          processedLines.push('}');
+          inList = false;
+          listType = null;
+          listCounter = 0;
+        }
+        if (line.trim()) {
+          processedLines.push(line);
+        }
+      }
+    }
+    
+    if (inList && listType) {
+      processedLines.push('}');
+    }
+    
+    html = processedLines.join('\\par ');
+    
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+      return `{\\field{\\*\\fldinst{HYPERLINK "${url}"}}{\\fldrslt{\\ul\\cf2 ${escapeRtf(text)}}}}}`;
+    });
+    
+    // Bold and italic
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '{\\b{\\i $1}}');
+    html = html.replace(/\*\*(.*?)\*\*/g, '{\\b $1}');
+    html = html.replace(/\*(.*?)\*/g, '{\\i $1}');
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '{\\f1\\fs20 $1}');
+    
+    // Headers with formatting
+    html = html.replace(/<h1>(.*?)<\/h1>/g, '{\\b\\fs32 $1}\\par ');
+    html = html.replace(/<h2>(.*?)<\/h2>/g, '{\\b\\fs28 $1}\\par ');
+    html = html.replace(/<h3>(.*?)<\/h3>/g, '{\\b\\fs24 $1}\\par ');
+    html = html.replace(/<h4>(.*?)<\/h4>/g, '{\\b\\fs20 $1}\\par ');
+    
+    // Horizontal rules
+    html = html.replace(/<hr>/g, '{\\pard\\brdrb\\brdrs\\brdrw10\\brsp20 \\par}\\pard ');
+    
+    // Code blocks
+    html = html.replace(/<pre>(.*?)<\/pre>/g, (match, code) => {
+      return `{\\f1\\fs20\\par ${code}\\par }`;
+    });
+    
+    // Paragraphs
+    html = html.split('\\par ').filter(p => p.trim()).map(para => {
+      const trimmed = para.trim();
+      if (!trimmed || trimmed.startsWith('{') && trimmed.includes('\\b\\fs')) {
+        return trimmed;
+      }
+      return `${trimmed}\\par `;
+    }).join('');
+    
+    // Clean up any remaining HTML tags
+    html = html.replace(/<[^>]+>/g, '');
+    
+    rtf += html;
+    rtf += '}';
+    
+    return rtf;
+  };
+
+  // Copy content to clipboard as HTML and RTF
   const copyToClipboard = async (content: string, contentType: 'markdown' | 'citations' = 'markdown') => {
     try {
       let htmlContent = '';
+      let rtfContent = '';
       let plainText = '';
 
       if (contentType === 'citations') {
         // Format citations as HTML list
         const citationsList = citations.map((citation, index) => {
           const urlPart = citation.url 
-            ? `<a href="${citation.url}" target="_blank">${citation.url}</a>`
-            : '<em>Legislation reference</em>';
-          return `<li><strong>${citation.title}</strong><br>${urlPart}</li>`;
+            ? `<a href="${citation.url}" style="color: #0066cc; text-decoration: underline;">${citation.url}</a>`
+            : '<em style="font-style: italic;">Legislation reference</em>';
+          return `<li style="margin: 6px 0; line-height: 1.6;"><strong style="font-weight: bold;">${citation.title}</strong><br>${urlPart}</li>`;
         }).join('');
-        htmlContent = `<ul>${citationsList}</ul>`;
+        htmlContent = `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;"><ul style="margin: 12px 0; padding-left: 24px; list-style-type: disc;">${citationsList}</ul></div>`;
         plainText = citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n');
+        
+        // RTF for citations
+        const rtfCitations = citations.map((citation, index) => {
+          const urlPart = citation.url 
+            ? `{\\field{\\*\\fldinst{HYPERLINK "${citation.url}"}}{\\fldrslt{\\ul\\cf2 ${citation.url}}}}`
+            : '{\\i Legislation reference}';
+          return `{\\pntext\\f0\\\'B7\\tab}{\\b ${citation.title}}\\par ${urlPart}\\par `;
+        }).join('');
+        rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Arial;}} {\\colortbl ;\\red0\\green0\\blue0;\\red0\\green102\\blue204;}\\f0\\fs24 {\\pntext\\f0\\\'B7\\tab}${rtfCitations}}`;
       } else {
-        // Convert markdown to HTML
+        // Convert markdown to HTML and RTF
         htmlContent = markdownToHtml(content);
+        rtfContent = markdownToRtf(content);
         plainText = content;
       }
 
-      // Use Clipboard API with HTML format
+      // Use Clipboard API with multiple formats (HTML, RTF, and plain text)
       const clipboardItem = new ClipboardItem({
         'text/html': new Blob([htmlContent], { type: 'text/html' }),
+        'text/rtf': new Blob([rtfContent], { type: 'text/rtf' }),
         'text/plain': new Blob([plainText], { type: 'text/plain' })
       });
 
@@ -323,7 +472,7 @@ export default function PraxioPage() {
         duration: 2000,
       });
     } catch (error) {
-      // Fallback to plain text if HTML copy fails
+      // Fallback to plain text if multi-format copy fails
       try {
         await navigator.clipboard.writeText(contentType === 'citations' 
           ? citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n')
