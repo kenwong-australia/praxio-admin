@@ -18,6 +18,8 @@ import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle,
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
 
 // Mock data structure - will be replaced with real data later
 interface ChatItem {
@@ -1910,12 +1912,40 @@ export default function PraxioPage() {
           <Tabs value={draftStep} onValueChange={(v) => setDraftStep(v as 'edit' | 'compile' | 'share')} className="flex-1 flex flex-col min-h-0">
             <TabsContent value="edit" className="flex-1 min-h-0 mt-0">
               <div className="p-6 flex flex-col">
-                <textarea
-                  value={draftContent}
-                  onChange={(e) => setDraftContent(e.target.value)}
-                  placeholder="Enter your client draft here... (Markdown supported)"
-                  className="h-[600px] w-full p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                />
+                <div className="flex-1 min-h-[700px]">
+                  <style jsx global>{`
+                    .w-md-editor {
+                      height: 100% !important;
+                    }
+                    .w-md-editor-text {
+                      width: 0% !important;
+                      display: none !important;
+                    }
+                    .w-md-editor-preview {
+                      width: 100% !important;
+                      padding: 1.5rem !important;
+                    }
+                    .w-md-editor-text-textarea {
+                      display: none !important;
+                    }
+                  `}</style>
+                  <div className="h-full border rounded-lg overflow-hidden">
+                    <div className="h-full p-6 overflow-y-auto bg-white prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                      <ReactMarkdown>{draftContent || '*Start typing your draft in the editor below...*'}</ReactMarkdown>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <MDEditor
+                      value={draftContent}
+                      onChange={(value) => setDraftContent(value || '')}
+                      preview="edit"
+                      hideToolbar={false}
+                      visibleDragBar={false}
+                      data-color-mode="light"
+                      height={200}
+                    />
+                  </div>
+                </div>
                 <div className="mt-4 flex justify-end gap-2">
                   <Button
                     variant="outline"
