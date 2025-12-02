@@ -269,6 +269,21 @@ export async function archiveChat(chatId: number) {
   }
 }
 
+export async function updateChatDraft(chatId: number, draft: string) {
+  try {
+    const { error } = await svc()
+      .from('chat')
+      .update({ draft: draft.trim() })
+      .eq('id', chatId);
+    
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating chat draft:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
 // User management functions
 export async function getUsers(input: unknown) {
   try {
