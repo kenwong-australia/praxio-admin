@@ -774,13 +774,13 @@ export default function PraxioPage() {
         setSelectedChat({ ...selectedChat, title: renameTitle.trim() });
       }
       toast.success('Chat Renamed', {
-        description: 'The chat title has been updated',
-        duration: 2000,
+        description: `Title updated to "${renameTitle.trim()}"`,
+        duration: 4000,
       });
     } else {
       toast.error('Rename Failed', {
         description: result.error || 'Could not rename chat. Please try again.',
-        duration: 3000,
+        duration: 4000,
       });
     }
   };
@@ -810,12 +810,12 @@ export default function PraxioPage() {
       await refreshChats();
       toast.success('Chat Deleted', {
         description: 'The chat has been permanently deleted',
-        duration: 2000,
+        duration: 4000,
       });
     } else {
       toast.error('Delete Failed', {
         description: result.error || 'Could not delete chat. Please try again.',
-        duration: 3000,
+        duration: 4000,
       });
     }
   };
@@ -845,12 +845,12 @@ export default function PraxioPage() {
       await refreshChats();
       toast.success('Chat Archived', {
         description: 'The chat has been archived (this can be reversed later)',
-        duration: 2000,
+        duration: 4000,
       });
     } else {
       toast.error('Archive Failed', {
         description: result.error || 'Could not archive chat. Please try again.',
-        duration: 3000,
+        duration: 4000,
       });
     }
   };
