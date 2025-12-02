@@ -1262,9 +1262,9 @@ export default function PraxioPage() {
                             <AccordionContent className="pt-2">
                               <div className="max-h-[400px] overflow-y-auto pr-2">
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
-                            <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
-                          </div>
-                        </div>
+                                  <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
+                                </div>
+                              </div>
                             </AccordionContent>
                           </AccordionItem>
                       )}
@@ -1605,7 +1605,7 @@ export default function PraxioPage() {
                           e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
                         }}
                         placeholder="Enter your scenario here..."
-                        className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                            className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
                         rows={1}
                         onKeyDown={(e) => {
                           // Allow Enter to create new lines - only button click submits
