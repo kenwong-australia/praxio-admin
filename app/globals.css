@@ -81,6 +81,19 @@
   }
 }
 
+/* App shell keeps admin UI comfortably centered on large monitors */
+.app-shell {
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 0 24px;
+}
+
+@media (min-width: 1600px) {
+  .app-shell {
+    max-width: 1600px;
+  }
+}
+
 /* Prevent KPI cards/tables from splitting across pages */
 .avoid-break { break-inside: avoid; page-break-inside: avoid; }
 

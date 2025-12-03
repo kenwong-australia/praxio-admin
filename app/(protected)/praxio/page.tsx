@@ -1105,10 +1105,12 @@ export default function PraxioPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
+      {/* Main 3-column research layout. Resizable panels are used on desktop widths;
+          the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
         {/* Previous Research Sidebar - 30% */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-          <div className="h-full flex flex-col bg-white border-r border-slate-200">
+        <ResizablePanel defaultSize={30} minSize={22} maxSize={40}>
+          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[240px]">
             {/* Header */}
             <div className="p-4 border-b border-slate-200">
               <Button
@@ -1200,7 +1202,7 @@ export default function PraxioPage() {
         <ResizableHandle withHandle />
 
         {/* Main Content Area - 70% */}
-        <ResizablePanel defaultSize={70} minSize={60}>
+        <ResizablePanel defaultSize={70} minSize={58}>
           {selectedChat && loadingChatData ? (
             // Loading state
             <div className="h-full flex items-center justify-center bg-white">
