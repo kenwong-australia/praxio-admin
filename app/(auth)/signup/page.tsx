@@ -26,6 +26,49 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
+  const formatAustralianPhone = (value: string): string => {
+    // Remove all non-digits and limit to 10 digits
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+    
+    // Mobile number (starts with 04)
+    if (digitsOnly.startsWith('04')) {
+      if (digitsOnly.length <= 2) {
+        return digitsOnly;
+      } else if (digitsOnly.length <= 4) {
+        return `(${digitsOnly})`;
+      } else if (digitsOnly.length <= 7) {
+        return `(${digitsOnly.slice(0, 4)}) ${digitsOnly.slice(4)}`;
+      } else {
+        return `(${digitsOnly.slice(0, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 10)}`;
+      }
+    }
+    // Landline number (starts with area code 02, 03, 07, 08)
+    else {
+      if (digitsOnly.length <= 2) {
+        return digitsOnly.length > 0 ? `(${digitsOnly}` : '';
+      } else if (digitsOnly.length <= 4) {
+        return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+      } else if (digitsOnly.length <= 8) {
+        return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+      } else {
+        return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 6)}-${digitsOnly.slice(6, 10)}`;
+      }
+    }
+  };
+
+  const validateAustralianPhone = (phone: string): boolean => {
+    // Remove all formatting
+    const digitsOnly = phone.replace(/\D/g, '');
+    
+    // Mobile: (04xx) xxx-xxx = 10 digits starting with 04
+    const mobilePattern = /^04\d{8}$/;
+    
+    // Landline: (xx) xxxx-xxxx = 10 digits, area code starts with 02, 03, 07, or 08
+    const landlinePattern = /^(02|03|07|08)\d{8}$/;
+    
+    return mobilePattern.test(digitsOnly) || landlinePattern.test(digitsOnly);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -33,7 +76,13 @@ export default function SignUpPage() {
     if (name === 'abn') {
       const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
       setFormData(prev => ({ ...prev, [name]: digitsOnly }));
-    } else {
+    } 
+    // Format Australian phone number
+    else if (name === 'phone') {
+      const formatted = formatAustralianPhone(value);
+      setFormData(prev => ({ ...prev, [name]: formatted }));
+    } 
+    else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
     
@@ -53,7 +102,11 @@ export default function SignUpPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!validateAustralianPhone(formData.phone)) {
+      newErrors.phone = 'Please enter a valid Australian phone number (landline: (xx) xxxx-xxxx or mobile: (xxxx) xxx-xxx)';
+    }
     if (!formData.company.trim()) newErrors.company = 'Company is required';
     if (!formData.abn.trim()) {
       newErrors.abn = 'ABN is required';
@@ -294,7 +347,7 @@ export default function SignUpPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Enter number"
+                    placeholder="(02) 1234-5678 or (0412) 345-678"
                     className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
                       errors.phone
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
