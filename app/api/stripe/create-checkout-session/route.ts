@@ -49,10 +49,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Default URLs if not provided
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                    (typeof window !== 'undefined' ? window.location.origin : '');
-    const defaultSuccessUrl = `${baseUrl}/pricing?success=true`;
-    const defaultCancelUrl = `${baseUrl}/pricing?canceled=true`;
+    // Note: In production, NEXT_PUBLIC_BASE_URL should be set
+    // Client always provides URLs, so defaults are fallback only
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    const defaultSuccessUrl = baseUrl ? `${baseUrl}/pricing?success=true` : '/pricing?success=true';
+    const defaultCancelUrl = baseUrl ? `${baseUrl}/pricing?canceled=true` : '/pricing?canceled=true';
 
     // Create Stripe checkout session
     const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {

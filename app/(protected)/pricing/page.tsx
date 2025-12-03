@@ -5,7 +5,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { PricingPage } from '@/components/PricingPage';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface UserData {
@@ -21,18 +21,18 @@ interface UserData {
 
 export default function PricingPageRoute() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Handle cancel query parameter
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('canceled') === 'true') {
+    if (searchParams.get('canceled') === 'true') {
       toast.error('Checkout was canceled. Please try again when you\'re ready.');
       // Clean up URL
       router.replace('/pricing');
     }
-  }, [router]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -107,8 +107,21 @@ export default function PricingPageRoute() {
           }),
         });
 
-        const result = await response.json();
         toast.dismiss('creating-customer');
+
+        if (!response.ok) {
+          let errorMessage = 'Failed to create customer';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+          toast.error(errorMessage);
+          return;
+        }
+
+        const result = await response.json();
 
         if (!result.success) {
           toast.error(result.error || 'Failed to create customer');
@@ -144,8 +157,21 @@ export default function PricingPageRoute() {
         }),
       });
 
-      const checkoutResult = await checkoutResponse.json();
       toast.dismiss('checkout');
+
+      if (!checkoutResponse.ok) {
+        let errorMessage = 'Failed to create checkout session';
+        try {
+          const errorData = await checkoutResponse.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = `HTTP ${checkoutResponse.status}: ${checkoutResponse.statusText}`;
+        }
+        toast.error(errorMessage);
+        return;
+      }
+
+      const checkoutResult = await checkoutResponse.json();
 
       if (!checkoutResult.success) {
         toast.error(checkoutResult.error || 'Failed to create checkout session');
