@@ -64,7 +64,7 @@ export default function SettingsPage() {
     try {
       const auth = getFirebaseAuth();
       await signOut(auth);
-      router.push('/signin');
+      router.replace('/signin');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
