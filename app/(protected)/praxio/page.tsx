@@ -1115,9 +1115,9 @@ export default function PraxioPage() {
             <div className="p-4 border-b border-slate-200">
               <Button
                 onClick={handleNewResearch}
-                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                 New Research
               </Button>
               <div className="flex items-center justify-between">
@@ -1149,7 +1149,7 @@ export default function PraxioPage() {
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
-                    className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
                       selectedChat?.id === chat.id
                         ? 'bg-blue-50 border border-blue-200'
                         : 'hover:bg-slate-50 border border-transparent'
@@ -1228,8 +1228,8 @@ export default function PraxioPage() {
                       >
                       {/* Scenario */}
                       {fullChatData.scenario?.trim() && (
-                          <AccordionItem value="scenario" className="border rounded-lg px-4">
-                            <AccordionTrigger className="hover:no-underline">
+                          <AccordionItem value="scenario" className="border rounded-lg px-3">
+                            <AccordionTrigger className="hover:no-underline py-2">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-3.5 w-3.5 text-blue-600" />
@@ -1273,8 +1273,8 @@ export default function PraxioPage() {
 
                       {/* Research */}
                       {fullChatData.research?.trim() && (
-                          <AccordionItem value="research" className="border rounded-lg px-4">
-                            <AccordionTrigger className="hover:no-underline">
+                          <AccordionItem value="research" className="border rounded-lg px-3">
+                            <AccordionTrigger className="hover:no-underline py-2">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
                                   <Search className="h-3.5 w-3.5 text-green-600" />
@@ -1318,8 +1318,8 @@ export default function PraxioPage() {
 
                       {/* Citations */}
                       {citations.length > 0 && (
-                            <AccordionItem value="citations" className="border rounded-lg px-4">
-                              <AccordionTrigger className="hover:no-underline">
+                            <AccordionItem value="citations" className="border rounded-lg px-3">
+                              <AccordionTrigger className="hover:no-underline py-2">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
                                   <ExternalLink className="h-3.5 w-3.5 text-purple-600" />
@@ -1408,8 +1408,8 @@ export default function PraxioPage() {
                             onValueChange={setRightAccordionValue}
                             defaultValue="questions"
                           >
-                            <AccordionItem value="questions" className="border rounded-lg px-4">
-                              <AccordionTrigger className="hover:no-underline">
+                            <AccordionItem value="questions" className="border rounded-lg px-3">
+                              <AccordionTrigger className="hover:no-underline py-2">
                                 <div className="flex items-center justify-between w-full pr-2">
                                   <div className="flex items-center gap-2">
                                     <HelpCircle className="h-3.5 w-3.5 text-orange-600" />
@@ -1533,15 +1533,10 @@ export default function PraxioPage() {
                           <Button
                             onClick={handleRunResearch}
                             disabled={!prompt.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
-                            style={{ 
-                              height: '44px',
-                              minHeight: '44px',
-                              marginTop: '0px'
-                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0"
                           >
                             Run Research
-                            </Button>
+                          </Button>
                           </div>
                         </div>
                         <div className="flex justify-end">
@@ -1556,9 +1551,9 @@ export default function PraxioPage() {
                               });
                               setDraftDialogOpen(true);
                             }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
                           >
-                            <FileText className="h-4 w-4 mr-2" />
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
                             Create Client Draft
                           </Button>
                         </div>
@@ -1577,7 +1572,7 @@ export default function PraxioPage() {
                 <p className="text-sm mb-4">Chat ID: {selectedChat.id}</p>
                 <Button
                   onClick={handleNewResearch}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
                 >
                   Start New Research
                 </Button>
@@ -1618,12 +1613,7 @@ export default function PraxioPage() {
                       <Button
                         onClick={handleRunResearch}
                         disabled={!prompt.trim()}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 shrink-0 flex-shrink-0"
-                        style={{ 
-                          height: '44px',
-                          minHeight: '44px',
-                          marginTop: '0px'
-                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0"
                       >
                         Run Research
                       </Button>
@@ -1755,6 +1745,7 @@ export default function PraxioPage() {
               <Button
                 onClick={handleConfirmRename}
                 disabled={!renameTitle.trim()}
+                className="text-xs h-8 px-3"
               >
                 Confirm
               </Button>
@@ -1815,6 +1806,7 @@ export default function PraxioPage() {
             </Button>
             <Button
               onClick={handleConfirmArchive}
+              className="text-xs h-8 px-3"
             >
               Archive
             </Button>
@@ -1900,6 +1892,7 @@ export default function PraxioPage() {
                       }
                     }}
                     disabled={!draftContent.trim()}
+                    className="text-xs h-8 px-3"
                   >
                     Next: Compile Output
                   </Button>
@@ -1947,6 +1940,7 @@ export default function PraxioPage() {
                   </Button>
                   <Button
                     onClick={() => setDraftStep('share')}
+                    className="text-xs h-8 px-3"
                   >
                     Next: Share
                   </Button>

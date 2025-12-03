@@ -31,7 +31,7 @@ export default function PdfDownloadButton({ targetId, filenamePrefix, options, c
     <button
       onClick={handleClick}
       disabled={busy}
-      className={className ?? 'rounded-md px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60'}
+      className={className ?? 'rounded-md px-3 py-1.5 text-xs h-8 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60'}
       title="Download PDF"
     >
       {busy ? 'Preparing…' : 'Download PDF'}

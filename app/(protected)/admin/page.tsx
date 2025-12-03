@@ -107,7 +107,7 @@ export default function AdminPage() {
                 targetId="print-area"
                 filenamePrefix="praxio-admin-summary"
                 options={{ paper: { format: 'a4', orientation: 'portrait' }, fixedWidthPx: 794, hideSelectors: ['.pdf-hide'] }}
-                className="rounded-md px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
+                className="rounded-md px-3 py-1.5 text-xs h-8 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
               />
               <DocxDownloadButton
                 targetId="print-area"
