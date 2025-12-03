@@ -1857,31 +1857,22 @@ export default function PraxioPage() {
                       height: 100% !important;
                     }
                     .w-md-editor-text {
-                      width: 0% !important;
-                      display: none !important;
+                      flex: 1 !important;
                     }
                     .w-md-editor-preview {
-                      width: 100% !important;
+                      flex: 1 !important;
                       padding: 1.5rem !important;
                     }
-                    .w-md-editor-text-textarea {
-                      display: none !important;
-                    }
                   `}</style>
-                  <div className="flex-1 min-h-0 border rounded-lg overflow-y-auto mb-4">
-                    <div className="p-6 bg-white prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                      <ReactMarkdown>{draftContent || '*Start typing your draft in the editor below...*'}</ReactMarkdown>
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-1 min-h-0 border rounded-lg overflow-hidden">
                     <MDEditor
                       value={draftContent}
                       onChange={(value) => setDraftContent(value || '')}
                       preview="edit"
                       hideToolbar={false}
-                      visibleDragbar={false}
+                      visibleDragbar={true}
                       data-color-mode="light"
-                      height={200}
+                      height="100%"
                     />
                   </div>
                 </div>
