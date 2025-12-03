@@ -1547,7 +1547,24 @@ export default function PraxioPage() {
                           </Button>
                           </div>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            onClick={() => {
+                              // Shortcut: Go directly to share step with research and citations included
+                              // Use existing draft if available, otherwise empty (will just send research + citations)
+                              setDraftContent(fullChatData?.draft || '');
+                              setDraftStep('share');
+                              setCompileOptions({
+                                includeResearch: true,
+                                includeCitations: true,
+                                includeQuestions: false,
+                              });
+                              setDraftDialogOpen(true);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
+                          >
+                            Send Results to Me
+                          </Button>
                           <Button
                             onClick={() => {
                               setDraftContent(fullChatData.draft || '');
@@ -1564,6 +1581,22 @@ export default function PraxioPage() {
                             <FileText className="h-3.5 w-3.5 mr-1.5" />
                             Create Client Draft
                           </Button>
+                        </div>
+                        {/* Disclaimer */}
+                        <div className="pt-3 border-t border-slate-200">
+                          <div className="text-center space-y-1">
+                            <p className="text-[10px] text-slate-600">
+                              Praxio AI may be inaccurate. Verify with official sources.
+                            </p>
+                            <p className="text-[10px] text-slate-600">
+                              Do not enter client information such as TFN, ABN etc.
+                            </p>
+                            {fullChatData?.processTime && (
+                              <p className="text-[10px] text-slate-500">
+                                Praxio AI thought for {fullChatData.processTime.toFixed(1)}s
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
