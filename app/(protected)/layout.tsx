@@ -35,7 +35,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const [smallScreenOverride, setSmallScreenOverride] = useState(false);
 
   const [phase, setPhase] = useState<
-    'auth-loading' | 'role-loading' | 'in' | 'not-admin' | 'out'
+    'auth-loading' | 'role-loading' | 'trial-check' | 'in' | 'not-admin' | 'out' | 'trial-expired'
   >('auth-loading');
 
   useEffect(() => {
@@ -61,20 +61,63 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Authenticated → check role in Firestore
+      // Authenticated → check role and trial status in Firestore
       setPhase('role-loading');
       try {
         const db = getDb();
         const snap = await getDoc(doc(db, 'users', user.uid));
-        const role = snap.exists() ? (snap.data() as any).role : undefined;
+        
+        if (!snap.exists()) {
+          setPhase('out');
+          router.replace('/signin');
+          return;
+        }
 
+        const data = snap.data() as any;
+        const role = data?.role;
+        const subscriptionStatus = data?.stripe_subscription_status;
+        
+        // Convert Firestore timestamps to Date objects
+        const toDateSafe = (v: any) => {
+          if (!v) return undefined;
+          if (v instanceof Date) return v;
+          if (typeof v?.toDate === 'function') return v.toDate();
+          return undefined;
+        };
+        
+        const trialEndDate = toDateSafe(data?.stripe_trial_end_date);
+        const renewalDate = toDateSafe(data?.stripe_plan_renewal_date);
+        const now = new Date();
+
+        // Check if user is admin
         if (role === 'admin') {
           setPhase('in');
-        } else {
-          setPhase('not-admin');
+          return;
         }
-      } catch {
-        // If role check fails, treat as not-admin for safety
+
+        // For non-admin users, check trial expiration
+        // Redirect to pricing if:
+        // 1. role IS NOT "admin" (already checked above) ✓
+        // 2. stripe_subscription_status IS NOT "active" ✓
+        // 3. stripe_trial_end_date < current datetime OR stripe_plan_renewal_date < current datetime
+        //    (dates in the past indicate expiration)
+        const isNotActive = subscriptionStatus !== 'active';
+        const trialExpired = trialEndDate && trialEndDate < now;
+        const renewalExpired = renewalDate && renewalDate < now;
+        const shouldRedirectToPricing = isNotActive && (trialExpired || renewalExpired);
+
+        // Don't redirect if already on pricing page
+        if (shouldRedirectToPricing && pathname !== '/pricing') {
+          setPhase('trial-expired');
+          router.replace('/pricing');
+          return;
+        }
+
+        // User is not admin but trial is still active or subscription is active
+        setPhase('in');
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        // If check fails, treat as not-admin for safety
         setPhase('not-admin');
       }
     });
@@ -82,8 +125,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [pathname, router]);
 
-  if (phase === 'auth-loading' || phase === 'role-loading') {
+  if (phase === 'auth-loading' || phase === 'role-loading' || phase === 'trial-check') {
     return <div className="min-h-screen grid place-items-center bg-neutral-100">Loading…</div>;
+  }
+
+  if (phase === 'trial-expired') {
+    // Brief placeholder while redirect occurs
+    return <div className="min-h-screen grid place-items-center bg-neutral-100">Redirecting to pricing…</div>;
   }
 
   if (phase === 'not-admin') {
@@ -141,16 +189,25 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // Pricing and success pages should render full-screen without sidebar
+  const isFullPage = pathname === '/pricing' || pathname === '/success';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="app-shell">
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-x-hidden">
-            {children}
-          </main>
+      {isFullPage ? (
+        // Full-page layout (no sidebar)
+        <>{children}</>
+      ) : (
+        // Standard layout with sidebar for other pages
+        <div className="app-shell">
+          <div className="flex">
+            <Sidebar />
+            <main className="flex-1 overflow-x-hidden">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      )}
       <Toaster />
     </div>
   );
