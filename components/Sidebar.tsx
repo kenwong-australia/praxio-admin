@@ -114,7 +114,7 @@ export function Sidebar() {
       </nav>
       
       <div className="mt-auto p-4">
-        <SignOutButton />
+        <SignOutButton isCollapsed={isCollapsed} />
       </div>
     </aside>
   );

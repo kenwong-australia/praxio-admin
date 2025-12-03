@@ -1109,26 +1109,26 @@ export default function PraxioPage() {
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
         {/* Previous Research Sidebar - 30% */}
-        <ResizablePanel defaultSize={30} minSize={22} maxSize={40}>
-          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[240px]">
+        <ResizablePanel defaultSize={30} minSize={16} maxSize={40}>
+          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[200px]">
             {/* Header */}
             <div className="p-4 border-b border-slate-200">
               <Button
                 onClick={handleNewResearch}
-                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-sm"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 New Research
               </Button>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Previous Research</h2>
+                <h2 className="text-sm font-semibold">Previous</h2>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSearchOpen(true)}
-                  className="h-8 w-8"
+                  className="h-7 w-7"
                 >
-                  <Search className="h-4 w-4" />
+                  <Search className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
@@ -1157,10 +1157,10 @@ export default function PraxioPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-foreground truncate">
+                        <div className="font-medium text-xs text-foreground truncate">
                           {chat.title}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
                           {toSydneyDateTime(chat.created_at)}
                         </div>
                       </div>
@@ -1218,7 +1218,7 @@ export default function PraxioPage() {
                 {/* Left Column - Scenario, Research, Citations */}
                 <ResizablePanel defaultSize={50}>
                   <ScrollArea className="h-full">
-                    <div className="p-6 space-y-4">
+                    <div className="p-5 space-y-3">
                       <Accordion 
                         type="multiple" 
                         className="w-full space-y-4" 
@@ -1232,8 +1232,8 @@ export default function PraxioPage() {
                             <AccordionTrigger className="hover:no-underline">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-blue-600" />
-                                  <span className="font-medium">Scenario</span>
+                                  <FileText className="h-3.5 w-3.5 text-blue-600" />
+                                  <span className="font-medium text-sm">Scenario</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Button
@@ -1263,7 +1263,7 @@ export default function PraxioPage() {
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
                               <div className="max-h-[400px] overflow-y-auto pr-2">
-                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
                                   <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
                                 </div>
                               </div>
@@ -1277,8 +1277,8 @@ export default function PraxioPage() {
                             <AccordionTrigger className="hover:no-underline">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
-                                  <Search className="h-4 w-4 text-green-600" />
-                                  <span className="font-medium">Research</span>
+                                  <Search className="h-3.5 w-3.5 text-green-600" />
+                                  <span className="font-medium text-sm">Research</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Button
@@ -1308,7 +1308,7 @@ export default function PraxioPage() {
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
                               <div className={`overflow-y-auto pr-2 ${leftAccordionValue.includes('scenario') ? 'max-h-[600px]' : 'max-h-[800px]'}`}>
-                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
                             <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                           </div>
                         </div>
@@ -1322,8 +1322,8 @@ export default function PraxioPage() {
                               <AccordionTrigger className="hover:no-underline">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
-                                  <ExternalLink className="h-4 w-4 text-purple-600" />
-                                  <span className="font-medium">Citations ({citations.length})</span>
+                                  <ExternalLink className="h-3.5 w-3.5 text-purple-600" />
+                                  <span className="font-medium text-sm">Citations ({citations.length})</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Button
@@ -1358,9 +1358,9 @@ export default function PraxioPage() {
                               <div className="max-h-[400px] overflow-y-auto pr-2">
                                 <div className="space-y-3">
                                   {citations.map((citation, index) => (
-                                    <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                    <div key={index} className="flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg">
                                       <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm mb-1 line-clamp-2">
+                                        <p className="font-medium text-xs mb-0.5 line-clamp-2">
                                           {citation.title}
                                         </p>
                                         {citation.url ? (
@@ -1368,13 +1368,13 @@ export default function PraxioPage() {
                                             href={citation.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 truncate"
+                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-center gap-1 truncate"
                                           >
-                                            <ExternalLink className="h-3 w-3 shrink-0" />
+                                            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                                             {citation.url}
                                           </a>
                                         ) : (
-                                          <span className="text-xs text-muted-foreground italic">
+                                          <span className="text-[10px] text-muted-foreground italic">
                                             Legislation reference
                                           </span>
                                         )}
@@ -1397,7 +1397,7 @@ export default function PraxioPage() {
                 <ResizablePanel defaultSize={50}>
                   <div className="h-full flex flex-col">
                     <ScrollArea className="flex-shrink-0">
-                      <div className="p-6 pb-4">
+                      <div className="p-5 pb-3">
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
                           <Accordion 
@@ -1412,8 +1412,8 @@ export default function PraxioPage() {
                               <AccordionTrigger className="hover:no-underline">
                                 <div className="flex items-center justify-between w-full pr-2">
                                   <div className="flex items-center gap-2">
-                                    <HelpCircle className="h-4 w-4 text-orange-600" />
-                                    <span className="font-medium">Questions to refine research</span>
+                                    <HelpCircle className="h-3.5 w-3.5 text-orange-600" />
+                                    <span className="font-medium text-sm">Questions to refine research</span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button
@@ -1443,7 +1443,7 @@ export default function PraxioPage() {
                               </AccordionTrigger>
                               <AccordionContent className="pt-2">
                                 <div className="max-h-[400px] overflow-y-auto pr-2">
-                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
+                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
                               <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
                             </div>
                           </div>
@@ -1458,24 +1458,24 @@ export default function PraxioPage() {
                     <div className="flex-1 flex flex-col border-t border-slate-200 bg-white min-h-0">
                       {/* Conversation Messages */}
                       <ScrollArea className="flex-1">
-                        <div className="p-6">
+                        <div className="p-4">
                           {loadingConversations ? (
                             <div className="flex items-center justify-center h-32 text-muted-foreground">
                               <div className="text-center">
                                 <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50 animate-pulse" />
-                                <p className="text-sm">Loading conversation...</p>
+                                <p className="text-xs">Loading conversation...</p>
                               </div>
                             </div>
                           ) : conversations.length === 0 ? (
                             <div className="flex items-center justify-center h-32 text-muted-foreground">
                               <div className="text-center">
                                 <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">No conversation messages yet</p>
-                                <p className="text-xs mt-1">Start a conversation below</p>
+                                <p className="text-xs">No conversation messages yet</p>
+                                <p className="text-[10px] mt-1">Start a conversation below</p>
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                               {conversations.map((conv) => {
                                 const isUser = conv.type === 'user';
                                 return (
@@ -1484,19 +1484,19 @@ export default function PraxioPage() {
                                     className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
                                   >
                                     <div
-                                      className={`max-w-[80%] rounded-lg p-4 ${
+                                      className={`max-w-[80%] rounded-lg p-3 ${
                                         isUser
                                           ? 'bg-muted/50 text-left'
                                           : 'bg-blue-50 text-right'
                                       }`}
                                     >
-                                      <div className={`text-xs font-medium text-muted-foreground mb-2 ${isUser ? 'text-left' : 'text-right'}`}>
+                                      <div className={`text-[10px] font-medium text-muted-foreground mb-1.5 ${isUser ? 'text-left' : 'text-right'}`}>
                                         {isUser ? 'User' : 'Assistant'}
                                       </div>
-                                      <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                                      <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-sm prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
                                         <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
                                       </div>
-                                      <div className={`mt-2 text-xs text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
+                                      <div className={`mt-1.5 text-[10px] text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
                                         {toSydneyDateTime(conv.created_at)}
                                       </div>
                                     </div>
@@ -1510,7 +1510,7 @@ export default function PraxioPage() {
                       </ScrollArea>
 
                       {/* Prompt Box - Fixed at bottom */}
-                      <div className="border-t border-slate-200 p-6 bg-white space-y-3">
+                      <div className="border-t border-slate-200 p-4 bg-white space-y-2">
                       <div className="flex gap-3">
                         <div className="flex-1 relative">
                           <textarea
