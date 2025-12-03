@@ -63,20 +63,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe customer
+    // Build URLSearchParams with metadata in the correct format: metadata[key]=value
+    const params = new URLSearchParams({
+      email: email,
+      name: businessName || email, // Use business name if available, otherwise email
+    });
+    
+    // Add metadata fields in the format Stripe expects: metadata[key_name]=value
+    params.append('metadata[firebase_uid]', uid);
+    if (businessName) {
+      params.append('metadata[business_name]', businessName);
+    }
+    
     const stripeResponse = await fetch('https://api.stripe.com/v1/customers', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        email: email,
-        name: businessName || email, // Use business name if available, otherwise email
-        metadata: JSON.stringify({
-          firebase_uid: uid,
-          business_name: businessName || '',
-        }),
-      }),
+      body: params,
     });
 
     if (!stripeResponse.ok) {

@@ -100,14 +100,17 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         // 1. role IS NOT "admin" (already checked above) ✓
         // 2. stripe_subscription_status IS NOT "active" ✓
         // 3. stripe_trial_end_date < current datetime OR stripe_plan_renewal_date < current datetime
+        //    OR both dates are missing (user needs to subscribe)
         //    (dates in the past indicate expiration)
         const isNotActive = subscriptionStatus !== 'active';
         const trialExpired = trialEndDate && trialEndDate < now;
         const renewalExpired = renewalDate && renewalDate < now;
-        const shouldRedirectToPricing = isNotActive && (trialExpired || renewalExpired);
+        const datesMissing = !trialEndDate && !renewalDate;
+        // Redirect if subscription is inactive AND (dates expired OR dates are missing)
+        const shouldRedirectToPricing = isNotActive && (trialExpired || renewalExpired || datesMissing);
 
-        // Don't redirect if already on pricing page
-        if (shouldRedirectToPricing && pathname !== '/pricing') {
+        // Don't redirect if already on pricing or success page
+        if (shouldRedirectToPricing && pathname !== '/pricing' && pathname !== '/success') {
           setPhase('trial-expired');
           router.replace('/pricing');
           return;
