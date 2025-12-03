@@ -621,7 +621,7 @@ export default function PraxioPage() {
       });
 
       const buffer = await Packer.toBuffer(doc);
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const blob = new Blob([new Uint8Array(buffer)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -980,7 +980,7 @@ export default function PraxioPage() {
       });
 
       const buffer = await Packer.toBuffer(doc);
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const blob = new Blob([new Uint8Array(buffer)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -1522,7 +1522,7 @@ export default function PraxioPage() {
                               e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
                             }}
                             placeholder="Add further details here..."
-                            className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                            className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
                             rows={1}
                             onKeyDown={(e) => {
                               // Allow Enter to create new lines - only button click submits
@@ -1602,7 +1602,7 @@ export default function PraxioPage() {
                           e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
                         }}
                         placeholder="Enter your scenario here..."
-                            className="w-full min-h-[44px] max-h-[200px] px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal"
+                            className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
                         rows={1}
                         onKeyDown={(e) => {
                           // Allow Enter to create new lines - only button click submits
@@ -1739,6 +1739,7 @@ export default function PraxioPage() {
                   setRenameChatId(null);
                   setRenameTitle('');
                 }}
+                className="text-xs h-8 px-3"
               >
                 Cancel
               </Button>
@@ -1771,12 +1772,14 @@ export default function PraxioPage() {
                 setDeleteChatId(null);
                 setDeleteChatTitle('');
               }}
+              className="text-xs h-8 px-3"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleConfirmDelete}
+              className="text-xs h-8 px-3"
             >
               Delete
             </Button>
@@ -1801,6 +1804,7 @@ export default function PraxioPage() {
                 setArchiveChatId(null);
                 setArchiveChatTitle('');
               }}
+              className="text-xs h-8 px-3"
             >
               Cancel
             </Button>
@@ -1882,6 +1886,7 @@ export default function PraxioPage() {
                       setDraftContent('');
                       setDraftStep('edit');
                     }}
+                    className="text-xs h-8 px-3"
                   >
                     Back
                   </Button>
@@ -1935,6 +1940,7 @@ export default function PraxioPage() {
                   <Button
                     variant="outline"
                     onClick={() => setDraftStep('edit')}
+                    className="text-xs h-8 px-3"
                   >
                     Back to Edit
                   </Button>
@@ -1954,35 +1960,35 @@ export default function PraxioPage() {
                 <div className="space-y-3">
                   <Button
                     onClick={handleShareEmail}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs h-8"
                     variant="outline"
                     disabled={!fullChatData?.email}
                   >
-                    <Mail className="h-4 w-4 mr-2" />
+                    <Mail className="h-3.5 w-3.5 mr-2" />
                     Send to {fullChatData?.email || 'user email'}
                   </Button>
                   <Button
                     onClick={handleShareDownloadDocx}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs h-8"
                     variant="outline"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-3.5 w-3.5 mr-2" />
                     Download as DOCX
                   </Button>
                   <Button
                     onClick={handleShareDownloadPdf}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs h-8"
                     variant="outline"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-3.5 w-3.5 mr-2" />
                     Download as PDF
                   </Button>
                   <Button
                     onClick={handleShareCopy}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs h-8"
                     variant="outline"
                   >
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-3.5 w-3.5 mr-2" />
                     Copy to Clipboard
                   </Button>
                 </div>
@@ -1991,6 +1997,7 @@ export default function PraxioPage() {
                   <Button
                     variant="outline"
                     onClick={() => setDraftStep('compile')}
+                    className="text-xs h-8 px-3"
                   >
                     Back to Compile
                   </Button>
@@ -2000,6 +2007,7 @@ export default function PraxioPage() {
                       setDraftDialogOpen(false);
                       setDraftStep('edit');
                     }}
+                    className="text-xs h-8 px-3"
                   >
                     Back
                   </Button>
