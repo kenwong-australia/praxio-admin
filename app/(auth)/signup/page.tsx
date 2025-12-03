@@ -127,7 +127,7 @@ export default function SignUpPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Left Section - Features */}
-          <div className="flex flex-col justify-center space-y-8">
+          <div className="flex flex-col">
             {/* Mobile Header - Shown on small screens */}
             <div className="lg:hidden text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -153,47 +153,52 @@ export default function SignUpPage() {
 
             {/* Desktop Features - Hidden on mobile */}
             <div className="hidden lg:block">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Image
-                  src="/Praxio Logo clean-12 (logo only).png"
-                  alt="Praxio AI"
-                  width={40}
-                  height={40}
-                  priority
-                  className="object-contain"
-                />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Praxio AI Tax Assistant
-                </h1>
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Image
+                    src="/Praxio Logo clean-12 (logo only).png"
+                    alt="Praxio AI"
+                    width={40}
+                    height={40}
+                    priority
+                    className="object-contain"
+                  />
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Praxio AI Tax Assistant
+                  </h1>
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                  Your AI-powered Australian tax assistant
+                </h2>
+                <p className="text-lg text-slate-600">
+                  Delivers fast, cited research and clear outputs
+                </p>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">
-                Your AI-powered Australian tax assistant
-              </h2>
-              <p className="text-lg text-slate-600">
-                Delivers fast, cited research and clear outputs
-              </p>
-            </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <feature.icon className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 mb-1">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        {feature.description}
-                      </p>
+                  <div 
+                    key={index} 
+                    className="bg-slate-50 rounded-lg p-4 border border-slate-200 hover:border-slate-300 transition-colors"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <feature.icon className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900 mb-1">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-slate-600 pt-4">
+              <div className="flex items-center gap-2 text-sm text-slate-600 mt-8">
                 <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <span>Trusted by tax and accounting professionals Australia wide</span>
               </div>
