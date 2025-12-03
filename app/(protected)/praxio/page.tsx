@@ -1822,7 +1822,7 @@ export default function PraxioPage() {
 
       {/* Create Client Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-        <DialogContent className={`w-[80vw] ${draftStep === 'compile' ? 'max-w-[600px] h-[500px] max-h-[500px]' : 'max-w-[1200px] h-[800px] max-h-[800px]'} overflow-hidden flex flex-col p-0`}>
+        <DialogContent className={`w-[80vw] ${draftStep === 'compile' ? 'max-w-[520px] h-[360px] max-h-[360px]' : 'max-w-[1200px] h-[800px] max-h-[800px]'} overflow-hidden flex flex-col p-0`}>
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
@@ -1931,18 +1931,6 @@ export default function PraxioPage() {
                       />
                       <label htmlFor="include-citations" className="text-sm font-medium cursor-pointer">
                         Citations ({citations.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-questions"
-                        checked={compileOptions.includeQuestions}
-                        onCheckedChange={(checked) =>
-                          setCompileOptions({ ...compileOptions, includeQuestions: checked === true })
-                        }
-                      />
-                      <label htmlFor="include-questions" className="text-sm font-medium cursor-pointer">
-                        Questions
                       </label>
                     </div>
                   </div>
