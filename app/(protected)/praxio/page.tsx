@@ -1115,9 +1115,9 @@ export default function PraxioPage() {
             <div className="p-4 border-b border-slate-200">
               <Button
                 onClick={handleNewResearch}
-                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
+                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2"
               >
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                <Sparkles className="h-3 w-3 mr-1" />
                 New Research
               </Button>
               <div className="flex items-center justify-between">
@@ -1307,7 +1307,15 @@ export default function PraxioPage() {
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
-                              <div className={`overflow-y-auto pr-2 ${leftAccordionValue.includes('scenario') ? 'max-h-[600px]' : 'max-h-[800px]'}`}>
+                              <div className={`overflow-y-auto pr-2 ${
+                                leftAccordionValue.includes('scenario') && leftAccordionValue.includes('citations')
+                                  ? 'max-h-[400px]'
+                                  : leftAccordionValue.includes('scenario')
+                                  ? 'max-h-[450px]'
+                                  : leftAccordionValue.includes('citations')
+                                  ? 'max-h-[500px]'
+                                  : 'max-h-[600px]'
+                              }`}>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
                             <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                           </div>
