@@ -100,16 +100,9 @@ export function Sidebar() {
           <Database className="h-4 w-4 flex-shrink-0" />
           {!isCollapsed && <span className="truncate">VB Processing</span>}
         </Link>
-        <Link href="#" className={navClasses('#')}>
+        <Link href="/settings" className={navClasses('/settings')}>
           <Settings className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && (
-            <>
-              <span className="truncate">Settings</span>
-              <span className="ml-auto text-xs bg-slate-200 px-2 py-0.5 rounded-full flex-shrink-0">
-                Soon
-              </span>
-            </>
-          )}
+          {!isCollapsed && <span className="truncate">Settings</span>}
         </Link>
       </nav>
       

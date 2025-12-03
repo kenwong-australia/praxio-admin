@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 function friendlyError(code: string) {
   switch (code) {
@@ -125,8 +126,11 @@ function SignInForm() {
           </button>
         </form>
 
-        <p className="mt-3 text-xs text-neutral-500">
-          Don't have an account? Contact your administrator.
+        <p className="mt-3 text-xs text-center text-neutral-500">
+          Don't have an account?{' '}
+          <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+            Sign up here
+          </Link>
         </p>
       </div>
     </div>
