@@ -1822,13 +1822,17 @@ export default function PraxioPage() {
 
       {/* Create Client Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-        <DialogContent className="w-[80vw] max-w-[1200px] h-[800px] max-h-[800px] overflow-hidden flex flex-col p-0">
+        <DialogContent className={`w-[80vw] ${draftStep === 'compile' ? 'max-w-[600px] h-[500px] max-h-[500px]' : 'max-w-[1200px] h-[800px] max-h-[800px]'} overflow-hidden flex flex-col p-0`}>
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle>Create Client Draft</DialogTitle>
+                <DialogTitle>
+                  {draftStep === 'compile' ? 'Compile final output' : 'Create Client Draft'}
+                </DialogTitle>
                 <DialogDescription>
-                  Edit the draft directly below and then move to compile it with supporting sections
+                  {draftStep === 'compile' 
+                    ? 'Select section to include with Client Draft'
+                    : 'Edit the draft directly below and then move to compile it with supporting sections'}
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -1904,7 +1908,6 @@ export default function PraxioPage() {
             <TabsContent value="compile" className="flex-1 min-h-0 mt-0">
               <div className="p-6 h-full flex flex-col">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold mb-3">Select sections to include:</h3>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -1942,12 +1945,6 @@ export default function PraxioPage() {
                         Questions
                       </label>
                     </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 border rounded-lg p-4 overflow-y-auto bg-muted/20">
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{getCompiledOutput()}</ReactMarkdown>
                   </div>
                 </div>
 
