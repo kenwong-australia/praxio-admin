@@ -211,35 +211,12 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          {/* Left Section - Features */}
-          <div className="flex flex-col">
-            {/* Mobile Header - Shown on small screens */}
-            <div className="lg:hidden text-center mb-6">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Image
-                  src="/Praxio Logo clean-12 (logo only).png"
-                  alt="Praxio AI"
-                  width={40}
-                  height={40}
-                  priority
-                  className="object-contain"
-                />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Praxio AI Tax Assistant
-                </h1>
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                Your AI-powered Australian tax assistant
-              </h2>
-              <p className="text-base text-slate-600">
-                Delivers fast, cited research and clear outputs
-              </p>
-            </div>
-
-            {/* Desktop Features - Hidden on mobile */}
-            <div className="hidden lg:block">
+          {/* Left Section - Features (Desktop only) */}
+          <div className="hidden lg:flex flex-col">
+            {/* Desktop Features */}
+            <div>
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-4">
                   <Image
@@ -294,21 +271,18 @@ export default function SignUpPage() {
 
           {/* Right Section - Signup Form */}
           <div className="flex items-center justify-center">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+              <div className="mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                   Start your 7 day free trial
                 </h2>
-                <p className="text-sm text-slate-600">
-                  Create your account to get started
-                </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
                       First
                     </label>
                     <input
@@ -317,18 +291,18 @@ export default function SignUpPage() {
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="Enter first name"
-                      className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                      className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                         errors.firstName
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                           : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                       }`}
                     />
                     {errors.firstName && (
-                      <p className="mt-1 text-xs text-red-600">{errors.firstName}</p>
+                      <p className="mt-0.5 text-xs text-red-600">{errors.firstName}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
                       Last
                     </label>
                     <input
@@ -337,21 +311,21 @@ export default function SignUpPage() {
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Enter last name"
-                      className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                      className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                         errors.lastName
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                           : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                       }`}
                     />
                     {errors.lastName && (
-                      <p className="mt-1 text-xs text-red-600">{errors.lastName}</p>
+                      <p className="mt-0.5 text-xs text-red-600">{errors.lastName}</p>
                     )}
                   </div>
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Email Address
                   </label>
                   <input
@@ -360,20 +334,20 @@ export default function SignUpPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your email"
-                    className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                       errors.email
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
                   {errors.email && (
-                    <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.email}</p>
                   )}
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Phone Number
                   </label>
                   <input
@@ -382,23 +356,23 @@ export default function SignUpPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="(02) 1234-5678 or (0412) 345-678"
-                    className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                       errors.phone
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
                   {phoneNonDigitWarning && (
-                    <p className="mt-1 text-xs text-amber-600">Please enter only digits</p>
+                    <p className="mt-0.5 text-xs text-amber-600">Please enter only digits</p>
                   )}
                   {errors.phone && (
-                    <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.phone}</p>
                   )}
                 </div>
 
                 {/* Company */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Company
                   </label>
                   <input
@@ -407,21 +381,21 @@ export default function SignUpPage() {
                     value={formData.company}
                     onChange={handleChange}
                     placeholder="Enter your company"
-                    className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                       errors.company
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
                   {errors.company && (
-                    <p className="mt-1 text-xs text-red-600">{errors.company}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.company}</p>
                   )}
                 </div>
 
                 {/* ABN */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-sm font-medium text-slate-700">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-700">
                       ABN
                     </label>
                     <span className="text-xs text-slate-500">
@@ -435,24 +409,24 @@ export default function SignUpPage() {
                     onChange={handleChange}
                     placeholder="Enter your 11 digit ABN"
                     maxLength={11}
-                    className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors ${
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                       errors.abn
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
                   {abnNonDigitWarning && (
-                    <p className="mt-1 text-xs text-amber-600">Please enter only digits</p>
+                    <p className="mt-0.5 text-xs text-amber-600">Please enter only digits</p>
                   )}
                   {errors.abn && (
-                    <p className="mt-1 text-xs text-red-600">{errors.abn}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.abn}</p>
                   )}
                 </div>
 
                 {/* General Error Message */}
                 {Object.keys(errors).length > 0 && !errors.terms && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">
+                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-xs text-red-600">
                       Please complete all fields above
                     </p>
                   </div>
@@ -460,7 +434,7 @@ export default function SignUpPage() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -470,7 +444,7 @@ export default function SignUpPage() {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
-                      className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-sm outline-none transition-colors ${
+                      className={`w-full rounded-lg border px-3 py-2 pr-10 text-sm outline-none transition-colors ${
                         errors.password
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                           : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -490,13 +464,13 @@ export default function SignUpPage() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="mt-1 text-xs text-red-600">{errors.password}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.password}</p>
                   )}
                 </div>
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Confirm your password
                   </label>
                   <div className="relative">
@@ -506,7 +480,7 @@ export default function SignUpPage() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-sm outline-none transition-colors ${
+                      className={`w-full rounded-lg border px-3 py-2 pr-10 text-sm outline-none transition-colors ${
                         errors.confirmPassword
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                           : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -526,7 +500,7 @@ export default function SignUpPage() {
                     </button>
                   </div>
                   {errors.confirmPassword && (
-                    <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.confirmPassword}</p>
                   )}
                 </div>
 
@@ -544,7 +518,7 @@ export default function SignUpPage() {
                       }}
                       className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-slate-700">
+                    <span className="text-xs text-slate-700">
                       Agree to{' '}
                       <Link href="https://www.praxio-ai.com.au/terms-conditions" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         Terms and Conditions
@@ -556,19 +530,19 @@ export default function SignUpPage() {
                     </span>
                   </label>
                   {errors.terms && (
-                    <p className="mt-1 text-xs text-red-600">{errors.terms}</p>
+                    <p className="mt-0.5 text-xs text-red-600">{errors.terms}</p>
                   )}
                 </div>
 
                 {/* Form Completion Helper */}
                 {!isFormReady() && !loading && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm font-medium text-amber-900 mb-1.5">
+                  <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs font-medium text-amber-900 mb-1">
                       Complete the following to continue:
                     </p>
-                    <ul className="text-xs text-amber-800 space-y-1 list-disc list-inside">
+                    <ul className="text-xs text-amber-800 space-y-0.5 list-disc list-inside max-h-24 overflow-y-auto pr-2">
                       {getMissingFields().map((field, index) => (
-                        <li key={index}>{field}</li>
+                        <li key={index} className="leading-tight">{field}</li>
                       ))}
                     </ul>
                   </div>
@@ -576,9 +550,9 @@ export default function SignUpPage() {
                 
                 {/* Success Message when form is ready */}
                 {isFormReady() && !loading && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm font-medium text-green-900 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
+                  <div className="p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs font-medium text-green-900 flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                       All fields completed! You can now create your account.
                     </p>
                   </div>
@@ -588,7 +562,7 @@ export default function SignUpPage() {
                 <button
                   type="submit"
                   disabled={loading || !isFormReady()}
-                  className={`w-full rounded-lg text-white font-medium py-3 px-4 transition-colors ${
+                  className={`w-full rounded-lg text-white font-medium py-2.5 px-4 transition-colors ${
                     isFormReady() && !loading
                       ? 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                       : 'bg-slate-400 cursor-not-allowed'
