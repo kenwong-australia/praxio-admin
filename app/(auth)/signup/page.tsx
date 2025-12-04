@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -27,6 +28,8 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [phoneNonDigitWarning, setPhoneNonDigitWarning] = useState(false);
   const [abnNonDigitWarning, setAbnNonDigitWarning] = useState(false);
+  const [abnLookupLoading, setAbnLookupLoading] = useState(false);
+  const [abnValidated, setAbnValidated] = useState<boolean | null>(null);
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -83,6 +86,10 @@ export default function SignUpPage() {
       }
       const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
       setFormData(prev => ({ ...prev, [name]: digitsOnly }));
+      // Reset validation status when ABN changes
+      if (digitsOnly.length !== 11) {
+        setAbnValidated(null);
+      }
     } 
     // Format Australian phone number
     else if (name === 'phone') {
@@ -105,6 +112,72 @@ export default function SignUpPage() {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+
+  // ABN Lookup Effect - triggers when ABN reaches 11 digits
+  useEffect(() => {
+    const lookupABN = async (abn: string, currentCompany: string) => {
+      // Only lookup if ABN is exactly 11 digits
+      if (abn.length !== 11 || abnLookupLoading) {
+        return;
+      }
+
+      setAbnLookupLoading(true);
+      const toastId = toast.loading('Validating ABN...', {
+        description: 'Checking Australian Business Register',
+      });
+
+      try {
+        const response = await fetch('/api/abn-lookup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ abn }),
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.valid) {
+          setAbnValidated(true);
+          toast.success('ABN Verified', {
+            id: toastId,
+            description: data.businessName 
+              ? `Business: ${data.businessName}`
+              : 'ABN is valid and registered',
+            duration: 5000,
+          });
+
+          // Auto-fill company name if found and company field is empty
+          if (data.businessName && !currentCompany.trim()) {
+            setFormData(prev => ({ ...prev, company: data.businessName }));
+          }
+        } else {
+          setAbnValidated(false);
+          toast.error('ABN Not Found', {
+            id: toastId,
+            description: data.error || 'This ABN is not registered in the Australian Business Register',
+            duration: 5000,
+          });
+        }
+      } catch (error) {
+        setAbnValidated(false);
+        toast.error('ABN Lookup Failed', {
+          id: toastId,
+          description: error instanceof Error ? error.message : 'Unable to verify ABN at this time',
+          duration: 5000,
+        });
+      } finally {
+        setAbnLookupLoading(false);
+      }
+    };
+
+    // Debounce the lookup by 500ms after user stops typing
+    const timeoutId = setTimeout(() => {
+      lookupABN(formData.abn, formData.company);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.abn, formData.company, abnLookupLoading]);
 
   const getMissingFields = (): string[] => {
     const missing: string[] = [];
@@ -398,9 +471,20 @@ export default function SignUpPage() {
                     <label className="block text-xs font-medium text-slate-700">
                       ABN
                     </label>
-                    <span className="text-xs text-slate-500">
-                      {formData.abn.length}/11
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {abnLookupLoading && (
+                        <span className="text-xs text-slate-500 animate-pulse">Validating...</span>
+                      )}
+                      {abnValidated === true && !abnLookupLoading && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      )}
+                      {abnValidated === false && !abnLookupLoading && (
+                        <span className="text-xs text-red-600">Not found</span>
+                      )}
+                      <span className="text-xs text-slate-500">
+                        {formData.abn.length}/11
+                      </span>
+                    </div>
                   </div>
                   <input
                     type="text"
@@ -409,11 +493,16 @@ export default function SignUpPage() {
                     onChange={handleChange}
                     placeholder="Enter your 11 digit ABN"
                     maxLength={11}
+                    disabled={abnLookupLoading}
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
                       errors.abn
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
+                        : abnValidated === true
+                        ? 'border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500'
+                        : abnValidated === false
+                        ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                    }`}
+                    } ${abnLookupLoading ? 'opacity-60 cursor-wait' : ''}`}
                   />
                   {abnNonDigitWarning && (
                     <p className="mt-0.5 text-xs text-amber-600">Please enter only digits</p>
