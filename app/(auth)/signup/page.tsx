@@ -25,6 +25,8 @@ export default function SignUpPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [phoneNonDigitWarning, setPhoneNonDigitWarning] = useState(false);
+  const [abnNonDigitWarning, setAbnNonDigitWarning] = useState(false);
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -74,11 +76,23 @@ export default function SignUpPage() {
     
     // Format ABN (only digits, max 11)
     if (name === 'abn') {
+      const hasNonDigits = /\D/.test(value);
+      if (hasNonDigits) {
+        setAbnNonDigitWarning(true);
+        setTimeout(() => setAbnNonDigitWarning(false), 3000);
+      }
       const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
       setFormData(prev => ({ ...prev, [name]: digitsOnly }));
     } 
     // Format Australian phone number
     else if (name === 'phone') {
+      // Check if user is trying to type non-digits (excluding formatting characters)
+      // Compare the raw input (without formatting) to detect non-digit characters
+      const rawInput = value.replace(/[()\s-]/g, '');
+      if (rawInput.length > 0 && /\D/.test(rawInput)) {
+        setPhoneNonDigitWarning(true);
+        setTimeout(() => setPhoneNonDigitWarning(false), 3000);
+      }
       const formatted = formatAustralianPhone(value);
       setFormData(prev => ({ ...prev, [name]: formatted }));
     } 
@@ -90,6 +104,26 @@ export default function SignUpPage() {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const getMissingFields = (): string[] => {
+    const missing: string[] = [];
+    
+    if (!formData.firstName.trim()) missing.push('First name');
+    if (!formData.lastName.trim()) missing.push('Last name');
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) missing.push('Valid email');
+    if (!formData.phone.trim() || !validateAustralianPhone(formData.phone)) missing.push('Valid phone number');
+    if (!formData.company.trim()) missing.push('Company');
+    if (!formData.abn.trim() || formData.abn.length !== 11) missing.push('11-digit ABN');
+    if (!formData.password || formData.password.length < 8) missing.push('Password (min 8 characters)');
+    if (!formData.confirmPassword || formData.password !== formData.confirmPassword) missing.push('Matching password confirmation');
+    if (!agreedToTerms) missing.push('Terms & Conditions agreement');
+    
+    return missing;
+  };
+
+  const isFormReady = (): boolean => {
+    return getMissingFields().length === 0;
   };
 
   const validateForm = () => {
@@ -354,6 +388,9 @@ export default function SignUpPage() {
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
+                  {phoneNonDigitWarning && (
+                    <p className="mt-1 text-xs text-amber-600">Please enter only digits</p>
+                  )}
                   {errors.phone && (
                     <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
                   )}
@@ -404,6 +441,9 @@ export default function SignUpPage() {
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
+                  {abnNonDigitWarning && (
+                    <p className="mt-1 text-xs text-amber-600">Please enter only digits</p>
+                  )}
                   {errors.abn && (
                     <p className="mt-1 text-xs text-red-600">{errors.abn}</p>
                   )}
@@ -506,11 +546,11 @@ export default function SignUpPage() {
                     />
                     <span className="text-sm text-slate-700">
                       Agree to{' '}
-                      <Link href="/terms" className="text-blue-600 hover:underline">
+                      <Link href="https://www.praxio-ai.com.au/terms-conditions" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         Terms and Conditions
                       </Link>
                       {' '}and{' '}
-                      <Link href="/privacy" className="text-blue-600 hover:underline">
+                      <Link href="https://www.praxio-ai.com.au/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         Privacy Policy
                       </Link>
                     </span>
@@ -520,11 +560,39 @@ export default function SignUpPage() {
                   )}
                 </div>
 
+                {/* Form Completion Helper */}
+                {!isFormReady() && !loading && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm font-medium text-amber-900 mb-1.5">
+                      Complete the following to continue:
+                    </p>
+                    <ul className="text-xs text-amber-800 space-y-1 list-disc list-inside">
+                      {getMissingFields().map((field, index) => (
+                        <li key={index}>{field}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Success Message when form is ready */}
+                {isFormReady() && !loading && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-900 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      All fields completed! You can now create your account.
+                    </p>
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={loading || !isFormReady()}
+                  className={`w-full rounded-lg text-white font-medium py-3 px-4 transition-colors ${
+                    isFormReady() && !loading
+                      ? 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                      : 'bg-slate-400 cursor-not-allowed'
+                  }`}
                 >
                   {loading ? 'Creating Account...' : 'Create Account and Start 7 Day Trial'}
                 </button>
