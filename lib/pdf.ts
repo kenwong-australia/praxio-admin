@@ -58,6 +58,7 @@ export async function exportElementToPdf(el: HTMLElement, opts: PdfOptions = {})
       margin: marginMm,
       html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'mm', format: paper.format, orientation: paper.orientation },
+      // @ts-expect-error - html2pdf.js types don't include pagebreak option
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     })
     .save();

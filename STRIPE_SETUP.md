@@ -2,14 +2,14 @@
 
 ## Environment Variable Setup
 
-### For Netlify (Production)
+### For Vercel (Production)
 
-1. Go to your Netlify dashboard
-2. Navigate to: **Site settings** → **Environment variables**
+1. Go to your Vercel dashboard
+2. Navigate to your project → **Settings** → **Environment Variables**
 3. Add a new variable:
    - **Key**: `STRIPE_SECRET_KEY`
    - **Value**: Your Stripe live secret key (starts with `sk_live_...`)
-   - **Scopes**: Select "All scopes" or "Production"
+   - **Environments**: Select "Production", "Preview", and/or "Development" as needed
 
 ### For Local Development
 
@@ -78,7 +78,7 @@ When creating a customer, the following data is sent to Stripe:
 
 ## Environment Variables Required
 
-### In Netlify
+### In Vercel
 
 1. **STRIPE_SECRET_KEY** (already set ✅)
    - Your Stripe live secret key
@@ -140,9 +140,9 @@ The checkout session is created with:
 
 ## Next Steps
 
-1. ✅ Set up STRIPE_SECRET_KEY in Netlify
-2. ⏳ Set up NEXT_PUBLIC_STRIPE_PRICE_MONTHLY in Netlify
-3. ⏳ Set up NEXT_PUBLIC_STRIPE_PRICE_YEARLY in Netlify
+1. ✅ Set up STRIPE_SECRET_KEY in Vercel
+2. ⏳ Set up NEXT_PUBLIC_STRIPE_PRICE_MONTHLY in Vercel
+3. ⏳ Set up NEXT_PUBLIC_STRIPE_PRICE_YEARLY in Vercel
 4. ✅ Customer creation API
 5. ✅ Checkout session API endpoint
 6. ✅ Checkout redirect implemented
@@ -164,9 +164,10 @@ curl -X POST http://localhost:3000/api/stripe/create-customer \
 ## Troubleshooting
 
 ### Error: "STRIPE_SECRET_KEY environment variable is not set"
-- Make sure you've added the environment variable in Netlify
+- Make sure you've added the environment variable in Vercel
 - For local dev, ensure `.env.local` exists and has the key
 - Restart your dev server after adding the variable
+- After adding variables in Vercel, redeploy your application for changes to take effect
 
 ### Error: "Failed to create Stripe customer"
 - Check that your Stripe secret key is valid

@@ -28,6 +28,8 @@ export default function UsersPage() {
     pageSize: 25,
   });
 
+  // Request ID tracking prevents race conditions
+  // Only applies results from the most recent request
   const requestIdRef = useRef(0);
 
   const loadUsers = async () => {
@@ -43,7 +45,8 @@ export default function UsersPage() {
       if (requestId !== requestIdRef.current) return;
       console.log('Users result:', usersResult);
       console.log('Stats result:', statsResult);
-      // Apply a defensive client-side filter mirror to avoid any server/query edge cases
+      // Client-side filtering as backup to server-side filters
+      // Handles edge cases where server filters might miss data
       let rows = usersResult.rows as User[];
       if ((filters as any).status) {
         const s = String((filters as any).status).trim().toLowerCase();

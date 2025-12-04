@@ -6,7 +6,9 @@ import {
   Auth,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+
 // Firebase Admin SDK imports (server-side only)
+// Dynamically imported to avoid bundling in client-side code
 let initializeAdminApp: any;
 let getAdminApps: any;
 let App: any;
@@ -15,6 +17,7 @@ let getFirebaseAdminAuth: any;
 let getAdminFirestore: any;
 
 // Dynamically import Firebase Admin SDK only on server side
+// Prevents client-side bundle from including Admin SDK (security + bundle size)
 if (typeof window === 'undefined') {
   const firebaseAdmin = require('firebase-admin/app');
   const firebaseAdminAuth = require('firebase-admin/auth');
@@ -74,6 +77,7 @@ export function getFirebaseAdmin() {
 
   const adminConfig = {
     projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FB_PROJECT_ID || '',
+    // Private key may be stored with escaped newlines in env vars, need to unescape
     privateKey: process.env.FIREBASE_PRIVATE_KEY
       ?.replace(/\\n/g, '\n')
       ?.replace(/"/g, '') || '',

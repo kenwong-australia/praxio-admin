@@ -208,7 +208,7 @@ export default function PricingPageRoute() {
     );
   }
 
-  // Determine which date to show (trial end or renewal date)
+  // Show trial end date if in trial, otherwise show renewal date for active subscriptions
   const relevantDate = userData?.stripe_trial_end_date || userData?.stripe_plan_renewal_date;
 
   return (

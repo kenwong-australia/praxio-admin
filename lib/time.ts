@@ -5,10 +5,14 @@ import tz from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(tz);
 
+// All dates are handled in Australia/Sydney timezone
+// Converted to UTC for database storage, displayed in Sydney time
 const SYD = 'Australia/Sydney';
 
 export const nowSydney = () => dayjs().tz(SYD);
 
+// Returns UTC ISO strings for last 30 days in Sydney timezone
+// Used for date range queries (databases store UTC)
 export const rangeLast30Sydney = () => {
   const to = nowSydney().endOf('day');
   const from = to.clone().subtract(30, 'day').startOf('day');

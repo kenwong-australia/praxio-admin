@@ -1,9 +1,11 @@
 'use server';
+// Server Actions - run on server, can be called from client components
 import { svc, ingest } from '@/lib/supabase';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase';
 import { z } from 'zod';
 import { User, UserFilters, UserStats } from '@/lib/types';
 
+// Validation schema for date range and pagination filters
 const F = z.object({
   email: z.string().nullable(),
   fromISO: z.string(),
@@ -75,7 +77,8 @@ export async function getKPIs(input: unknown) {
     const totalFeedback = feedbacks.length;
     const avgFeedback = totalFeedback > 0 ? feedbacks.reduce((a, b) => a + b, 0) / totalFeedback : 0;
 
-    // Engagement = (# chats + # user messages) / # chats
+    // Engagement formula: (chats + user messages) / chats
+    // Higher ratio = more user interaction per chat session
     const engagement = totalScenarios > 0 ? (totalScenarios + userMessageCount) / totalScenarios : 0;
 
     return {
@@ -284,6 +287,10 @@ export async function updateChatDraft(chatId: number, draft: string) {
   }
 }
 
+/**
+ * Send draft email via Loops.so transactional email service
+ * Requires LOOPS_API_KEY environment variable
+ */
 export async function sendDraftEmail(email: string, htmlContent: string, draft: string, research: string | null, citations: string) {
   try {
     const loopsApiKey = process.env.LOOPS_API_KEY;
@@ -448,9 +455,8 @@ export async function getUsers(input: unknown) {
     
     console.log('Mapped users:', users.length);
     
-    // ==============================
-    // Filter: only show records with subscription status data
-    // ==============================
+    // Filter: only show users with subscription status
+    // Removes users without Stripe subscription data from results
     const filteredUsers = users.filter(user => {
       const status = (user.stripe_subscription_status || '').trim();
       return status.length > 0;
@@ -459,9 +465,8 @@ export async function getUsers(input: unknown) {
     console.log('Filtered users (with subscription status):', filteredUsers.length, '(removed', users.length - filteredUsers.length, 'records without status)');
     users = filteredUsers;
     
-    // ==============================
-    // Supabase presence (per page)
-    // ==============================
+    // Check if users exist in Supabase (cross-database validation)
+    // Marks users with in_supabase flag for UI display
     try {
       const uids = Array.from(new Set((users.map((u: User) => u.uid).filter(Boolean))));
       const emails = Array.from(new Set((users.map((u: User) => u.email).filter(Boolean))));
@@ -495,9 +500,8 @@ export async function getUsers(input: unknown) {
       console.error('Supabase presence check failed:', e);
     }
 
-    // ======================================
-    // Supabase chat counts (per page, RPC)
-    // ======================================
+    // Get chat counts from Supabase using RPC function
+    // More efficient than individual queries per user
     try {
       const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
       if (uids.length > 0) {
@@ -515,9 +519,8 @@ export async function getUsers(input: unknown) {
       console.error('Supabase chat count fetch failed:', e);
     }
 
-    // ======================================
-    // Latest chat created_at (per page, by email)
-    // ======================================
+    // Get latest chat timestamp per email from Supabase
+    // Used to show most recent activity for each user
     try {
       const emails = Array.from(new Set((users.map(u => u.email).filter(Boolean))));
       if (emails.length > 0) {
@@ -663,6 +666,7 @@ export async function getUserDetails(uid: string) {
     }
     
     const userData = userDoc.data() || {};
+    // Convert Firestore Timestamp to Date (Firestore stores as Timestamp objects)
     const toDateSafe = (v: any) => (v && typeof v?.toDate === 'function') ? v.toDate() : undefined;
     return {
       uid: String(userDoc.id),

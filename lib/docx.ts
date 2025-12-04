@@ -207,7 +207,9 @@ export async function exportElementToDocx(data: DocxExportData, opts: DocxOption
 
   // Generate and download the document
   const buffer = await Packer.toBuffer(doc);
-  const blob = new Blob([buffer], { 
+  // Buffer extends Uint8Array and is directly compatible with Blob
+  // Type assertion needed for TypeScript, but no runtime copy is created
+  const blob = new Blob([buffer as BlobPart], { 
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
   });
   

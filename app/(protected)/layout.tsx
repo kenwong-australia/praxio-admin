@@ -78,6 +78,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
         const subscriptionStatus = data?.stripe_subscription_status;
         
         // Convert Firestore timestamps to Date objects
+        // Handles both Firestore Timestamp objects and native Date objects
         const toDateSafe = (v: any) => {
           if (!v) return undefined;
           if (v instanceof Date) return v;
@@ -95,13 +96,11 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           return;
         }
 
-        // For non-admin users, check trial expiration
-        // Redirect to pricing if:
-        // 1. role IS NOT "admin" (already checked above) ✓
-        // 2. stripe_subscription_status IS NOT "active" ✓
-        // 3. stripe_trial_end_date < current datetime OR stripe_plan_renewal_date < current datetime
-        //    OR both dates are missing (user needs to subscribe)
-        //    (dates in the past indicate expiration)
+        // For non-admin users, check trial/subscription status
+        // Redirect to pricing if subscription is not active AND:
+        // - Trial has expired (trial_end_date < now), OR
+        // - Renewal date has passed (renewal_date < now), OR  
+        // - Both dates are missing (user needs to subscribe)
         const isNotActive = subscriptionStatus !== 'active';
         const trialExpired = trialEndDate && trialEndDate < now;
         const renewalExpired = renewalDate && renewalDate < now;

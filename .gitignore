@@ -31,6 +31,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# bolt (AI development tool)
+.bolt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

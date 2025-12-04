@@ -194,8 +194,9 @@ export default function PraxioPage() {
     }
   }, [selectedChat?.id]);
 
-  // Convert markdown to HTML for clipboard (with inline styles for email/Word compatibility)
+  // Convert markdown to HTML with inline styles for email/Word compatibility
   // Uses remark (same parser as ReactMarkdown) for consistency
+  // Inline styles required because email clients and Word don't support external CSS
   const markdownToHtml = (markdown: string): string => {
     if (!markdown) return '';
     
@@ -236,7 +237,8 @@ export default function PraxioPage() {
     }
   };
 
-  // Convert markdown to RTF (Rich Text Format) for Word/Google Docs
+  // Convert markdown to RTF (Rich Text Format) for Word/Google Docs compatibility
+  // RTF is a legacy format but widely supported for document export
   const markdownToRtf = (markdown: string): string => {
     if (!markdown) return '';
     

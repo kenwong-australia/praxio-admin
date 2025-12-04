@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     const doc = new Document({ sections: [{ children: sections }] });
     const buffer = await Packer.toBuffer(doc);
 
-    return new Response(buffer, {
+    // Buffer extends Uint8Array and is directly compatible with Response
+    // Type assertion needed for TypeScript, but no runtime copy is created
+    return new Response(buffer as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${(filename || 'chats_selected')}.docx"`,
