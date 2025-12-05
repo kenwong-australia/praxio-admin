@@ -288,6 +288,45 @@ export async function updateChatDraft(chatId: number, draft: string) {
 }
 
 /**
+ * Update chat feedback in Supabase
+ * @param chatId - The chat ID to update
+ * @param feedback - Feedback value: 1 for upvote, -1 for downvote
+ * @param commentSelection - Array of selected checkbox options (saved to comment_selection text array field)
+ * @param commentAdditional - Free text comments (saved to comment_additional text field)
+ */
+export async function updateChatFeedback(
+  chatId: number, 
+  feedback: number, 
+  commentSelection?: string[] | null, 
+  commentAdditional?: string | null
+) {
+  try {
+    const updateData: any = { feedback };
+    
+    // Save selected checkboxes to comment_selection (text array field)
+    if (commentSelection !== undefined) {
+      updateData.comment_selection = commentSelection.length > 0 ? commentSelection : null;
+    }
+    
+    // Save free text to comment_additional (text field)
+    if (commentAdditional !== undefined) {
+      updateData.comment_additional = commentAdditional?.trim() || null;
+    }
+    
+    const { error } = await svc()
+      .from('chat')
+      .update(updateData)
+      .eq('id', chatId);
+    
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating chat feedback:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
  * Send draft email via Loops.so transactional email service
  * Requires LOOPS_API_KEY environment variable
  * All dataVariables are optional and only included if provided

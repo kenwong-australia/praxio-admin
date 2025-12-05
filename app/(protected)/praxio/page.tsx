@@ -12,9 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2 } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
@@ -92,6 +93,7 @@ export default function PraxioPage() {
   });
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -664,6 +666,51 @@ export default function PraxioPage() {
     if (!prompt.trim()) return;
     // Will be wired up later
     console.log('Run research:', prompt);
+  };
+
+  const handleUpvote = async () => {
+    if (!fullChatData?.id) return;
+    
+    try {
+      const result = await updateChatFeedback(fullChatData.id, 1);
+      if (result.success) {
+        // Update local state
+        setFullChatData(prev => prev ? { ...prev, feedback: 1 } : null);
+        toast.success('Thank you for your feedback!', {
+          duration: 2000,
+        });
+      } else {
+        toast.error('Failed to submit feedback', {
+          description: result.error || 'Please try again.',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting upvote:', error);
+      toast.error('Failed to submit feedback', {
+        description: 'An unexpected error occurred.',
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleDownvote = () => {
+    if (!fullChatData?.id) return;
+    setFeedbackDialogOpen(true);
+  };
+
+  const handleFeedbackSubmitted = async () => {
+    // Refresh chat data to get updated feedback
+    if (fullChatData?.id) {
+      try {
+        const data = await getChatById(fullChatData.id);
+        if (data) {
+          setFullChatData(data);
+        }
+      } catch (error) {
+        console.error('Error refreshing chat data:', error);
+      }
+    }
   };
 
   const handleSearch = (query: string) => {
@@ -1327,6 +1374,38 @@ export default function PraxioPage() {
                                   <span className="font-medium text-sm">Research</span>
                                 </div>
                                 <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={`h-6 w-6 ${
+                                      fullChatData.feedback === 1
+                                        ? 'text-green-600 hover:text-green-700'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpvote();
+                                    }}
+                                    title="Vote up"
+                                  >
+                                    <ThumbsUp className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={`h-6 w-6 ${
+                                      fullChatData.feedback === -1
+                                        ? 'text-red-600 hover:text-red-700'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownvote();
+                                    }}
+                                    title="Vote down"
+                                  >
+                                    <ThumbsDown className="h-3.5 w-3.5" />
+                                  </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -2135,6 +2214,16 @@ export default function PraxioPage() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Feedback Dialog */}
+      {fullChatData?.id && (
+        <FeedbackDialog
+          isOpen={feedbackDialogOpen}
+          onClose={() => setFeedbackDialogOpen(false)}
+          chatId={fullChatData.id}
+          onFeedbackSubmitted={handleFeedbackSubmitted}
+        />
+      )}
     </div>
   );
 }

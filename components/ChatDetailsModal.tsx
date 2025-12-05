@@ -6,11 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { toSydneyDateTime } from '@/lib/time';
-import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool, MessageSquare, MessageCircle } from 'lucide-react';
+import { Clock, Mail, Hash, ExternalLink, FileText, Search, HelpCircle, PenTool, MessageSquare, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getConversationsByChatId } from '@/app/actions';
+import { getConversationsByChatId, updateChatFeedback, getChatById } from '@/app/actions';
 import { ConversationRow } from '@/lib/types';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { toast } from 'sonner';
 
 interface ChatDetailsModalProps {
   isOpen: boolean;
@@ -26,12 +29,19 @@ interface Citation {
 export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModalProps) {
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [localChatData, setLocalChatData] = useState(chatData);
+
+  // Update local chat data when chatData prop changes
+  useEffect(() => {
+    setLocalChatData(chatData);
+  }, [chatData]);
 
   // Fetch conversations when modal opens
   useEffect(() => {
-    if (isOpen && chatData?.id) {
+    if (isOpen && localChatData?.id) {
       setLoadingConversations(true);
-      getConversationsByChatId(chatData.id)
+      getConversationsByChatId(localChatData.id)
         .then((data) => {
           setConversations(data);
         })
@@ -45,9 +55,54 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     } else {
       setConversations([]);
     }
-  }, [isOpen, chatData?.id]);
+  }, [isOpen, localChatData?.id]);
 
-  if (!chatData) return null;
+  const handleUpvote = async () => {
+    if (!localChatData?.id) return;
+    
+    try {
+      const result = await updateChatFeedback(localChatData.id, 1);
+      if (result.success) {
+        // Update local state
+        setLocalChatData(prev => prev ? { ...prev, feedback: 1 } : null);
+        toast.success('Thank you for your feedback!', {
+          duration: 2000,
+        });
+      } else {
+        toast.error('Failed to submit feedback', {
+          description: result.error || 'Please try again.',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting upvote:', error);
+      toast.error('Failed to submit feedback', {
+        description: 'An unexpected error occurred.',
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleDownvote = () => {
+    if (!localChatData?.id) return;
+    setFeedbackDialogOpen(true);
+  };
+
+  const handleFeedbackSubmitted = async () => {
+    // Refresh chat data to get updated feedback
+    if (localChatData?.id) {
+      try {
+        const data = await getChatById(localChatData.id);
+        if (data) {
+          setLocalChatData(data);
+        }
+      } catch (error) {
+        console.error('Error refreshing chat data:', error);
+      }
+    }
+  };
+
+  if (!localChatData) return null;
 
   // Parse citations from Supabase JSONB field (already parsed by client)
   const parseCitations = (usedcitationsArray: any): Citation[] => {
@@ -89,15 +144,16 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     return [];
   };
 
-  const citations = parseCitations(chatData.usedcitationsArray || chatData.usedCitationsArray);
+  const citations = parseCitations(localChatData.usedcitationsArray || localChatData.usedCitationsArray);
   
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-h-[90vh] max-w-[1200px] lg:max-w-[1400px] p-0 overflow-hidden rounded-xl">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-xl font-semibold flex items-center gap-2">
             <Hash className="h-5 w-5 text-blue-600" />
-            Chat Details #{chatData.id}
+            Chat Details #{localChatData.id}
           </DialogTitle>
         </DialogHeader>
 
@@ -144,7 +200,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Created</p>
-                      <p className="font-medium">{toSydneyDateTime(chatData.created_at)}</p>
+                      <p className="font-medium">{toSydneyDateTime(localChatData.created_at)}</p>
                     </div>
                   </div>
                 </div>
@@ -154,7 +210,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">User Email</p>
-                      <p className="font-medium">{chatData.email}</p>
+                      <p className="font-medium">{localChatData.email}</p>
                     </div>
                   </div>
 
@@ -163,20 +219,20 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     <div>
                       <p className="text-sm text-muted-foreground">Processing Time</p>
                       <p className="font-medium">
-                        {chatData.processTime ? `${chatData.processTime.toFixed(2)}s` : 'N/A'}
+                        {localChatData.processTime ? `${localChatData.processTime.toFixed(2)}s` : 'N/A'}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {chatData.title?.trim() && (
+              {localChatData.title?.trim() && (
                 <div className="border-t pt-4">
                   <div className="flex items-center gap-3 mb-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">Title</p>
                   </div>
-                  <p className="font-medium text-lg">{chatData.title}</p>
+                  <p className="font-medium text-lg">{localChatData.title}</p>
                 </div>
               )}
             </TabsContent>
@@ -185,7 +241,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
               <ScrollArea className="h-[60vh]">
                 <div className="px-6">
                   <Accordion type="multiple" defaultValue={["scenario", "research", "citations", "questions"]} className="space-y-2">
-                  {chatData.scenario?.trim() && (
+                  {localChatData.scenario?.trim() && (
                     <AccordionItem value="scenario" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
@@ -195,23 +251,53 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
                         <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
-                          <ReactMarkdown>{chatData.scenario}</ReactMarkdown>
+                          <ReactMarkdown>{localChatData.scenario}</ReactMarkdown>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
                   )}
 
-                  {chatData.research?.trim() && (
+                  {localChatData.research?.trim() && (
                     <AccordionItem value="research" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          <Search className="h-4 w-4 text-green-600" />
-                          <span className="font-medium">Research</span>
+                        <div className="flex items-center justify-between w-full pr-2">
+                          <div className="flex items-center gap-2">
+                            <Search className="h-4 w-4 text-green-600" />
+                            <span className="font-medium">Research</span>
+                          </div>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-7 w-7 ${
+                                localChatData.feedback === 1
+                                  ? 'text-green-600 hover:text-green-700'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              onClick={handleUpvote}
+                              title="Vote up"
+                            >
+                              <ThumbsUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-7 w-7 ${
+                                localChatData.feedback === -1
+                                  ? 'text-red-600 hover:text-red-700'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              onClick={handleDownvote}
+                              title="Vote down"
+                            >
+                              <ThumbsDown className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
                         <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                          <ReactMarkdown>{chatData.research}</ReactMarkdown>
+                          <ReactMarkdown>{localChatData.research}</ReactMarkdown>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -256,7 +342,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     </AccordionItem>
                   )}
 
-                  {chatData.questions?.trim() && (
+                  {localChatData.questions?.trim() && (
                     <AccordionItem value="questions" className="border rounded-lg px-4">
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-2">
@@ -266,7 +352,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                       </AccordionTrigger>
                       <AccordionContent className="pt-2">
                         <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2">
-                          <ReactMarkdown>{chatData.questions}</ReactMarkdown>
+                          <ReactMarkdown>{localChatData.questions}</ReactMarkdown>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -279,9 +365,9 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
             <TabsContent value="draft" className="mt-4 flex-1 min-h-0">
               <ScrollArea className="h-[60vh]">
                 <div className="px-6">
-                  {chatData.draft ? (
+                  {localChatData.draft ? (
                     <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                      <ReactMarkdown>{chatData.draft ?? ''}</ReactMarkdown>
+                      <ReactMarkdown>{localChatData.draft ?? ''}</ReactMarkdown>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center h-32 text-muted-foreground">
@@ -358,9 +444,9 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                         Feedback Rating
                       </h3>
                       <div className="flex items-center gap-3">
-                        {chatData.feedback === 1 ? (
+                        {localChatData.feedback === 1 ? (
                           <Badge className="bg-green-500 text-white">👍 Positive</Badge>
-                        ) : chatData.feedback === -1 ? (
+                        ) : localChatData.feedback === -1 ? (
                           <Badge className="bg-red-500 text-white">👎 Negative</Badge>
                         ) : (
                           <Badge variant="outline">No feedback</Badge>
@@ -369,11 +455,11 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                     </div>
 
                     {/* Comment Selection */}
-                    {chatData.comment_selection && chatData.comment_selection.length > 0 && (
+                    {localChatData.comment_selection && localChatData.comment_selection.length > 0 && (
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold">Selected Comments</h3>
                         <div className="flex flex-wrap gap-2">
-                          {chatData.comment_selection.map((comment: string, index: number) => (
+                          {localChatData.comment_selection.map((comment: string, index: number) => (
                             <Badge key={index} variant="outline" className="text-sm">
                               {comment}
                             </Badge>
@@ -387,7 +473,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
                       <h3 className="text-lg font-semibold">Additional Comments</h3>
                       <div className="p-4 bg-muted/50 rounded-lg">
                         <p>
-                          {chatData.comment_additional?.trim() || 'No additional comments'}
+                          {localChatData.comment_additional?.trim() || 'No additional comments'}
                         </p>
                       </div>
                     </div>
@@ -399,5 +485,16 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* Feedback Dialog */}
+    {localChatData?.id && (
+      <FeedbackDialog
+        isOpen={feedbackDialogOpen}
+        onClose={() => setFeedbackDialogOpen(false)}
+        chatId={localChatData.id}
+        onFeedbackSubmitted={handleFeedbackSubmitted}
+      />
+    )}
+  </>
   );
 }
