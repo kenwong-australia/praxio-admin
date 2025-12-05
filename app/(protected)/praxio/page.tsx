@@ -675,7 +675,7 @@ export default function PraxioPage() {
       const result = await updateChatFeedback(fullChatData.id, 1);
       if (result.success) {
         // Update local state
-        setFullChatData(prev => prev ? { ...prev, feedback: 1 } : null);
+        setFullChatData((prev: FullChatData | null) => prev ? { ...prev, feedback: 1 } : null);
         toast.success('Thank you for your feedback!', {
           duration: 2000,
         });

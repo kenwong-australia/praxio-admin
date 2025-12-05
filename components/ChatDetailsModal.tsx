@@ -64,7 +64,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
       const result = await updateChatFeedback(localChatData.id, 1);
       if (result.success) {
         // Update local state
-        setLocalChatData(prev => prev ? { ...prev, feedback: 1 } : null);
+        setLocalChatData((prev: any) => prev ? { ...prev, feedback: 1 } : null);
         toast.success('Thank you for your feedback!', {
           duration: 2000,
         });
