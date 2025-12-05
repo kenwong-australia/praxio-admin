@@ -1187,7 +1187,7 @@ export default function PraxioPage() {
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
         {/* Previous Research Sidebar - 30% */}
         <ResizablePanel defaultSize={30} minSize={16} maxSize={40}>
-          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[200px]">
+          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[200px] max-w-full overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b border-slate-200">
               <Button
@@ -1211,8 +1211,8 @@ export default function PraxioPage() {
             </div>
 
             {/* Chat List */}
-            <ScrollArea className="flex-1">
-              <div className="p-2 space-y-1">
+            <ScrollArea className="flex-1 min-w-0">
+              <div className="p-2 space-y-1 min-w-0">
                 {loadingChats ? (
                   <div className="p-4 text-center text-muted-foreground text-sm">
                     Loading chats...
@@ -1226,17 +1226,17 @@ export default function PraxioPage() {
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
-                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full ${
+                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors min-w-0 max-w-full ${
                       selectedChat?.id === chat.id
                         ? 'bg-blue-50 border border-blue-200'
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="w-full min-w-0 overflow-hidden">
-                      <div className="font-medium text-xs text-foreground truncate w-full">
+                    <div className="min-w-0 max-w-full overflow-hidden">
+                      <div className="font-medium text-xs text-foreground truncate min-w-0">
                         {chat.title}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">
+                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate min-w-0">
                         {toSydneyDateTime(chat.created_at)}
                       </div>
                     </div>
