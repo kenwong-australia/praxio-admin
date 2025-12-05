@@ -290,8 +290,16 @@ export async function updateChatDraft(chatId: number, draft: string) {
 /**
  * Send draft email via Loops.so transactional email service
  * Requires LOOPS_API_KEY environment variable
+ * All dataVariables are optional and only included if provided
  */
-export async function sendDraftEmail(email: string, htmlContent: string, draft: string, research: string | null, citations: string) {
+export async function sendDraftEmail(
+  email: string,
+  draft?: string | null,
+  research?: string | null,
+  citations?: string | null,
+  questions?: string | null,
+  conversation?: string | null
+) {
   try {
     const loopsApiKey = process.env.LOOPS_API_KEY;
     
@@ -300,6 +308,14 @@ export async function sendDraftEmail(email: string, htmlContent: string, draft: 
       return { success: false, error: 'Email service not configured' };
     }
 
+    // Build dataVariables object with only provided values
+    const dataVariables: Record<string, string> = {};
+    if (draft) dataVariables.draft = draft;
+    if (research) dataVariables.research = research;
+    if (citations) dataVariables.citations = citations;
+    if (questions) dataVariables.questions = questions;
+    if (conversation) dataVariables.conversation = conversation;
+
     const response = await fetch('https://app.loops.so/api/v1/transactional', {
       method: 'POST',
       headers: {
@@ -307,13 +323,9 @@ export async function sendDraftEmail(email: string, htmlContent: string, draft: 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        transactionalId: 'cmahge5fe0tykzun2jp2e96gf',
+        transactionalId: 'cmisrvbja2bdhyt0imbtrhg0v',
         email,
-        dataVariables: {
-          draft: htmlContent, // Send compiled HTML as draft
-          research: research || '',
-          citations: citations || '',
-        },
+        dataVariables,
       }),
     });
 

@@ -88,6 +88,7 @@ export default function PraxioPage() {
     includeResearch: false,
     includeCitations: false,
     includeQuestions: false,
+    includeConversation: false,
   });
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -893,25 +894,52 @@ export default function PraxioPage() {
       return;
     }
 
-    const compiledContent = getCompiledOutput();
-    const htmlContent = markdownToHtml(compiledContent);
+    // Prepare data for loops.so template - all optional, fetched from chatID record
+    // Draft from chat record (or use draftContent if user has edited it)
+    const draftFromRecord = fullChatData?.draft || '';
+    const draftHtml = draftFromRecord.trim() 
+      ? markdownToHtml(draftFromRecord)
+      : null;
     
-    // Prepare data for loops.so template
-    const draftHtml = markdownToHtml(draftContent);
-    const researchHtml = compileOptions.includeResearch && fullChatData?.research 
+    // Research from chat record
+    const researchHtml = compileOptions.includeResearch && fullChatData?.research?.trim()
       ? markdownToHtml(fullChatData.research) 
-      : '';
+      : null;
+    
+    // Citations from chat record (usedcitationsArray)
     const citationsText = compileOptions.includeCitations && citations.length > 0
       ? citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n')
-      : '';
+      : null;
+    
+    // Questions from chat record
+    const questionsHtml = compileOptions.includeQuestions && fullChatData?.questions?.trim()
+      ? markdownToHtml(fullChatData.questions)
+      : null;
+    
+    // Format conversation from conversations array
+    let conversationHtml: string | null = null;
+    if (compileOptions.includeConversation && conversations.length > 0) {
+      const conversationParts = conversations.map((conv) => {
+        const isUser = conv.type === 'user';
+        const role = isUser ? 'User' : 'Assistant';
+        const contentHtml = markdownToHtml(conv.content || '');
+        return `<div style="margin-bottom: 16px; padding: 12px; border-radius: 8px; ${isUser ? 'background-color: #f3f4f6; text-align: left;' : 'background-color: #eff6ff; text-align: right;'}">
+          <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 8px; ${isUser ? 'text-align: left;' : 'text-align: right;'}">${role}</div>
+          <div style="font-size: 14px; line-height: 1.5; word-wrap: break-word;">${contentHtml}</div>
+          <div style="font-size: 10px; color: #6b7280; margin-top: 8px; ${isUser ? 'text-align: left;' : 'text-align: right;'}">${toSydneyDateTime(conv.created_at)}</div>
+        </div>`;
+      });
+      conversationHtml = conversationParts.join('');
+    }
     
     try {
       const result = await sendDraftEmail(
         fullChatData.email,
-        htmlContent, // Compiled HTML as main content
-        draftHtml,   // Draft section HTML
-        researchHtml, // Research section HTML (if included)
-        citationsText  // Citations as text
+        draftHtml,   // Draft section HTML (optional, from chat record)
+        researchHtml, // Research section HTML (optional, from chat record)
+        citationsText,  // Citations as text (optional, from chat record)
+        questionsHtml,  // Questions HTML (optional, from chat record)
+        conversationHtml  // Conversation HTML (optional, from conversation table)
       );
       
       if (result.success) {
@@ -1581,6 +1609,7 @@ export default function PraxioPage() {
                                 includeResearch: true,
                                 includeCitations: true,
                                 includeQuestions: false,
+                                includeConversation: false,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -1596,6 +1625,7 @@ export default function PraxioPage() {
                                 includeResearch: false,
                                 includeCitations: false,
                                 includeQuestions: false,
+                                includeConversation: false,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -1995,6 +2025,30 @@ export default function PraxioPage() {
                       />
                       <label htmlFor="include-citations" className="text-sm font-medium cursor-pointer">
                         Citations ({citations.length})
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-questions"
+                        checked={compileOptions.includeQuestions}
+                        onCheckedChange={(checked) =>
+                          setCompileOptions({ ...compileOptions, includeQuestions: checked === true })
+                        }
+                      />
+                      <label htmlFor="include-questions" className="text-sm font-medium cursor-pointer">
+                        Questions
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-conversation"
+                        checked={compileOptions.includeConversation}
+                        onCheckedChange={(checked) =>
+                          setCompileOptions({ ...compileOptions, includeConversation: checked === true })
+                        }
+                      />
+                      <label htmlFor="include-conversation" className="text-sm font-medium cursor-pointer">
+                        Conversation ({conversations.length})
                       </label>
                     </div>
                   </div>
