@@ -1,11 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BarChart3, Settings, Users, MessageSquare, Database, Sparkles, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { BarChart3, Settings, Users, MessageSquare, Database, Sparkles, PanelLeftClose, PanelLeftOpen, Clock } from "lucide-react";
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignOutButton } from '@/components/SignOutButton';
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout';
+
+function InactivityTimer({ isCollapsed }: { isCollapsed: boolean }) {
+  const { timeRemaining, isWarning, formatTimeRemaining } = useInactivityTimeout();
+
+  if (timeRemaining === null) {
+    return null;
+  }
+
+  return (
+    <div
+      className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-xs font-mono transition-colors ${
+        isWarning
+          ? 'bg-red-50 text-red-700 border border-red-200'
+          : 'bg-slate-50 text-slate-600 border border-slate-200'
+      }`}
+      title={isCollapsed ? formatTimeRemaining(timeRemaining) : undefined}
+    >
+      <Clock className={`h-3 w-3 flex-shrink-0 ${isWarning ? 'text-red-600' : 'text-slate-500'}`} />
+      {!isCollapsed && <span className="truncate">{formatTimeRemaining(timeRemaining)}</span>}
+    </div>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -111,7 +134,9 @@ export function Sidebar() {
         </Link>
       </nav>
       
-      <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'}`}>
+      <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'} space-y-2`}>
+        {/* Inactivity Timer */}
+        <InactivityTimer isCollapsed={isCollapsed} />
         <SignOutButton isCollapsed={isCollapsed} />
       </div>
     </aside>
