@@ -1225,35 +1225,18 @@ export default function PraxioPage() {
                 <div
                   key={chat.id}
                   onClick={() => handleChatClick(chat)}
-                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full ${
+                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full min-w-0 ${
                     selectedChat?.id === chat.id
                       ? 'bg-blue-50 border border-blue-200'
                       : 'hover:bg-slate-50 border border-transparent'
                   }`}
                 >
-                  <div className="w-full overflow-hidden">
-                    <div 
-                      className="font-medium text-xs text-foreground"
-                      style={{
-                        display: 'block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%'
-                      }}
-                    >
+                  {/* Make this flex + min-w-0 so children can truncate */}
+                  <div className="flex flex-col min-w-0">
+                    <div className="font-medium text-xs text-foreground truncate">
                       {chat.title}
                     </div>
-                    <div 
-                      className="text-[10px] text-muted-foreground mt-0.5"
-                      style={{
-                        display: 'block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%'
-                      }}
-                    >
+                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                       {toSydneyDateTime(chat.created_at)}
                     </div>
                   </div>
