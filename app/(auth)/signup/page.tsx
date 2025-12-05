@@ -27,9 +27,11 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [phoneNonDigitWarning, setPhoneNonDigitWarning] = useState(false);
+  const [phoneFormatWarning, setPhoneFormatWarning] = useState(false);
   const [abnNonDigitWarning, setAbnNonDigitWarning] = useState(false);
   const [abnLookupLoading, setAbnLookupLoading] = useState(false);
   const [abnValidated, setAbnValidated] = useState<boolean | null>(null);
+  const [abnValidatedValue, setAbnValidatedValue] = useState<string>('');
   const [hasEngaged, setHasEngaged] = useState(false);
 
   const formatAustralianPhone = (value: string): string => {
@@ -90,8 +92,8 @@ export default function SignUpPage() {
       }
       const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
       setFormData(prev => ({ ...prev, [name]: digitsOnly }));
-      // Reset validation status when ABN changes
-      if (digitsOnly.length !== 11) {
+      // Reset validation status when ABN changes to a different value
+      if (digitsOnly !== abnValidatedValue) {
         setAbnValidated(null);
       }
     } 
@@ -106,6 +108,8 @@ export default function SignUpPage() {
       }
       const formatted = formatAustralianPhone(value);
       setFormData(prev => ({ ...prev, [name]: formatted }));
+      // Clear format warning while typing (will be re-checked on blur)
+      setPhoneFormatWarning(false);
     } 
     else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -117,11 +121,36 @@ export default function SignUpPage() {
     }
   };
 
-  // ABN Lookup Effect - triggers when ABN reaches 11 digits
+  const handlePhoneBlur = () => {
+    // Validate phone format when user leaves the field
+    if (formData.phone.trim()) {
+      const digitsOnly = formData.phone.replace(/\D/g, '');
+      if (digitsOnly.length === 10) {
+        // If we have 10 digits, validate the format
+        if (!validateAustralianPhone(formData.phone)) {
+          setPhoneFormatWarning(true);
+        } else {
+          setPhoneFormatWarning(false);
+        }
+      } else if (digitsOnly.length > 0) {
+        // If there are digits but not 10, show warning
+        setPhoneFormatWarning(true);
+      } else {
+        setPhoneFormatWarning(false);
+      }
+    } else {
+      setPhoneFormatWarning(false);
+    }
+  };
+
+  // ABN Lookup Effect - triggers when ABN reaches 11 digits (only once per ABN value)
   useEffect(() => {
     const lookupABN = async (abn: string, currentCompany: string) => {
-      // Only lookup if ABN is exactly 11 digits
-      if (abn.length !== 11 || abnLookupLoading) {
+      // Only lookup if:
+      // 1. ABN is exactly 11 digits
+      // 2. Not currently loading
+      // 3. This ABN hasn't been validated yet (or it's a different ABN)
+      if (abn.length !== 11 || abnLookupLoading || (abnValidated !== null && abn === abnValidatedValue)) {
         return;
       }
 
@@ -143,6 +172,7 @@ export default function SignUpPage() {
 
         if (data.success && data.valid) {
           setAbnValidated(true);
+          setAbnValidatedValue(abn); // Store the validated ABN value
           toast.success('ABN Verified', {
             id: toastId,
             description: data.businessName 
@@ -157,6 +187,7 @@ export default function SignUpPage() {
           }
         } else {
           setAbnValidated(false);
+          setAbnValidatedValue(abn); // Store even failed validation to prevent re-validating
           toast.error('ABN Not Found', {
             id: toastId,
             description: data.error || 'This ABN is not registered in the Australian Business Register',
@@ -165,6 +196,7 @@ export default function SignUpPage() {
         }
       } catch (error) {
         setAbnValidated(false);
+        setAbnValidatedValue(abn); // Store even failed validation to prevent re-validating
         toast.error('ABN Lookup Failed', {
           id: toastId,
           description: error instanceof Error ? error.message : 'Unable to verify ABN at this time',
@@ -181,7 +213,7 @@ export default function SignUpPage() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData.abn, formData.company, abnLookupLoading]);
+  }, [formData.abn, formData.company, abnLookupLoading, abnValidated, abnValidatedValue]);
 
   const getMissingFields = (): string[] => {
     const missing: string[] = [];
@@ -435,15 +467,21 @@ export default function SignUpPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    onBlur={handlePhoneBlur}
                     placeholder="(02) 1234-5678 or (0412) 345-678"
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
-                      errors.phone
+                      errors.phone || phoneFormatWarning
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
                   {phoneNonDigitWarning && (
                     <p className="mt-0.5 text-xs text-amber-600">Please enter only digits</p>
+                  )}
+                  {phoneFormatWarning && (
+                    <p className="mt-0.5 text-xs text-amber-600">
+                      Please enter a valid Australian phone number format (landline: (02) 1234-5678 or mobile: (0412) 345-678)
+                    </p>
                   )}
                   {errors.phone && (
                     <p className="mt-0.5 text-xs text-red-600">{errors.phone}</p>
