@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -19,7 +20,8 @@ import {
   Trash2,
   ChevronRight,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
@@ -37,10 +39,49 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+const INACTIVITY_TIMEOUT_STORAGE_KEY = 'inactivity_timeout_hours';
+const DEFAULT_TIMEOUT_HOURS = 2;
+
 export default function SettingsPage() {
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [timeoutHours, setTimeoutHours] = useState<number>(DEFAULT_TIMEOUT_HOURS);
+
+  // Load timeout preference from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(INACTIVITY_TIMEOUT_STORAGE_KEY);
+      if (stored) {
+        const hours = parseFloat(stored);
+        if (!isNaN(hours) && hours > 0) {
+          setTimeoutHours(hours);
+        }
+      }
+    }
+  }, []);
+
+  const handleTimeoutChange = (value: string) => {
+    const hours = parseFloat(value);
+    if (!isNaN(hours) && hours > 0 && hours <= 24) {
+      setTimeoutHours(hours);
+      localStorage.setItem(INACTIVITY_TIMEOUT_STORAGE_KEY, hours.toString());
+      // Dispatch custom event to notify other tabs/components
+      window.dispatchEvent(new Event('timeoutPreferenceChanged'));
+      toast.success('Inactivity timeout updated', {
+        description: `Session will expire after ${hours} hour${hours !== 1 ? 's' : ''} of inactivity`,
+        duration: 3000,
+      });
+    } else if (value === '') {
+      // Allow empty input while typing
+      setTimeoutHours(0);
+    } else {
+      toast.error('Invalid timeout', {
+        description: 'Please enter a number between 0.5 and 24 hours',
+        duration: 3000,
+      });
+    }
+  };
 
   // Mock user data - will be replaced with real data later
   const userData = {
@@ -211,7 +252,7 @@ export default function SettingsPage() {
             Customize your experience
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-1">
           <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
@@ -235,6 +276,40 @@ export default function SettingsPage() {
                 toast.info('Theme change will be implemented soon');
               }}
             />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
+                <Clock className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Inactivity Timeout</p>
+                <p className="text-xs text-muted-foreground">
+                  Auto-logout after inactivity (hours)
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="0.5"
+                max="24"
+                step="0.5"
+                value={timeoutHours || ''}
+                onChange={(e) => handleTimeoutChange(e.target.value)}
+                onBlur={(e) => {
+                  if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                    setTimeoutHours(DEFAULT_TIMEOUT_HOURS);
+                    localStorage.setItem(INACTIVITY_TIMEOUT_STORAGE_KEY, DEFAULT_TIMEOUT_HOURS.toString());
+                    e.target.value = DEFAULT_TIMEOUT_HOURS.toString();
+                  }
+                }}
+                className="w-20 h-8 text-xs text-right"
+                placeholder="2"
+              />
+              <span className="text-xs text-muted-foreground">hrs</span>
+            </div>
           </div>
         </CardContent>
       </Card>

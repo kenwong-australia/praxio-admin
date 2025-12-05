@@ -22,6 +22,8 @@ import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { remark } from 'remark';
 import remarkHtml from 'remark-html';
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout';
+import { Clock } from 'lucide-react';
 
 // Mock data structure - will be replaced with real data later
 interface ChatItem {
@@ -1105,8 +1107,22 @@ export default function PraxioPage() {
 
   const citations = fullChatData ? parseCitations(fullChatData.usedcitationsArray || fullChatData.usedcitationsArray) : [];
 
+  // Inactivity timeout tracking
+  const { timeRemaining, isWarning, formatTimeRemaining } = useInactivityTimeout();
+
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col relative">
+      {/* Inactivity Timer - Non-intrusive countdown */}
+      {timeRemaining !== null && (
+        <div className={`absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${
+          isWarning 
+            ? 'bg-red-50 text-red-700 border border-red-200' 
+            : 'bg-slate-50 text-slate-600 border border-slate-200'
+        }`}>
+          <Clock className={`h-3 w-3 ${isWarning ? 'text-red-600' : 'text-slate-500'}`} />
+          <span>{formatTimeRemaining(timeRemaining)}</span>
+        </div>
+      )}
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
@@ -1318,6 +1334,11 @@ export default function PraxioPage() {
                                   ? 'max-h-[500px]'
                                   : 'max-h-[600px]'
                               }`}>
+                                <div className="mb-3 pb-2 border-b border-slate-200">
+                                  <p className="text-xs text-muted-foreground">
+                                    Research Date: {toSydneyDateTime(fullChatData.created_at)}
+                                  </p>
+                                </div>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
                             <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                           </div>
