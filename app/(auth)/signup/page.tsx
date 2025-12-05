@@ -30,6 +30,7 @@ export default function SignUpPage() {
   const [abnNonDigitWarning, setAbnNonDigitWarning] = useState(false);
   const [abnLookupLoading, setAbnLookupLoading] = useState(false);
   const [abnValidated, setAbnValidated] = useState<boolean | null>(null);
+  const [hasEngaged, setHasEngaged] = useState(false);
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -76,6 +77,9 @@ export default function SignUpPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Mark that user has engaged with the form
+    setHasEngaged(true);
     
     // Format ABN (only digits, max 11)
     if (name === 'abn') {
@@ -240,6 +244,9 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Mark that user has engaged (tried to submit)
+    setHasEngaged(true);
     
     if (!validateForm()) {
       return;
@@ -600,6 +607,7 @@ export default function SignUpPage() {
                       type="checkbox"
                       checked={agreedToTerms}
                       onChange={(e) => {
+                        setHasEngaged(true);
                         setAgreedToTerms(e.target.checked);
                         if (errors.terms) {
                           setErrors(prev => ({ ...prev, terms: '' }));
@@ -624,7 +632,7 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Form Completion Helper */}
-                {!isFormReady() && !loading && (
+                {hasEngaged && !isFormReady() && !loading && (
                   <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-xs font-medium text-amber-900 mb-1">
                       Complete the following to continue:
