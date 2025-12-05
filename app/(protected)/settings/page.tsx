@@ -16,15 +16,15 @@ import {
   HelpCircle, 
   FileText, 
   Shield, 
-  LogOut, 
   Trash2,
   ChevronRight,
   Copy,
   CheckCircle2,
   Clock
 } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getFirebaseAuth, getDb } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -42,11 +42,72 @@ import {
 const INACTIVITY_TIMEOUT_STORAGE_KEY = 'inactivity_timeout_hours';
 const DEFAULT_TIMEOUT_HOURS = 2;
 
+interface UserData {
+  display_name: string;
+  email: string;
+  business_name?: string;
+  stripe_subscription_status?: string;
+  selected_plan?: string;
+  selected_frequency?: string;
+  stripe_trial_end_date?: Date;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
   const [timeoutHours, setTimeoutHours] = useState<number>(DEFAULT_TIMEOUT_HOURS);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user data from Firebase
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    const unsub = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
+      if (!user) {
+        router.replace('/signin');
+        return;
+      }
+
+      try {
+        const db = getDb();
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        
+        if (!snap.exists()) {
+          toast.error('User data not found');
+          router.replace('/signin');
+          return;
+        }
+
+        const data = snap.data();
+        const toDateSafe = (v: any) => {
+          if (!v) return undefined;
+          if (v instanceof Date) return v;
+          if (typeof v?.toDate === 'function') return v.toDate();
+          return undefined;
+        };
+
+        const userData: UserData = {
+          display_name: data?.display_name || '',
+          email: data?.email || user.email || '',
+          business_name: data?.business_name,
+          stripe_subscription_status: data?.stripe_subscription_status,
+          selected_plan: data?.selected_plan,
+          selected_frequency: data?.selected_frequency,
+          stripe_trial_end_date: toDateSafe(data?.stripe_trial_end_date),
+        };
+
+        setUserData(userData);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load user data');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsub();
+  }, [router]);
 
   // Load timeout preference from localStorage
   useEffect(() => {
@@ -83,33 +144,11 @@ export default function SettingsPage() {
     }
   };
 
-  // Mock user data - will be replaced with real data later
-  const userData = {
-    name: 'Caitlin',
-    email: 'caitlinwkwong@gmail.com',
-    company: 'Praxio AI',
-    plan: 'standard',
-    frequency: 'monthly',
-    nextRenewal: 'Sep 29, 2025',
-    isTrial: true,
-  };
-
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('support@praxio-ai.com.au');
     setEmailCopied(true);
     toast.success('Email copied to clipboard');
     setTimeout(() => setEmailCopied(false), 2000);
-  };
-
-  const handleLogout = async () => {
-    try {
-      const auth = getFirebaseAuth();
-      await signOut(auth);
-      router.replace('/signin');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out');
-    }
   };
 
   const handleDeleteAccount = () => {
@@ -118,6 +157,7 @@ export default function SettingsPage() {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return 'U';
     return name
       .split(' ')
       .map(n => n[0])
@@ -126,16 +166,62 @@ export default function SettingsPage() {
       .slice(0, 2);
   };
 
-  const getPlanBadgeVariant = (plan: string) => {
-    switch (plan) {
-      case 'standard':
-        return 'default';
-      case 'premium':
-        return 'secondary';
-      default:
-        return 'outline';
+  const getStatusBadgeVariant = (status?: string) => {
+    if (!status) return 'outline';
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'active') {
+      return 'default'; // green
     }
+    if (statusLower === 'trialing') {
+      return 'secondary'; // blue
+    }
+    if (statusLower === 'canceled' || statusLower === 'past_due') {
+      return 'destructive'; // red
+    }
+    return 'outline';
   };
+
+  const getStatusLabel = (status?: string) => {
+    if (!status) return 'N/A';
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'active') return 'Active';
+    if (statusLower === 'trialing') return 'Trial';
+    if (statusLower === 'canceled') return 'Canceled';
+    if (statusLower === 'past_due') return 'Past Due';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  const formatSubscriptionLabel = () => {
+    if (!userData) return 'N/A';
+    const parts: string[] = [];
+    if (userData.selected_plan) {
+      parts.push(userData.selected_plan);
+    }
+    if (userData.selected_frequency) {
+      parts.push(userData.selected_frequency);
+    }
+    if (userData.stripe_subscription_status) {
+      parts.push(userData.stripe_subscription_status);
+    }
+    return parts.length > 0 ? parts.join(' • ') : 'N/A';
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold">Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return null;
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
@@ -153,22 +239,19 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-lg font-semibold">
-                {getInitials(userData.name)}
+                {getInitials(userData.display_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-lg font-semibold">{userData.name}</h2>
-                <Badge variant={getPlanBadgeVariant(userData.plan)} className="text-xs">
-                  {userData.plan.charAt(0).toUpperCase() + userData.plan.slice(1)} Plan
+                <h2 className="text-lg font-semibold">{userData.display_name || 'User'}</h2>
+                <Badge variant={getStatusBadgeVariant(userData.stripe_subscription_status)} className="text-xs">
+                  {getStatusLabel(userData.stripe_subscription_status)}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
-              <p className="text-xs text-muted-foreground mt-1">{userData.company}</p>
-              {userData.isTrial && (
-                <p className="text-xs text-orange-600 mt-1">
-                  Trial ends on {userData.nextRenewal}
-                </p>
+              {userData.business_name && (
+                <p className="text-xs text-muted-foreground mt-1">{userData.business_name}</p>
               )}
             </div>
             <Button
@@ -177,7 +260,7 @@ export default function SettingsPage() {
               className="text-xs h-8 px-3"
               onClick={() => toast.info('Upgrade functionality will be implemented soon')}
             >
-              {userData.isTrial ? 'Upgrade' : 'Manage Subscription'}
+              {userData.stripe_subscription_status?.toLowerCase() === 'trialing' ? 'Upgrade' : 'Manage Subscription'}
             </Button>
           </div>
         </CardContent>
@@ -225,8 +308,19 @@ export default function SettingsPage() {
           </button>
 
           <button
-            onClick={() => toast.info('Subscription management will be implemented soon')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            onClick={() => {
+              if (userData.stripe_subscription_status?.toLowerCase() === 'trialing') {
+                toast.info('Subscription management is disabled during trial');
+              } else {
+                toast.info('Subscription management will be implemented soon');
+              }
+            }}
+            disabled={userData.stripe_subscription_status?.toLowerCase() === 'trialing'}
+            className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
+              userData.stripe_subscription_status?.toLowerCase() === 'trialing'
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-slate-50'
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-purple-50 flex items-center justify-center">
@@ -235,7 +329,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm font-medium">Subscription</p>
                 <p className="text-xs text-muted-foreground">
-                  {userData.frequency.charAt(0).toUpperCase() + userData.frequency.slice(1)} • {userData.plan}
+                  {formatSubscriptionLabel()}
                 </p>
               </div>
             </div>
@@ -345,8 +439,10 @@ export default function SettingsPage() {
             )}
           </button>
 
-          <button
-            onClick={() => toast.info('Terms and Conditions will be implemented soon')}
+          <a
+            href="https://www.praxio-ai.com.au/terms-conditions"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
@@ -359,10 +455,12 @@ export default function SettingsPage() {
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          </a>
 
-          <button
-            onClick={() => toast.info('Privacy Policy will be implemented soon')}
+          <a
+            href="https://www.praxio-ai.com.au/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
@@ -375,7 +473,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          </a>
         </CardContent>
       </Card>
 
@@ -388,22 +486,6 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center">
-                <LogOut className="h-4 w-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-red-600">Logout</p>
-                <p className="text-xs text-muted-foreground">Sign out of your account</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors text-left">
