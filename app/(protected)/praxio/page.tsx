@@ -1212,7 +1212,7 @@ export default function PraxioPage() {
 
             {/* Chat List */}
             <ScrollArea className="flex-1">
-              <div className="p-2 space-y-1">
+              <div className="p-2 pr-3 space-y-1">
                 {loadingChats ? (
                   <div className="p-4 text-center text-muted-foreground text-sm">
                     Loading chats...
@@ -1226,14 +1226,14 @@ export default function PraxioPage() {
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
-                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors overflow-hidden ${
+                    className={`group relative p-2 pr-1 rounded-lg cursor-pointer transition-colors ${
                       selectedChat?.id === chat.id
                         ? 'bg-blue-50 border border-blue-200'
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <div className="flex-1 min-w-0 pr-1">
                         <div className="font-medium text-xs text-foreground truncate">
                           {chat.title}
                         </div>
@@ -1241,32 +1241,34 @@ export default function PraxioPage() {
                           {toSydneyDateTime(chat.created_at)}
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
-                            Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
-                            className="text-red-600"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center pointer-events-auto">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-20 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
+                              Archive
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
+                              className="text-red-600"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                   ))
