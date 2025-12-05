@@ -7,11 +7,13 @@ import { getFirebaseAuth } from '@/lib/firebase';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 export default function SuccessPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -26,6 +28,25 @@ export default function SuccessPage() {
 
     return () => unsub();
   }, [router]);
+
+  // Show success notification and auto-redirect after user is loaded
+  useEffect(() => {
+    if (!loading && user && !redirecting) {
+      // Show success toast
+      toast.success('Subscription Successful!', {
+        description: 'Your account has been activated. Redirecting to Praxio...',
+        duration: 3000,
+      });
+
+      // Auto-redirect after 2 seconds
+      setRedirecting(true);
+      const redirectTimer = setTimeout(() => {
+        router.push('/praxio');
+      }, 2000);
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [loading, user, redirecting, router]);
 
   if (loading) {
     return (
@@ -53,14 +74,20 @@ export default function SuccessPage() {
             <p className="text-muted-foreground">
               Thank you for subscribing to Praxio AI. Your account has been activated.
             </p>
+            {redirecting && (
+              <p className="text-sm text-blue-600 font-medium">
+                Redirecting to Praxio...
+              </p>
+            )}
           </div>
 
           <div className="pt-4">
             <Button
               onClick={() => router.push('/praxio')}
               className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={redirecting}
             >
-              Get Started
+              {redirecting ? 'Redirecting...' : 'Continue to Praxio'}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
