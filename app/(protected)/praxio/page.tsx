@@ -1211,69 +1211,92 @@ export default function PraxioPage() {
             </div>
 
             {/* Chat List */}
-            <ScrollArea className="flex-1 min-w-0">
-              <div className="p-2 space-y-1 min-w-0">
-                {loadingChats ? (
-                  <div className="p-4 text-center text-muted-foreground text-sm">
-                    Loading chats...
-                  </div>
-                ) : chats.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground text-sm">
-                    No previous research found
-                  </div>
-                ) : (
-                  chats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => handleChatClick(chat)}
-                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors min-w-0 max-w-full ${
-                      selectedChat?.id === chat.id
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'hover:bg-slate-50 border border-transparent'
-                    }`}
-                  >
-                    <div className="min-w-0 max-w-full overflow-hidden">
-                      <div className="font-medium text-xs text-foreground truncate min-w-0">
-                        {chat.title}
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <ScrollArea className="h-full w-full">
+                <div className="p-2 space-y-1 w-full" style={{ minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>
+                  {loadingChats ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      Loading chats...
+                    </div>
+                  ) : chats.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      No previous research found
+                    </div>
+                  ) : (
+                    chats.map((chat) => (
+                    <div
+                      key={chat.id}
+                      onClick={() => handleChatClick(chat)}
+                      className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedChat?.id === chat.id
+                          ? 'bg-blue-50 border border-blue-200'
+                          : 'hover:bg-slate-50 border border-transparent'
+                      }`}
+                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
+                    >
+                      <div style={{ width: '100%', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+                        <div 
+                          className="font-medium text-xs text-foreground" 
+                          style={{ 
+                            minWidth: 0, 
+                            maxWidth: '100%', 
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block'
+                          }}
+                        >
+                          {chat.title}
+                        </div>
+                        <div 
+                          className="text-[10px] text-muted-foreground mt-0.5" 
+                          style={{ 
+                            minWidth: 0, 
+                            maxWidth: '100%', 
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block'
+                          }}
+                        >
+                          {toSydneyDateTime(chat.created_at)}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate min-w-0">
-                        {toSydneyDateTime(chat.created_at)}
+                      {/* 3-dot menu - hidden for now, will be added back later */}
+                      <div className="flex-shrink-0 hidden">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
+                            Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
+                            className="text-red-600"
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       </div>
                     </div>
-                    {/* 3-dot menu - hidden for now, will be added back later */}
-                    <div className="flex-shrink-0 hidden">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
-                          Archive
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
-                          className="text-red-600"
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    </div>
-                  </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         </ResizablePanel>
 
