@@ -1211,7 +1211,7 @@ export default function PraxioPage() {
 
           {/* Chat List */}
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
+            <div className="p-2 space-y-1 w-full">
               {loadingChats ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">
                   Loading chats...
@@ -1225,17 +1225,37 @@ export default function PraxioPage() {
                 <div
                   key={chat.id}
                   onClick={() => handleChatClick(chat)}
-                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full ${
                     selectedChat?.id === chat.id
                       ? 'bg-blue-50 border border-blue-200'
                       : 'hover:bg-slate-50 border border-transparent'
                   }`}
                 >
-                  <div className="font-medium text-xs text-foreground truncate">
-                    {chat.title}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                    {toSydneyDateTime(chat.created_at)}
+                  <div className="w-full overflow-hidden">
+                    <div 
+                      className="font-medium text-xs text-foreground"
+                      style={{
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                      }}
+                    >
+                      {chat.title}
+                    </div>
+                    <div 
+                      className="text-[10px] text-muted-foreground mt-0.5"
+                      style={{
+                        display: 'block',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                      }}
+                    >
+                      {toSydneyDateTime(chat.created_at)}
+                    </div>
                   </div>
                   {/* 3-dot menu - hidden for now, will be added back later */}
                   <div className="flex-shrink-0 hidden">
