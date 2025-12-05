@@ -1232,43 +1232,42 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <div className="font-medium text-xs text-foreground truncate">
-                          {chat.title}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                          {toSydneyDateTime(chat.created_at)}
-                        </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-xs text-foreground truncate">
+                        {chat.title}
                       </div>
-                      <div className="flex-shrink-0">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
-                              Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
-                              className="text-red-600"
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                        {toSydneyDateTime(chat.created_at)}
                       </div>
+                    </div>
+                    {/* 3-dot menu - hidden for now, will be added back later */}
+                    <div className="flex-shrink-0 hidden">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
+                          Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     </div>
                   </div>
                   ))
