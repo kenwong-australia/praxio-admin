@@ -305,7 +305,7 @@ export async function updateChatFeedback(
     
     // Save selected checkboxes to comment_selection (text array field)
     if (commentSelection !== undefined) {
-      updateData.comment_selection = commentSelection.length > 0 ? commentSelection : null;
+      updateData.comment_selection = commentSelection && commentSelection.length > 0 ? commentSelection : null;
     }
     
     // Save free text to comment_additional (text field)
