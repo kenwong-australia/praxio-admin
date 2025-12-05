@@ -1211,7 +1211,7 @@ export default function PraxioPage() {
 
           {/* Chat List */}
           <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1 w-full">
+            <div className="p-2 space-y-1">
               {loadingChats ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">
                   Loading chats...
@@ -1222,54 +1222,57 @@ export default function PraxioPage() {
                 </div>
               ) : (
                 chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => handleChatClick(chat)}
-                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full min-w-0 ${
-                    selectedChat?.id === chat.id
-                      ? 'bg-blue-50 border border-blue-200'
-                      : 'hover:bg-slate-50 border border-transparent'
-                  }`}
-                >
-                  {/* Make this flex + min-w-0 so children can truncate */}
-                  <div className="flex flex-col min-w-0">
-                    <div className="font-medium text-xs text-foreground truncate">
-                      {chat.title}
+                  <div
+                    key={chat.id}
+                    onClick={() => handleChatClick(chat)}
+                    className={`
+                      group relative flex w-full items-start gap-2
+                      rounded-lg cursor-pointer transition-colors
+                      ${selectedChat?.id === chat.id
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'hover:bg-slate-50 border border-transparent'}
+                    `}
+                  >
+                    {/* TEXT COLUMN */}
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium text-xs text-foreground">
+                        {chat.title}
+                      </div>
+                      <div className="truncate text-[10px] text-muted-foreground mt-0.5">
+                        {toSydneyDateTime(chat.created_at)}
+                      </div>
                     </div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                      {toSydneyDateTime(chat.created_at)}
+
+                    {/* 3-dot menu, hidden for now */}
+                    <div className="flex-shrink-0 hidden">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
+                            Archive
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
+                            className="text-red-600"
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-                  {/* 3-dot menu - hidden for now, will be added back later */}
-                  <div className="flex-shrink-0 hidden">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
-                        Archive
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  </div>
-                </div>
                 ))
               )}
             </div>
