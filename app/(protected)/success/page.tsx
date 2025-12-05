@@ -17,9 +17,20 @@ export default function SuccessPage() {
 
   useEffect(() => {
     const auth = getFirebaseAuth();
+    
+    // Check if auth state is already available (fast path)
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      setUser(currentUser);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise wait for auth state to be restored from localStorage
     const unsub = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
       if (!user) {
-        router.replace('/signin');
+        // If no user after waiting, redirect to signin
+        router.replace('/signin?redirect=/success');
         return;
       }
       setUser(user);
