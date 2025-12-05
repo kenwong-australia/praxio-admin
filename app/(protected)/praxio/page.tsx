@@ -1226,18 +1226,18 @@ export default function PraxioPage() {
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
-                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors overflow-hidden ${
                       selectedChat?.id === chat.id
                         ? 'bg-blue-50 border border-blue-200'
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="font-medium text-xs text-foreground truncate">
                           {chat.title}
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                           {toSydneyDateTime(chat.created_at)}
                         </div>
                       </div>
@@ -1246,7 +1246,7 @@ export default function PraxioPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="h-4 w-4" />
