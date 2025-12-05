@@ -1226,17 +1226,17 @@ export default function PraxioPage() {
                   <div
                     key={chat.id}
                     onClick={() => handleChatClick(chat)}
-                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                    className={`group relative p-2 rounded-lg cursor-pointer transition-colors w-full ${
                       selectedChat?.id === chat.id
                         ? 'bg-blue-50 border border-blue-200'
                         : 'hover:bg-slate-50 border border-transparent'
                     }`}
                   >
-                    <div className="min-w-0">
-                      <div className="font-medium text-xs text-foreground truncate">
+                    <div className="w-full min-w-0 overflow-hidden">
+                      <div className="font-medium text-xs text-foreground truncate w-full">
                         {chat.title}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">
                         {toSydneyDateTime(chat.created_at)}
                       </div>
                     </div>
