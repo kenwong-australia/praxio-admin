@@ -1185,122 +1185,93 @@ export default function PraxioPage() {
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
-        {/* Previous Research Sidebar - 30% */}
-        <ResizablePanel defaultSize={30} minSize={16} maxSize={40}>
-          <div className="h-full flex flex-col bg-white border-r border-slate-200 min-w-[200px] max-w-full overflow-hidden">
-            {/* Header */}
-            <div className="p-4 border-b border-slate-200">
+        {/* Previous Research Sidebar - Fixed 300px width */}
+        <div className="w-[300px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
+          {/* Header */}
+          <div className="p-4 border-b border-slate-200">
+            <Button
+              onClick={handleNewResearch}
+              className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2"
+            >
+              <Sparkles className="h-3 w-3 mr-1" />
+              New Research
+            </Button>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Previous</h2>
               <Button
-                onClick={handleNewResearch}
-                className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSearchOpen(true)}
+                className="h-7 w-7"
               >
-                <Sparkles className="h-3 w-3 mr-1" />
-                New Research
+                <Search className="h-3.5 w-3.5" />
               </Button>
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Previous</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSearchOpen(true)}
-                  className="h-7 w-7"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Chat List */}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <ScrollArea className="h-full w-full">
-                <div className="p-2 space-y-1 w-full" style={{ minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>
-                  {loadingChats ? (
-                    <div className="p-4 text-center text-muted-foreground text-sm">
-                      Loading chats...
-                    </div>
-                  ) : chats.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground text-sm">
-                      No previous research found
-                    </div>
-                  ) : (
-                    chats.map((chat) => (
-                    <div
-                      key={chat.id}
-                      onClick={() => handleChatClick(chat)}
-                      className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedChat?.id === chat.id
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'hover:bg-slate-50 border border-transparent'
-                      }`}
-                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}
-                    >
-                      <div style={{ width: '100%', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
-                        <div 
-                          className="font-medium text-xs text-foreground" 
-                          style={{ 
-                            minWidth: 0, 
-                            maxWidth: '100%', 
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            display: 'block'
-                          }}
-                        >
-                          {chat.title}
-                        </div>
-                        <div 
-                          className="text-[10px] text-muted-foreground mt-0.5" 
-                          style={{ 
-                            minWidth: 0, 
-                            maxWidth: '100%', 
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            display: 'block'
-                          }}
-                        >
-                          {toSydneyDateTime(chat.created_at)}
-                        </div>
-                      </div>
-                      {/* 3-dot menu - hidden for now, will be added back later */}
-                      <div className="flex-shrink-0 hidden">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
-                            Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
-                            className="text-red-600"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      </div>
-                    </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
             </div>
           </div>
-        </ResizablePanel>
 
-        <ResizableHandle withHandle />
+          {/* Chat List */}
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {loadingChats ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  Loading chats...
+                </div>
+              ) : chats.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">
+                  No previous research found
+                </div>
+              ) : (
+                chats.map((chat) => (
+                <div
+                  key={chat.id}
+                  onClick={() => handleChatClick(chat)}
+                  className={`group relative p-2 rounded-lg cursor-pointer transition-colors ${
+                    selectedChat?.id === chat.id
+                      ? 'bg-blue-50 border border-blue-200'
+                      : 'hover:bg-slate-50 border border-transparent'
+                  }`}
+                >
+                  <div className="font-medium text-xs text-foreground truncate">
+                    {chat.title}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {toSydneyDateTime(chat.created_at)}
+                  </div>
+                  {/* 3-dot menu - hidden for now, will be added back later */}
+                  <div className="flex-shrink-0 hidden">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(chat.id); }}>
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleArchive(chat.id); }}>
+                        Archive
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); handleDelete(chat.id); }}
+                        className="text-red-600"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  </div>
+                </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={58}>
