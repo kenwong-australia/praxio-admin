@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
@@ -54,6 +54,7 @@ interface Citation {
 }
 
 export default function PraxioPage() {
+  const [isPreviousOpen, setIsPreviousOpen] = useState(true);
   const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
   const [fullChatData, setFullChatData] = useState<FullChatData | null>(null);
   const [loadingChatData, setLoadingChatData] = useState(false);
@@ -1185,20 +1186,32 @@ export default function PraxioPage() {
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
-        {/* Previous Research Sidebar - Fixed 300px width */}
+        {/* Previous Research Sidebar - collapsible */}
+        {isPreviousOpen ? (
           <div className="w-[300px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
             {/* Header */}
             <div className="p-4 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Previous</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSearchOpen(true)}
-                  className="h-7 w-7"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsSearchOpen(true)}
+                    className="h-7 w-7"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsPreviousOpen(false)}
+                    className="h-7 w-7"
+                    title="Collapse previous"
+                  >
+                    <PanelLeftClose className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -1267,7 +1280,20 @@ export default function PraxioPage() {
               )}
             </div>
           </ScrollArea>
-        </div>
+          </div>
+        ) : (
+          <div className="w-[44px] h-full flex flex-col items-center justify-start bg-white border-r border-slate-200 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsPreviousOpen(true)}
+              className="m-2 h-7 w-7"
+              title="Expand previous"
+            >
+              <PanelLeftOpen className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={58}>
