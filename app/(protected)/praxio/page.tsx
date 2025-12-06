@@ -1233,21 +1233,21 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'}
                     `}
                   >
-                  {/* TEXT COLUMN - simple display, no horizontal scroll */}
+                  {/* TEXT COLUMN - truncate by characters for consistent display */}
                   <div className="flex-1 min-w-0 w-full">
                     <div className="font-medium text-xs text-foreground break-words">
-                      {chat.title}
+                      {chat.title.length > 60 ? `${chat.title.slice(0, 57)}…` : chat.title}
                     </div>
                   </div>
 
                     {/* 3-dot menu, hidden for now */}
-                    <div className="flex-shrink-0 hidden">
+                  <div className="flex-shrink-0">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200 group-hover:delay-[2000ms]"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="h-4 w-4" />
