@@ -1234,7 +1234,7 @@ export default function PraxioPage() {
                     `}
                   >
                     {/* TEXT COLUMN */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 w-full overflow-hidden">
                       <div className="truncate font-medium text-xs text-foreground">
                         {chat.title}
                       </div>
