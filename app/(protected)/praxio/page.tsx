@@ -1233,17 +1233,10 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'}
                     `}
                   >
-                  {/* TEXT COLUMN - horizontal scroll for long titles */}
+                  {/* TEXT COLUMN - simple display, no horizontal scroll */}
                   <div className="flex-1 min-w-0 w-full">
-                    <div className="max-w-full overflow-hidden">
-                      <div
-                        className="inline-flex min-w-max gap-2 overflow-x-auto whitespace-nowrap pr-1"
-                        role="presentation"
-                      >
-                        <span className="font-medium text-xs text-foreground">
-                          {chat.title}
-                        </span>
-                      </div>
+                    <div className="font-medium text-xs text-foreground break-words">
+                      {chat.title}
                     </div>
                   </div>
 
