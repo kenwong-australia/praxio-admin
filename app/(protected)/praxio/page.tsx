@@ -1233,10 +1233,10 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'}
                     `}
                   >
-                  {/* TEXT COLUMN - truncate by characters for consistent display */}
+                  {/* TEXT COLUMN - truncate with CSS (ellipsis) */}
                   <div className="flex-1 min-w-0 w-full">
-                    <div className="font-medium text-xs text-foreground break-words">
-                      {chat.title.length > 60 ? `${chat.title.slice(0, 57)}…` : chat.title}
+                    <div className="font-medium text-xs text-foreground truncate">
+                      {chat.title}
                     </div>
                   </div>
 
