@@ -1234,9 +1234,16 @@ export default function PraxioPage() {
                     `}
                   >
                   {/* TEXT COLUMN - horizontal scroll for long titles */}
-                  <div className="flex-1 min-w-0 w-full overflow-x-auto whitespace-nowrap pr-1">
-                    <div className="font-medium text-xs text-foreground inline-block">
-                      {chat.title}
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="max-w-full overflow-hidden">
+                      <div
+                        className="inline-flex min-w-max gap-2 overflow-x-auto whitespace-nowrap pr-1"
+                        role="presentation"
+                      >
+                        <span className="font-medium text-xs text-foreground">
+                          {chat.title}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
