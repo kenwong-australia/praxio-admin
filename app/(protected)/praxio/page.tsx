@@ -1233,15 +1233,12 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'}
                     `}
                   >
-                    {/* TEXT COLUMN - allow horizontal scroll to view full title */}
-                    <div className="flex-1 min-w-0 w-full overflow-x-auto whitespace-nowrap pr-1">
-                      <div className="font-medium text-xs text-foreground inline-block">
-                        {chat.title}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 inline-block ml-2">
-                        {toSydneyDateTime(chat.created_at)}
-                      </div>
+                  {/* TEXT COLUMN - horizontal scroll for long titles */}
+                  <div className="flex-1 min-w-0 w-full overflow-x-auto whitespace-nowrap pr-1">
+                    <div className="font-medium text-xs text-foreground inline-block">
+                      {chat.title}
                     </div>
+                  </div>
 
                     {/* 3-dot menu, hidden for now */}
                     <div className="flex-shrink-0 hidden">
