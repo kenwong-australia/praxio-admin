@@ -1233,9 +1233,9 @@ export default function PraxioPage() {
                         : 'hover:bg-slate-50 border border-transparent'}
                     `}
                   >
-                  {/* TEXT COLUMN - truncate with CSS (ellipsis) */}
+                  {/* TEXT COLUMN - wrap long titles */}
                   <div className="flex-1 min-w-0 w-full">
-                    <div className="font-medium text-xs text-foreground truncate">
+                    <div className="font-medium text-xs text-foreground break-words">
                       {chat.title}
                     </div>
                   </div>
