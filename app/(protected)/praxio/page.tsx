@@ -1186,28 +1186,21 @@ export default function PraxioPage() {
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
         {/* Previous Research Sidebar - Fixed 300px width */}
-        <div className="w-[300px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
-          {/* Header */}
-          <div className="p-4 border-b border-slate-200">
-            <Button
-              onClick={handleNewResearch}
-              className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-2"
-            >
-              <Sparkles className="h-3 w-3 mr-1" />
-              New Research
-            </Button>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Previous</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSearchOpen(true)}
-                className="h-7 w-7"
-              >
-                <Search className="h-3.5 w-3.5" />
-              </Button>
+          <div className="w-[300px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Previous</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSearchOpen(true)}
+                  className="h-7 w-7"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-          </div>
 
           {/* Chat List */}
           <ScrollArea className="flex-1">
@@ -1659,7 +1652,13 @@ export default function PraxioPage() {
                           </Button>
                           </div>
                         </div>
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 justify-end flex-wrap">
+                          <Button
+                            onClick={handleNewResearch}
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs h-8 px-3"
+                          >
+                            New Scenario
+                          </Button>
                           <Button
                             onClick={() => {
                               // Shortcut: Go directly to share step with research and citations included
@@ -1692,7 +1691,6 @@ export default function PraxioPage() {
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
                           >
-                            <FileText className="h-3.5 w-3.5 mr-1.5" />
                             Create Client Draft
                           </Button>
                         </div>
