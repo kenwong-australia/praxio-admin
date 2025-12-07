@@ -2,11 +2,19 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 function friendlyError(code: string) {
   switch (code) {
@@ -15,6 +23,14 @@ function friendlyError(code: string) {
     case 'auth/user-not-found':
     case 'auth/wrong-password':  return 'Email or password is incorrect. Please try again.';
     default:                     return 'Sign-in failed. Please try again.';
+  }
+}
+
+function friendlyResetError(code: string) {
+  switch (code) {
+    case 'auth/invalid-email':  return 'That email looks invalid. Please double-check.';
+    case 'auth/user-not-found': return 'No account found for that email.';
+    default:                    return 'Could not send reset email. Please try again.';
   }
 }
 
@@ -29,13 +45,26 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // 🟢 Always clear fields when arriving on /signin
   useEffect(() => {
     setEmail('');
     setPassword('');
+    setResetMessage(null);
   }, [reason]); 
   // reason in deps ensures it also clears after redirects like ?reason=not_admin
+
+  // Keep reset dialog email in sync when opening
+  useEffect(() => {
+    if (resetDialogOpen) {
+      setResetEmail(email.trim());
+      setResetMessage(null);
+    }
+  }, [resetDialogOpen, email]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +77,27 @@ function SignInForm() {
     } catch (err: any) {
       setError(friendlyError(err?.code || ''));
       setLoading(false);
+    }
+  };
+
+  const onResetPassword = async () => {
+    if (resetLoading) return;
+    const trimmedEmail = resetEmail.trim();
+    if (!trimmedEmail) {
+      setResetMessage({ type: 'error', text: 'Enter your email to receive a reset link.' });
+      return;
+    }
+
+    setResetMessage(null);
+    setResetLoading(true);
+    try {
+      const auth = getFirebaseAuth();
+      await sendPasswordResetEmail(auth, trimmedEmail);
+      setResetMessage({ type: 'success', text: 'If this account exists, a reset link is on its way.' });
+    } catch (err: any) {
+      setResetMessage({ type: 'error', text: friendlyResetError(err?.code || '') });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -114,6 +164,16 @@ function SignInForm() {
             </div>
           </label>
 
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setResetDialogOpen(true)}
+              className="text-xs font-medium text-blue-600 hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
@@ -125,6 +185,57 @@ function SignInForm() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Reset password</DialogTitle>
+              <DialogDescription>
+                Enter the email for your account. If it exists, we&apos;ll send a password reset link.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-2">
+              <label className="block">
+                <span className="text-sm">Email</span>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
+              </label>
+              {resetMessage && (
+                <p
+                  className={`text-xs ${resetMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}
+                  aria-live="polite"
+                >
+                  {resetMessage.text}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="sm:justify-between sm:space-x-2">
+              <button
+                type="button"
+                onClick={() => setResetDialogOpen(false)}
+                className="text-sm font-medium text-neutral-600 hover:text-neutral-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onResetPassword}
+                disabled={resetLoading}
+                className="rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white hover:bg-[#1D4ED8] disabled:opacity-60"
+              >
+                {resetLoading ? 'Sending…' : 'Send reset link'}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <p className="mt-3 text-xs text-center text-neutral-500">
           Don't have an account?{' '}
