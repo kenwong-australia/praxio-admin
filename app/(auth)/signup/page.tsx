@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
@@ -33,6 +33,10 @@ export default function SignUpPage() {
   const [abnValidated, setAbnValidated] = useState<boolean | null>(null);
   const [abnValidatedValue, setAbnValidatedValue] = useState<string>('');
   const [hasEngaged, setHasEngaged] = useState(false);
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [lastCheckedEmail, setLastCheckedEmail] = useState('');
+  const emailRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -113,6 +117,15 @@ export default function SignUpPage() {
     } 
     else {
       setFormData(prev => ({ ...prev, [name]: value }));
+      if (name === 'email') {
+        // Reset email existence state when user edits email
+        setEmailExists(null);
+        setLastCheckedEmail('');
+        if (emailRedirectTimerRef.current) {
+          clearTimeout(emailRedirectTimerRef.current);
+          emailRedirectTimerRef.current = null;
+        }
+      }
     }
     
     // Clear error when user starts typing
@@ -142,6 +155,75 @@ export default function SignUpPage() {
       setPhoneFormatWarning(false);
     }
   };
+
+  // Email existence check (Firestore) - debounced
+  useEffect(() => {
+    const email = formData.email.trim().toLowerCase();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!email || !isValidEmail) {
+      setEmailExists(null);
+      setEmailCheckLoading(false);
+      return;
+    }
+
+    if (email === lastCheckedEmail) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setEmailCheckLoading(true);
+      try {
+        const response = await fetch('/api/users/check-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+          signal: controller.signal,
+        });
+
+        const data = await response.json();
+        const exists = Boolean(data?.exists);
+        setEmailExists(exists);
+        setLastCheckedEmail(email);
+
+        if (exists) {
+          toast.info('Account already exists', {
+            description: 'Redirecting you to sign in',
+            duration: 3000,
+          });
+          if (emailRedirectTimerRef.current) {
+            clearTimeout(emailRedirectTimerRef.current);
+          }
+          emailRedirectTimerRef.current = setTimeout(() => {
+            router.push('/signin');
+          }, 3000);
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('Email check failed:', error);
+          setEmailExists(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setEmailCheckLoading(false);
+        }
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [formData.email, lastCheckedEmail, router]);
+
+  useEffect(() => {
+    return () => {
+      if (emailRedirectTimerRef.current) {
+        clearTimeout(emailRedirectTimerRef.current);
+      }
+    };
+  }, []);
 
   // ABN Lookup Effect - triggers when ABN reaches 11 digits (only once per ABN value)
   useEffect(() => {
@@ -220,7 +302,12 @@ export default function SignUpPage() {
     
     if (!formData.firstName.trim()) missing.push('First name');
     if (!formData.lastName.trim()) missing.push('Last name');
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) missing.push('Valid email');
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      missing.push('Valid email');
+    }
+    if (emailExists === true) {
+      missing.push('Use a different email (already registered)');
+    }
     if (!formData.phone.trim() || !validateAustralianPhone(formData.phone)) missing.push('Valid phone number');
     if (!formData.company.trim()) missing.push('Company');
     if (!formData.abn.trim() || formData.abn.length !== 11) missing.push('11-digit ABN');
@@ -244,6 +331,8 @@ export default function SignUpPage() {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    } else if (emailExists === true) {
+      newErrors.email = 'An account already exists with this email. Please sign in instead.';
     }
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
@@ -280,7 +369,19 @@ export default function SignUpPage() {
     // Mark that user has engaged (tried to submit)
     setHasEngaged(true);
     
-    if (!validateForm()) {
+    if (!validateForm() || emailExists === true) {
+      if (emailExists === true) {
+        toast.info('Account already exists', {
+          description: 'Redirecting to sign in',
+          duration: 3000,
+        });
+        if (emailRedirectTimerRef.current) {
+          clearTimeout(emailRedirectTimerRef.current);
+        }
+        emailRedirectTimerRef.current = setTimeout(() => {
+          router.push('/signin');
+        }, 3000);
+      }
       return;
     }
 
@@ -452,6 +553,14 @@ export default function SignUpPage() {
                         : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
+                  {emailCheckLoading && (
+                    <p className="mt-0.5 text-xs text-slate-500">Checking email...</p>
+                  )}
+                  {emailExists === true && !emailCheckLoading && (
+                    <p className="mt-0.5 text-xs text-amber-600">
+                      Account already exists. Redirecting you to sign in.
+                    </p>
+                  )}
                   {errors.email && (
                     <p className="mt-0.5 text-xs text-red-600">{errors.email}</p>
                   )}
