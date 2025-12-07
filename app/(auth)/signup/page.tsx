@@ -6,6 +6,8 @@ import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -386,12 +388,55 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
-    // Mock submission - will be wired up later
-    setTimeout(() => {
+    try {
+      const auth = getFirebaseAuth();
+
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        formData.email.trim(),
+        formData.password
+      );
+
+      const displayName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+      if (displayName) {
+        await updateProfile(user, { displayName });
+      }
+
+      const idToken = await user.getIdToken();
+
+      const provisionRes = await fetch('/api/users/provision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          phone: formData.phone.trim(),
+          company: formData.company.trim(),
+          abn: formData.abn.trim(),
+          displayName,
+        }),
+      });
+
+      const provisionData = await provisionRes.json();
+      if (!provisionRes.ok || !provisionData?.ok) {
+        throw new Error(provisionData?.error || 'Provisioning failed');
+      }
+
+      toast.success('Account created!', {
+        description: 'Welcome to Praxio. Redirecting you now.',
+        duration: 3000,
+      });
+      router.push('/praxio');
+    } catch (error) {
+      console.error('Signup failed', error);
+      toast.error('Signup failed', {
+        description:
+          error instanceof Error ? error.message : 'Unable to create account right now.',
+      });
+    } finally {
       setLoading(false);
-      // router.push('/signin?message=account_created');
-      alert('Sign up functionality will be wired up later. Form validated successfully!');
-    }, 1000);
+    }
   };
 
   const features = [
