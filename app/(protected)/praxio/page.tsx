@@ -1345,22 +1345,40 @@ export default function PraxioPage() {
 
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={58}>
-          {selectedChat && loadingChatData ? (
-            // Loading state
-            <div className="h-full flex items-center justify-center bg-white">
-              <div className="text-center text-muted-foreground">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-                <p className="text-lg">Loading chat data...</p>
+          <div className="h-full relative">
+            {userRole === 'admin' && (
+              <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-200 shadow-sm w-[190px]">
+                <div className="text-[11px] text-slate-500 mb-1 uppercase tracking-[0.04em]">
+                  Model
+                </div>
+                <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Praxio AI">Praxio AI</SelectItem>
+                    <SelectItem value="Test AI">Test AI</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          ) : selectedChat && !loadingChatData && fullChatData ? (
-            // When chat is selected and data loaded: Show split columns
-            <div className="h-full flex flex-col bg-white">
-              <ResizablePanelGroup direction="horizontal" className="flex-1">
-                {/* Left Column - Scenario, Research, Citations */}
-                <ResizablePanel defaultSize={50}>
-                  <ScrollArea className="h-full">
-                    <div className="p-5 space-y-3">
+            )}
+
+            {selectedChat && loadingChatData ? (
+              // Loading state
+              <div className="h-full flex items-center justify-center bg-white">
+                <div className="text-center text-muted-foreground">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+                  <p className="text-lg">Loading chat data...</p>
+                </div>
+              </div>
+            ) : selectedChat && !loadingChatData && fullChatData ? (
+              // When chat is selected and data loaded: Show split columns
+              <div className="h-full flex flex-col bg-white">
+                <ResizablePanelGroup direction="horizontal" className="flex-1">
+                  {/* Left Column - Scenario, Research, Citations */}
+                  <ResizablePanel defaultSize={50}>
+                    <ScrollArea className="h-full">
+                      <div className="p-5 space-y-3">
                       <Accordion 
                         type="multiple" 
                         className="w-full space-y-4" 
