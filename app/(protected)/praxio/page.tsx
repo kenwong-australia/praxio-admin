@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { getDb, getFirebaseAuth } from '@/lib/firebase';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
@@ -53,6 +55,9 @@ interface Citation {
   url: string | null;
 }
 
+type ModelOption = 'Praxio AI' | 'Test AI';
+const MODEL_STORAGE_KEY = 'praxio_model_selection';
+
 export default function PraxioPage() {
   const [isPreviousOpen, setIsPreviousOpen] = useState(true);
   const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
@@ -93,6 +98,8 @@ export default function PraxioPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelOption>('Praxio AI');
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -135,6 +142,47 @@ export default function PraxioPage() {
     }
     loadChats();
   }, [userId]);
+
+  // Load persisted model from sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = sessionStorage.getItem(MODEL_STORAGE_KEY);
+    if (stored === 'Praxio AI' || stored === 'Test AI') {
+      setSelectedModel(stored as ModelOption);
+    }
+  }, []);
+
+  // Fetch user role from Firestore to gate model selector
+  useEffect(() => {
+    if (!userId) return;
+    const fetchRole = async () => {
+      try {
+        const db = getDb();
+        const snap = await getDoc(doc(db, 'users', userId));
+        const role = snap.exists() ? (snap.data()?.role as string | null) : null;
+        setUserRole(role ?? null);
+        if (role !== 'admin') {
+          setSelectedModel('Praxio AI');
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(MODEL_STORAGE_KEY, 'Praxio AI');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole(null);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(MODEL_STORAGE_KEY, 'Praxio AI');
+        }
+      }
+    };
+    fetchRole();
+  }, [userId]);
+
+  // Persist model selection in sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
+  }, [selectedModel]);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
