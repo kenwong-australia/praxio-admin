@@ -1363,7 +1363,7 @@ export default function PraxioPage() {
               </div>
             )}
 
-            {selectedChat && loadingChatData ? (
+          {selectedChat && loadingChatData ? (
               // Loading state
               <div className="h-full flex items-center justify-center bg-white">
                 <div className="text-center text-muted-foreground">
@@ -1875,6 +1875,7 @@ export default function PraxioPage() {
               </div>
             </div>
           )}
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
 
