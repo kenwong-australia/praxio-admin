@@ -1347,12 +1347,9 @@ export default function PraxioPage() {
         <ResizablePanel defaultSize={70} minSize={58}>
           <div className="h-full relative">
             {userRole === 'admin' && (
-              <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur px-3 py-2 rounded-lg border border-slate-200 shadow-sm w-[190px]">
-                <div className="text-[11px] text-slate-500 mb-1 uppercase tracking-[0.04em]">
-                  Model
-                </div>
+              <div className="absolute top-4 left-4 z-20">
                 <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white/90 backdrop-blur border border-slate-200">
                     <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent>
