@@ -6,7 +6,7 @@ import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function SignUpPage() {
@@ -413,6 +413,17 @@ export default function SignUpPage() {
         await updateProfile(user, { displayName });
       }
 
+      // Send verification email right after account creation
+      try {
+        await sendEmailVerification(user);
+      } catch (error) {
+        console.error('sendEmailVerification failed', error);
+        toast.error('Verification email failed to send', {
+          description: 'Please try resending from Settings.',
+          duration: 5000,
+        });
+      }
+
       const idToken = await user.getIdToken();
 
       const provisionRes = await fetch('/api/users/provision', {
@@ -435,7 +446,7 @@ export default function SignUpPage() {
       }
 
       toast.success('Account created!', {
-        description: 'Welcome to Praxio. Redirecting you now.',
+        description: 'Verification email sent. Check your inbox to verify.',
         duration: 3000,
       });
       router.push('/praxio');

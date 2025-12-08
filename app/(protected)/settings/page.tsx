@@ -22,7 +22,7 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,7 @@ interface UserData {
   selected_plan?: string;
   selected_frequency?: string;
   stripe_trial_end_date?: Date;
+  email_verified?: boolean;
 }
 
 export default function SettingsPage() {
@@ -59,6 +60,8 @@ export default function SettingsPage() {
   const [timeoutHours, setTimeoutHours] = useState<number>(DEFAULT_TIMEOUT_HOURS);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -70,6 +73,8 @@ export default function SettingsPage() {
       }
 
       try {
+        await reload(user);
+        setAuthUser(user);
         const db = getDb();
         const snap = await getDoc(doc(db, 'users', user.uid));
         
@@ -95,6 +100,7 @@ export default function SettingsPage() {
           selected_plan: data?.selected_plan,
           selected_frequency: data?.selected_frequency,
           stripe_trial_end_date: toDateSafe(data?.stripe_trial_end_date),
+          email_verified: Boolean(data?.email_verified),
         };
 
         setUserData(userData);
@@ -108,6 +114,60 @@ export default function SettingsPage() {
 
     return () => unsub();
   }, [router]);
+
+  // Sync Firestore when Auth email becomes verified
+  useEffect(() => {
+    const syncEmailVerified = async () => {
+      if (!authUser || !userData) return;
+      if (!authUser.emailVerified || userData.email_verified) return;
+      try {
+        const idToken = await authUser.getIdToken(true);
+        const res = await fetch('/api/users/mark-email-verified', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json?.ok) {
+          console.error('mark-email-verified failed', json);
+          return;
+        }
+        setUserData(prev => (prev ? { ...prev, email_verified: true } : prev));
+      } catch (error) {
+        console.error('mark-email-verified error', error);
+      }
+    };
+    syncEmailVerified();
+  }, [authUser, userData]);
+
+  const handleResendVerification = async () => {
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('No signed-in user found.');
+      return;
+    }
+    try {
+      setResendLoading(true);
+      await reload(user);
+      if (user.emailVerified) {
+        toast.success('Email already verified', {
+          description: 'Thanks for confirming your email.',
+        });
+        setUserData(prev => (prev ? { ...prev, email_verified: true } : prev));
+        return;
+      }
+      await sendEmailVerification(user);
+      toast.success('Verification email sent', {
+        description: 'Check your inbox to verify your email.',
+      });
+    } catch (error) {
+      console.error('Resend verification error', error);
+      toast.error('Unable to send verification email');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   // Load timeout preference from localStorage
   useEffect(() => {
@@ -250,6 +310,23 @@ export default function SettingsPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge
+                  variant="outline"
+                  className={`text-[11px] ${
+                    userData.email_verified
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}
+                >
+                  {userData.email_verified ? 'Email verified' : 'Email not verified'}
+                </Badge>
+                {!userData.email_verified && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Check your inbox or resend below
+                  </span>
+                )}
+              </div>
               {userData.business_name && (
                 <p className="text-xs text-muted-foreground mt-1">{userData.business_name}</p>
               )}
@@ -292,8 +369,11 @@ export default function SettingsPage() {
           </button>
 
           <button
-            onClick={() => toast.info('Resend verification email functionality will be implemented soon')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            onClick={handleResendVerification}
+            disabled={resendLoading}
+            className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
+              resendLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50'
+            }`}
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center">
