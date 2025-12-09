@@ -102,6 +102,7 @@ export default function PraxioPage() {
   const [selectedModel, setSelectedModel] = useState<ModelOption>('Praxio AI');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const progressTimersRef = useRef<NodeJS.Timeout[]>([]);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -752,6 +753,7 @@ export default function PraxioPage() {
 
     setIsRunning(true);
     const toastId = toast.loading(isFollowUp ? 'Re-running research...' : 'Running research...');
+    scheduleProgressToasts(isFollowUp);
 
     try {
       const resp = await fetch(endpoint, {
@@ -807,6 +809,7 @@ export default function PraxioPage() {
         id: toastId,
         description: insert.chat.title || 'New research created',
       });
+      playChime();
     } catch (error: any) {
       console.error('Run research failed:', error);
       toast.error('Research failed', {
@@ -814,6 +817,7 @@ export default function PraxioPage() {
         description: error?.message || 'Please try again.',
       });
     } finally {
+      clearProgressToasts();
       setIsRunning(false);
     }
   };
@@ -1331,6 +1335,54 @@ export default function PraxioPage() {
   };
 
   const citations = fullChatData ? parseCitations(fullChatData.usedcitationsArray || fullChatData.usedcitationsArray) : [];
+
+  // Utility: play short chime when work completes
+  const playChime = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.value = 0.08;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch {
+      // silently ignore audio errors
+    }
+  };
+
+  const clearProgressToasts = () => {
+    progressTimersRef.current.forEach((t) => clearTimeout(t));
+    progressTimersRef.current = [];
+  };
+
+  const scheduleProgressToasts = (isFollowUp: boolean) => {
+    clearProgressToasts();
+    const messages = isFollowUp
+      ? [
+          'Sending user re-prompt...',
+          'Analysing new information...',
+          'Fetching legislation and ATO references...',
+          'Researching and redrafting client response...',
+        ]
+      : [
+          'Sending user prompt...',
+          'Analysing scenario...',
+          'Fetching legislation and ATO references...',
+          'Researching and redrafting client response...',
+        ];
+
+    const intervalMs = 8000; // show progress every 8s
+    messages.forEach((msg, idx) => {
+      const timer = setTimeout(() => {
+        toast.message(msg, { duration: 4000 });
+      }, idx * intervalMs);
+      progressTimersRef.current.push(timer);
+    });
+  };
 
   return (
     <div className="h-screen flex flex-col relative">
