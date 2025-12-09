@@ -20,11 +20,12 @@ import {
   ChevronRight,
   Copy,
   CheckCircle2,
-  Clock
+  Clock,
+  Building2
 } from 'lucide-react';
 import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -38,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const INACTIVITY_TIMEOUT_STORAGE_KEY = 'inactivity_timeout_hours';
 const DEFAULT_TIMEOUT_HOURS = 2;
@@ -62,6 +64,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -216,6 +221,33 @@ export default function SettingsPage() {
     toast.info('Delete account functionality will be implemented soon');
   };
 
+  const handleSaveDisplayName = async () => {
+    if (!authUser) {
+      toast.error('No signed-in user found.');
+      return;
+    }
+
+    const trimmed = editDisplayName.trim();
+    if (!trimmed) {
+      toast.error('Display name cannot be empty');
+      return;
+    }
+
+    try {
+      setSavingProfile(true);
+      const db = getDb();
+      await updateDoc(doc(db, 'users', authUser.uid), { display_name: trimmed });
+      setUserData(prev => (prev ? { ...prev, display_name: trimmed } : prev));
+      toast.success('Display name updated');
+      setEditProfileOpen(false);
+    } catch (error) {
+      console.error('Error updating display name:', error);
+      toast.error('Failed to update display name');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     if (!name) return 'U';
     return name
@@ -310,6 +342,10 @@ export default function SettingsPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                <span className="truncate">{userData.business_name || 'Company not set'}</span>
+              </div>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   variant="outline"
@@ -327,9 +363,6 @@ export default function SettingsPage() {
                   </span>
                 )}
               </div>
-              {userData.business_name && (
-                <p className="text-xs text-muted-foreground mt-1">{userData.business_name}</p>
-              )}
             </div>
             <Button
               variant="outline"
@@ -353,7 +386,10 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-1">
           <button
-            onClick={() => toast.info('Edit profile functionality will be implemented soon')}
+            onClick={() => {
+              setEditDisplayName(userData.display_name || '');
+              setEditProfileOpen(true);
+            }}
             className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
@@ -362,7 +398,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Edit Profile</p>
-                <p className="text-xs text-muted-foreground">Update your name and company</p>
+                <p className="text-xs text-muted-foreground">Update your display name</p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -417,6 +453,50 @@ export default function SettingsPage() {
           </button>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={editProfileOpen}
+        onOpenChange={(open) => {
+          setEditProfileOpen(open);
+          if (open) {
+            setEditDisplayName(userData.display_name || '');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update your display name.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Display name</p>
+              <Input
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                placeholder="Enter your display name"
+                autoFocus
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:justify-end">
+              <Button
+                variant="outline"
+                className="text-xs h-8 px-3"
+                onClick={() => setEditProfileOpen(false)}
+              >
+                Back
+              </Button>
+              <Button
+                className="text-xs h-8 px-3"
+                onClick={handleSaveDisplayName}
+                disabled={savingProfile || !editDisplayName.trim()}
+              >
+                {savingProfile ? 'Saving...' : 'Confirm'}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Preferences Section */}
       <Card>
