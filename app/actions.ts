@@ -227,6 +227,68 @@ export async function getPraxioChats(userId: string | null) {
   }
 }
 
+/**
+ * Create a new chat row and optional conversation rows in Supabase.
+ */
+export async function createChatWithConversation(input: {
+  title?: string | null;
+  scenario: string;
+  research: string;
+  usedcitationsArray: any;
+  questions?: string | null;
+  draft?: string | null;
+  processTime?: number | null;
+  model: string | null;
+  user_id: string;
+  email?: string | null;
+  conversation?: { type: 'user' | 'assistant'; content: string }[];
+}) {
+  try {
+    const insertData: any = {
+      title: (input.title || '').trim() || null,
+      scenario: (input.scenario || '').trim(),
+      research: (input.research || '').trim(),
+      usedcitationsArray: input.usedcitationsArray ?? null,
+      questions: (input.questions || '').trim() || null,
+      draft: (input.draft || '').trim() || null,
+      processTime: input.processTime ?? null,
+      model: input.model,
+      user_id: input.user_id,
+      email: input.email ?? null,
+    };
+
+    const { data: chatRow, error } = await svc()
+      .from('chat')
+      .insert(insertData)
+      .select('id,created_at,title,scenario,model,processTime')
+      .single();
+
+    if (error) throw error;
+
+    const chatId = chatRow?.id;
+
+    if (chatId && Array.isArray(input.conversation) && input.conversation.length > 0) {
+      const convoRows = input.conversation
+        .filter((c) => c?.content && c.content.trim())
+        .map((c) => ({
+          chat_id: chatId,
+          type: c.type,
+          content: c.content.trim(),
+        }));
+
+      if (convoRows.length > 0) {
+        const { error: convoError } = await svc().from('conversation').insert(convoRows);
+        if (convoError) throw convoError;
+      }
+    }
+
+    return { success: true, chat: chatRow };
+  } catch (error) {
+    console.error('Error creating chat with conversation:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
 export async function updateChatTitle(chatId: number, newTitle: string) {
   try {
     const { error } = await svc()

@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
+import { createChatWithConversation } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
@@ -100,6 +101,7 @@ export default function PraxioPage() {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelOption>('Praxio AI');
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -709,10 +711,111 @@ export default function PraxioPage() {
     setPrompt('');
   };
 
-  const handleRunResearch = () => {
-    if (!prompt.trim()) return;
-    // Will be wired up later
-    console.log('Run research:', prompt);
+  const handleRunResearch = async () => {
+    if (!prompt.trim() || isRunning) return;
+    if (!userId) {
+      toast.error('Please sign in', { description: 'User not authenticated.' });
+      return;
+    }
+
+    const isFollowUp = Boolean(fullChatData);
+    const endpoint =
+      selectedModel === 'Test AI'
+        ? 'https://tax-law-api-test.onrender.com/query'
+        : 'https://tax-law-api-launch.onrender.com/query';
+
+    const nowStr = new Date().toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const conversationHistory = conversations
+      .map((c) => `${c.type === 'user' ? 'User' : 'Assistant'}: ${c.content || ''}`)
+      .join('\n');
+
+    const latestResearch = fullChatData?.research || '';
+    const queryString = isFollowUp
+      ? `It is now ${nowStr}.  Please update research based on this additional information. ${latestResearch}\n${conversationHistory}\n${prompt.trim()}`
+      : `It is now ${nowStr}. Please research the following tax scenario: ${prompt.trim()}`;
+
+    const payload = {
+      query: queryString,
+      title: '',
+      tax_research: '',
+      used_citations: '',
+      draft_client_response: '',
+      clarifying_questions: '',
+      confirmation: '',
+      initial: !isFollowUp,
+    };
+
+    setIsRunning(true);
+    const toastId = toast.loading(isFollowUp ? 'Re-running research...' : 'Running research...');
+
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        throw new Error(`API error ${resp.status}`);
+      }
+
+      const result = await resp.json();
+
+      const usedCitationsArray = Array.isArray(result.citations)
+        ? result.citations
+        : Array.isArray(result.used_citations)
+        ? result.used_citations.map((c: any) => ({
+            fullreference: typeof c === 'string' ? c : String(c),
+            url: '',
+          }))
+        : [];
+
+      const insert = await createChatWithConversation({
+        title: result.title || prompt.trim().slice(0, 80) || 'Untitled',
+        scenario: prompt.trim(),
+        research: result.tax_research || '',
+        usedcitationsArray: usedCitationsArray,
+        questions: result.clarifying_questions || '',
+        draft: result.draft_client_response || '',
+        processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
+        model: result.model || selectedModel,
+        user_id: userId,
+        conversation: [
+          { type: 'user', content: prompt.trim() },
+          { type: 'assistant', content: result.tax_research || '' },
+        ],
+      });
+
+      if (!insert.success || !insert.chat) {
+        throw new Error(insert.error || 'Failed to save research');
+      }
+
+      await refreshChats();
+      setSelectedChat({
+        id: insert.chat.id,
+        title: insert.chat.title || `Chat #${insert.chat.id}`,
+        created_at: insert.chat.created_at,
+      });
+      setPrompt('');
+
+      toast.success('Research ready', {
+        id: toastId,
+        description: insert.chat.title || 'New research created',
+      });
+    } catch (error: any) {
+      console.error('Run research failed:', error);
+      toast.error('Research failed', {
+        id: toastId,
+        description: error?.message || 'Please try again.',
+      });
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const handleUpvote = async () => {
@@ -1734,10 +1837,10 @@ export default function PraxioPage() {
                         <div className="flex items-start">
                           <Button
                             onClick={handleRunResearch}
-                            disabled={!prompt.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0"
+                            disabled={!prompt.trim() || isRunning}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
                           >
-                            Run Research
+                            {fullChatData ? 'Re-run Research' : 'Run Research'}
                           </Button>
                           </div>
                         </div>
@@ -1854,10 +1957,10 @@ export default function PraxioPage() {
                     <div className="flex items-start">
                       <Button
                         onClick={handleRunResearch}
-                        disabled={!prompt.trim()}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0"
+                        disabled={!prompt.trim() || isRunning}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
                       >
-                        Run Research
+                        {fullChatData ? 'Re-run Research' : 'Run Research'}
                       </Button>
                     </div>
                   </div>
