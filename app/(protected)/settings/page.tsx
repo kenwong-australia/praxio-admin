@@ -21,7 +21,8 @@ import {
   Copy,
   CheckCircle2,
   Clock,
-  Building2
+  Building2,
+  Loader2
 } from 'lucide-react';
 import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
@@ -48,7 +49,10 @@ interface UserData {
   display_name: string;
   email: string;
   business_name?: string;
+  stripe_cust_id?: string;
+  stripe_subscription_id?: string;
   stripe_subscription_status?: string;
+  stripe_plan_renewal_date?: Date;
   selected_plan?: string;
   selected_frequency?: string;
   stripe_trial_end_date?: Date;
@@ -67,6 +71,10 @@ export default function SettingsPage() {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
+  const [subscriptionCancelOpen, setSubscriptionCancelOpen] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -101,7 +109,10 @@ export default function SettingsPage() {
           display_name: data?.display_name || '',
           email: data?.email || user.email || '',
           business_name: data?.business_name,
+          stripe_cust_id: data?.stripe_cust_id,
+          stripe_subscription_id: data?.stripe_subscription_id,
           stripe_subscription_status: data?.stripe_subscription_status,
+          stripe_plan_renewal_date: toDateSafe(data?.stripe_plan_renewal_date),
           selected_plan: data?.selected_plan,
           selected_frequency: data?.selected_frequency,
           stripe_trial_end_date: toDateSafe(data?.stripe_trial_end_date),
@@ -298,6 +309,108 @@ export default function SettingsPage() {
     return parts.length > 0 ? parts.join(' • ') : 'N/A';
   };
 
+  const formatDate = (date?: Date) => {
+    if (!date) return '—';
+    try {
+      return date.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return '—';
+    }
+  };
+
+  const openSubscriptionModal = () => {
+    if (userData?.stripe_subscription_status?.toLowerCase() === 'trialing') {
+      toast.info('Subscription management is disabled during trial');
+      return;
+    }
+    setSubscriptionDialogOpen(true);
+  };
+
+  const handleOpenBillingPortal = async () => {
+    if (!userData?.stripe_cust_id) {
+      toast.error('Stripe customer not found');
+      return;
+    }
+    try {
+      setPortalLoading(true);
+      const baseUrl = window.location.origin;
+      const response = await fetch('/api/stripe/create-billing-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: userData.stripe_cust_id,
+          returnUrl: `${baseUrl}/settings`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const msg = errorData?.error || 'Unable to open billing portal';
+        toast.error(msg);
+        return;
+      }
+
+      const data = await response.json();
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      toast.error('Portal URL not received');
+    } catch (error) {
+      console.error('Billing portal error', error);
+      toast.error('Unable to open billing portal');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  const handleDeleteSubscription = async () => {
+    if (!userData?.stripe_subscription_id) {
+      toast.error('No active subscription found');
+      return;
+    }
+    try {
+      setCancelLoading(true);
+      const response = await fetch('/api/stripe/delete-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: userData.stripe_subscription_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const msg = errorData?.error || 'Failed to cancel subscription';
+        toast.error(msg);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data?.success) {
+        toast.error(data?.error || 'Failed to cancel subscription');
+        return;
+      }
+
+      toast.success('Subscription canceled', {
+        description: 'Your subscription has been canceled in Stripe.',
+      });
+      setSubscriptionDialogOpen(false);
+      setSubscriptionCancelOpen(false);
+      setUserData(prev => (prev ? { ...prev, stripe_subscription_status: 'canceled' } : prev));
+    } catch (error) {
+      console.error('Cancel subscription error', error);
+      toast.error('Failed to cancel subscription');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6 space-y-6 max-w-4xl mx-auto">
@@ -368,7 +481,7 @@ export default function SettingsPage() {
               variant="outline"
               size="sm"
               className="text-xs h-8 px-3"
-              onClick={() => toast.info('Upgrade functionality will be implemented soon')}
+              onClick={openSubscriptionModal}
             >
               {userData.stripe_subscription_status?.toLowerCase() === 'trialing' ? 'Upgrade' : 'Manage Subscription'}
             </Button>
@@ -424,13 +537,7 @@ export default function SettingsPage() {
           </button>
 
           <button
-            onClick={() => {
-              if (userData.stripe_subscription_status?.toLowerCase() === 'trialing') {
-                toast.info('Subscription management is disabled during trial');
-              } else {
-                toast.info('Subscription management will be implemented soon');
-              }
-            }}
+            onClick={openSubscriptionModal}
             disabled={userData.stripe_subscription_status?.toLowerCase() === 'trialing'}
             className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
               userData.stripe_subscription_status?.toLowerCase() === 'trialing'
@@ -453,6 +560,98 @@ export default function SettingsPage() {
           </button>
         </CardContent>
       </Card>
+
+      {/* Subscription Modal */}
+      <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Your Subscription</DialogTitle>
+            <DialogDescription>
+              Manage billing details or cancel your plan. You will return here after visiting Stripe.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Current Plan</p>
+                  <p className="text-sm text-muted-foreground">{formatSubscriptionLabel()}</p>
+                </div>
+                <Badge variant={getStatusBadgeVariant(userData.stripe_subscription_status)} className="text-xs">
+                  {getStatusLabel(userData.stripe_subscription_status)}
+                </Badge>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Renews</p>
+                  <p className="text-slate-900">{formatDate(userData.stripe_plan_renewal_date)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Trial Ends</p>
+                  <p className="text-slate-900">{formatDate(userData.stripe_trial_end_date)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Use the buttons below to open the Stripe billing portal or cancel your subscription. Your return URL is set to this settings page.
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <AlertDialog open={subscriptionCancelOpen} onOpenChange={setSubscriptionCancelOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="text-xs h-9 px-3"
+                  disabled={!userData.stripe_subscription_id || cancelLoading}
+                >
+                  {cancelLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Cancel Subscription
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancel subscription?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will cancel your current subscription in Stripe. You will retain access through the end of the current billing period if applicable.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="text-xs h-8 px-3">Back</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteSubscription}
+                    className="bg-red-600 hover:bg-red-700 text-xs h-8 px-3"
+                    disabled={cancelLoading}
+                  >
+                    {cancelLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Confirm Cancel
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <div className="flex flex-1 justify-end gap-2">
+              <Button
+                variant="outline"
+                className="text-xs h-9 px-3"
+                onClick={() => setSubscriptionDialogOpen(false)}
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleOpenBillingPortal}
+                disabled={portalLoading}
+                className="text-xs h-9 px-3"
+              >
+                {portalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Manage in Stripe
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={editProfileOpen}
