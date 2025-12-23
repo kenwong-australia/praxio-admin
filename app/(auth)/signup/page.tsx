@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
@@ -41,7 +41,6 @@ export default function SignUpPage() {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [lastCheckedEmail, setLastCheckedEmail] = useState('');
-  const emailRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -126,10 +125,6 @@ export default function SignUpPage() {
         // Reset email existence state when user edits email
         setEmailExists(null);
         setLastCheckedEmail('');
-        if (emailRedirectTimerRef.current) {
-          clearTimeout(emailRedirectTimerRef.current);
-          emailRedirectTimerRef.current = null;
-        }
       }
     }
     
@@ -192,18 +187,7 @@ export default function SignUpPage() {
         setEmailExists(exists);
         setLastCheckedEmail(email);
 
-        if (exists) {
-          toast.info('Account already exists', {
-            description: 'Redirecting you to sign in',
-            duration: 3000,
-          });
-          if (emailRedirectTimerRef.current) {
-            clearTimeout(emailRedirectTimerRef.current);
-          }
-          emailRedirectTimerRef.current = setTimeout(() => {
-            router.push('/signin');
-          }, 3000);
-        }
+        // If email already exists, we surface an inline message near the field (no auto-redirect)
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           console.error('Email check failed:', error);
@@ -221,14 +205,6 @@ export default function SignUpPage() {
       controller.abort();
     };
   }, [formData.email, lastCheckedEmail, router]);
-
-  useEffect(() => {
-    return () => {
-      if (emailRedirectTimerRef.current) {
-        clearTimeout(emailRedirectTimerRef.current);
-      }
-    };
-  }, []);
 
   // ABN Lookup Effect - triggers when ABN reaches 11 digits (only once per ABN value)
   useEffect(() => {
@@ -383,18 +359,6 @@ export default function SignUpPage() {
     }
     
     if (!validateForm() || emailExists === true) {
-      if (emailExists === true) {
-        toast.info('Account already exists', {
-          description: 'Redirecting to sign in',
-          duration: 3000,
-        });
-        if (emailRedirectTimerRef.current) {
-          clearTimeout(emailRedirectTimerRef.current);
-        }
-        emailRedirectTimerRef.current = setTimeout(() => {
-          router.push('/signin');
-        }, 3000);
-      }
       return;
     }
 
@@ -624,9 +588,15 @@ export default function SignUpPage() {
                     <p className="mt-0.5 text-xs text-slate-500">Checking email...</p>
                   )}
                   {emailExists === true && !emailCheckLoading && (
-                    <p className="mt-0.5 text-xs text-amber-600">
-                      Account already exists. Redirecting you to sign in.
-                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-amber-700">
+                      <span>Account already exists.</span>
+                      <Link
+                        href="/signin"
+                        className="inline-flex items-center rounded-md border border-amber-300 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50"
+                      >
+                        Go to sign in
+                      </Link>
+                    </div>
                   )}
                   {errors.email && (
                     <p className="mt-0.5 text-xs text-red-600">{errors.email}</p>
