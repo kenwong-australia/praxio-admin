@@ -1527,9 +1527,9 @@ export default function PraxioPage() {
             ) : selectedChat && !loadingChatData && fullChatData ? (
               // When chat is selected and data loaded: Show split columns
               <div className="h-full flex flex-col bg-white">
-                <ResizablePanelGroup direction="horizontal" className="flex-1">
+                <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
                   {/* Left Column - Scenario, Research, Citations */}
-                  <ResizablePanel defaultSize={50}>
+                  <ResizablePanel defaultSize={50} className="min-w-0">
                     <ScrollArea className="h-full">
                       <div className="p-5 space-y-3">
                       <Accordion 
@@ -1716,7 +1716,7 @@ export default function PraxioPage() {
                               <div className="max-h-[400px] overflow-y-auto pr-2">
                                 <div className="space-y-3">
                                   {citations.map((citation, index) => (
-                                    <div key={index} className="flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg">
+                                    <div key={index} className="flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg w-full min-w-0">
                                       <div className="flex-1 min-w-0">
                                         <p className="font-medium text-xs mb-0.5 line-clamp-2">
                                           {citation.title}
@@ -1726,7 +1726,7 @@ export default function PraxioPage() {
                                             href={citation.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-center gap-1 truncate"
+                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-center gap-1 truncate min-w-0"
                                           >
                                             <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                                             {citation.url}
@@ -1752,7 +1752,7 @@ export default function PraxioPage() {
                 <ResizableHandle withHandle />
 
                 {/* Right Column - Questions, Conversation Widget */}
-                <ResizablePanel defaultSize={50}>
+                <ResizablePanel defaultSize={50} className="min-w-0">
                   <div className="h-full flex flex-col">
                     <ScrollArea className="flex-shrink-0">
                       <div className="p-5 pb-3">
