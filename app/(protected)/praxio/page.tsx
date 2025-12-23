@@ -1391,7 +1391,7 @@ export default function PraxioPage() {
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
         {/* Previous Research Sidebar - collapsible */}
         {isPreviousOpen ? (
-          <div className="w-[300px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
+          <div className="w-[240px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
             {/* Header */}
             <div className="p-4 border-b border-slate-200">
               <div className="flex items-center justify-between">
@@ -1501,20 +1501,6 @@ export default function PraxioPage() {
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={58}>
           <div className="h-full relative">
-            {userRole === 'admin' && (
-              <div className="absolute top-4 left-4 z-20">
-                <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
-                  <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white/90 backdrop-blur border border-slate-200">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Praxio AI">Praxio AI</SelectItem>
-                    <SelectItem value="Test AI">Test AI</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
           {selectedChat && loadingChatData ? (
               // Loading state
               <div className="h-full flex items-center justify-center bg-white">
@@ -1868,7 +1854,7 @@ export default function PraxioPage() {
 
                       {/* Prompt Box - Fixed at bottom */}
                       <div className="border-t border-slate-200 p-4 bg-white space-y-2">
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 flex-wrap">
                         <div className="flex-1 relative">
                           <textarea
                             value={prompt}
@@ -1886,6 +1872,19 @@ export default function PraxioPage() {
                             }}
                           />
                         </div>
+                        {userRole === 'admin' && fullChatData && (
+                          <div className="flex items-start">
+                            <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
+                              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white border border-slate-200">
+                                <SelectValue placeholder="Select model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Praxio AI">Praxio AI</SelectItem>
+                                <SelectItem value="Test AI">Test AI</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         <div className="flex items-start">
                           <Button
                             onClick={handleRunResearch}
