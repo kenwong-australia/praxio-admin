@@ -1501,6 +1501,21 @@ export default function PraxioPage() {
         {/* Main Content Area - 70% */}
         <ResizablePanel defaultSize={70} minSize={58}>
           <div className="h-full relative">
+          {/* Keep model selector visible for admins before results are shown */}
+          {userRole === 'admin' && !fullChatData && (
+            <div className="absolute top-4 left-4 z-20">
+              <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
+                <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white/90 backdrop-blur border border-slate-200">
+                  <SelectValue placeholder="Select model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Praxio AI">Praxio AI</SelectItem>
+                  <SelectItem value="Test AI">Test AI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {selectedChat && loadingChatData ? (
               // Loading state
               <div className="h-full flex items-center justify-center bg-white">
@@ -1854,26 +1869,37 @@ export default function PraxioPage() {
 
                       {/* Prompt Box - Fixed at bottom */}
                       <div className="border-t border-slate-200 p-4 bg-white space-y-2">
-                      <div className="flex gap-3 flex-wrap">
-                        <div className="flex-1 relative">
-                          <textarea
-                            value={prompt}
-                            onChange={(e) => {
-                              setPrompt(e.target.value);
-                              // Auto-resize textarea
-                              e.target.style.height = 'auto';
-                              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-                            }}
-                            placeholder="Add further details here..."
-                            className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
-                            rows={1}
-                            onKeyDown={(e) => {
-                              // Allow Enter to create new lines - only button click submits
-                            }}
-                          />
-                        </div>
-                        {userRole === 'admin' && fullChatData && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-3 flex-wrap">
+                          <div className="flex-1 relative">
+                            <textarea
+                              value={prompt}
+                              onChange={(e) => {
+                                setPrompt(e.target.value);
+                                // Auto-resize textarea
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                              }}
+                              placeholder="Add further details here..."
+                              className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
+                              rows={1}
+                              onKeyDown={(e) => {
+                                // Allow Enter to create new lines - only button click submits
+                              }}
+                            />
+                          </div>
                           <div className="flex items-start">
+                            <Button
+                              onClick={handleRunResearch}
+                              disabled={!prompt.trim() || isRunning}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
+                            >
+                              {fullChatData ? 'Re-run Research' : 'Run Research'}
+                            </Button>
+                            </div>
+                          </div>
+                        {userRole === 'admin' && fullChatData && (
+                          <div className="flex flex-wrap gap-2 items-start">
                             <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
                               <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white border border-slate-200">
                                 <SelectValue placeholder="Select model" />
@@ -1885,15 +1911,6 @@ export default function PraxioPage() {
                             </Select>
                           </div>
                         )}
-                        <div className="flex items-start">
-                          <Button
-                            onClick={handleRunResearch}
-                            disabled={!prompt.trim() || isRunning}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
-                          >
-                            {fullChatData ? 'Re-run Research' : 'Run Research'}
-                          </Button>
-                          </div>
                         </div>
                         <div className="flex gap-2 justify-end flex-wrap">
                           <Button
