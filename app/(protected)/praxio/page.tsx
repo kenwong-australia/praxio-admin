@@ -1726,10 +1726,10 @@ export default function PraxioPage() {
                                             href={citation.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-center gap-1 truncate min-w-0"
+                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-start gap-1 break-all whitespace-normal min-w-0"
                                           >
-                                            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
-                                            {citation.url}
+                                            <ExternalLink className="h-2.5 w-2.5 shrink-0 mt-[2px]" />
+                                            <span className="leading-snug break-all">{citation.url}</span>
                                           </a>
                                         ) : (
                                           <span className="text-[10px] text-muted-foreground italic">
