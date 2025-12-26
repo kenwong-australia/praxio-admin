@@ -765,7 +765,8 @@ export default function PraxioPage() {
     const resp = await fetch('/api/praxio-query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      // send model hint for proxy routing; proxy strips it before forwarding
+      body: JSON.stringify({ ...payload, __model: selectedModel }),
     });
 
     const wrapped = await resp.json();
@@ -821,9 +822,10 @@ export default function PraxioPage() {
       playChime();
     } catch (error: any) {
       console.error('Run research failed:', error);
+      toast.dismiss(toastId);
       toast.error('API request failed', {
-        id: toastId,
         description: error?.message || 'Please try again.',
+        position: 'bottom-center',
       });
     } finally {
       clearProgressToasts();

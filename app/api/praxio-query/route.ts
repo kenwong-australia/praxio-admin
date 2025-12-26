@@ -3,15 +3,14 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    // Body already matches TaxQuery schema; no wrapper expected
-    // Decide endpoint based on optional "model" string in body; default to launch
-    const model = (body?.model || '').trim();
+    // Body should match TaxQuery schema; we may get a hint for model selection via __model
+    const model = (body?.__model || '').trim();
     const endpoint =
       model === 'Test AI'
         ? 'https://tax-law-api-test.onrender.com/query'
         : 'https://tax-law-api-launch.onrender.com/query';
 
-    const { model: _m, ...forwardBody } = body || {};
+    const { __model: _m, model: _legacy, ...forwardBody } = body || {};
 
     const apiResp = await fetch(endpoint, {
       method: 'POST',
