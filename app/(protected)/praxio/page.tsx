@@ -823,9 +823,16 @@ export default function PraxioPage() {
     } catch (error: any) {
       console.error('Run research failed:', error);
       toast.dismiss(toastId);
+      const msg: string =
+        error?.message || 'Please try again.';
+      const friendly =
+        msg.includes('Failed to fetch')
+          ? 'Could not reach /api/praxio-query. Check server logs and upstream /query.'
+          : msg;
       toast.error('API request failed', {
-        description: error?.message || 'Please try again.',
+        description: friendly,
         position: 'bottom-center',
+        duration: 8000,
       });
     } finally {
       clearProgressToasts();
