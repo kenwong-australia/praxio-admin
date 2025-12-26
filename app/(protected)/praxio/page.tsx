@@ -103,6 +103,7 @@ export default function PraxioPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const progressTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const progressPersistentToastRef = useRef<string | number | null>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -758,7 +759,6 @@ export default function PraxioPage() {
     };
 
     setIsRunning(true);
-    const toastId = toast.loading(isFollowUp ? 'Re-running research...' : 'Running research...');
     scheduleProgressToasts(isFollowUp);
 
     try {
@@ -787,6 +787,13 @@ export default function PraxioPage() {
           }))
         : [];
 
+      const conversationRows: { type: 'user' | 'assistant'; content: string }[] | undefined = isFollowUp
+        ? [
+            { type: 'user', content: prompt.trim() },
+            { type: 'assistant', content: result.tax_research || '' },
+          ]
+        : undefined; // For initial runs, skip creating conversation rows
+
       const insert = await createChatWithConversation({
         title: result.title || prompt.trim().slice(0, 80) || 'Untitled',
         scenario: prompt.trim(),
@@ -797,10 +804,7 @@ export default function PraxioPage() {
         processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
         model: result.model || selectedModel,
         user_id: userId,
-        conversation: [
-          { type: 'user', content: prompt.trim() },
-          { type: 'assistant', content: result.tax_research || '' },
-        ],
+        conversation: conversationRows,
       });
 
       if (!insert.success || !insert.chat) {
@@ -816,13 +820,11 @@ export default function PraxioPage() {
       setPrompt('');
 
       toast.success('Research ready', {
-        id: toastId,
         description: insert.chat.title || 'New research created',
       });
       playChime();
     } catch (error: any) {
       console.error('Run research failed:', error);
-      toast.dismiss(toastId);
       const msg: string =
         error?.message || 'Please try again.';
       const friendly =
@@ -1372,9 +1374,31 @@ export default function PraxioPage() {
     }
   };
 
+  // Utility: gentle ping to signal long-running status
+  const playProgressPing = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 660;
+      gain.gain.value = 0.05;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    } catch {
+      // ignore audio errors
+    }
+  };
+
   const clearProgressToasts = () => {
     progressTimersRef.current.forEach((t) => clearTimeout(t));
     progressTimersRef.current = [];
+    if (progressPersistentToastRef.current !== null) {
+      toast.dismiss(progressPersistentToastRef.current);
+      progressPersistentToastRef.current = null;
+    }
   };
 
   const scheduleProgressToasts = (isFollowUp: boolean) => {
@@ -1390,13 +1414,18 @@ export default function PraxioPage() {
           'Sending user prompt...',
           'Analysing scenario...',
           'Fetching legislation and ATO references...',
-          'Researching and redrafting client response...',
+          'Researching and drafting client response...',
         ];
 
     const intervalMs = 8000; // show progress every 8s
     messages.forEach((msg, idx) => {
       const timer = setTimeout(() => {
-        toast.message(msg, { duration: 4000 });
+        const isLast = idx === messages.length - 1;
+        const toastId = toast.message(msg, isLast ? {} : { duration: 4000 });
+        if (isLast) {
+          progressPersistentToastRef.current = toastId;
+          playProgressPing();
+        }
       }, idx * intervalMs);
       progressTimersRef.current.push(timer);
     });
