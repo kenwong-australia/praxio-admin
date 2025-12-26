@@ -756,17 +756,18 @@ export default function PraxioPage() {
     scheduleProgressToasts(isFollowUp);
 
     try {
-      const resp = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const resp = await fetch('/api/praxio-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload, model: selectedModel }),
+    });
 
-      if (!resp.ok) {
-        throw new Error(`API error ${resp.status}`);
-      }
+    const wrapped = await resp.json();
+    if (!resp.ok || wrapped?.ok === false) {
+      throw new Error(wrapped?.error || `API error ${resp.status}`);
+    }
 
-      const result = await resp.json();
+    const result = wrapped?.data || {};
 
       const usedCitationsArray = Array.isArray(result.citations)
         ? result.citations
@@ -812,7 +813,7 @@ export default function PraxioPage() {
       playChime();
     } catch (error: any) {
       console.error('Run research failed:', error);
-      toast.error('Research failed', {
+      toast.error('API request failed', {
         id: toastId,
         description: error?.message || 'Please try again.',
       });
