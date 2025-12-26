@@ -736,6 +736,12 @@ export default function PraxioPage() {
       .join('\n');
 
     const latestResearch = fullChatData?.research || '';
+    const existingCitations = fullChatData?.usedcitationsArray
+      ? (typeof fullChatData.usedcitationsArray === 'string'
+          ? fullChatData.usedcitationsArray
+          : JSON.stringify(fullChatData.usedcitationsArray))
+      : '';
+
     const queryString = isFollowUp
       ? `It is now ${nowStr}.  Please update research based on this additional information. ${latestResearch}\n${conversationHistory}\n${prompt.trim()}`
       : `It is now ${nowStr}. Please research the following tax scenario: ${prompt.trim()}`;
@@ -743,8 +749,8 @@ export default function PraxioPage() {
     const payload = {
       query: queryString,
       title: '',
-      tax_research: '',
-      used_citations: '',
+      tax_research: isFollowUp ? latestResearch : '',
+      used_citations: isFollowUp ? existingCitations : '',
       draft_client_response: '',
       clarifying_questions: '',
       confirmation: '',
@@ -759,12 +765,14 @@ export default function PraxioPage() {
     const resp = await fetch('/api/praxio-query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload, model: selectedModel }),
+      body: JSON.stringify(payload),
     });
 
     const wrapped = await resp.json();
     if (!resp.ok || wrapped?.ok === false) {
-      throw new Error(wrapped?.error || `API error ${resp.status}`);
+      const errMsg = wrapped?.error || `API error ${resp.status}`;
+      const upstream = wrapped?.upstreamBody ? ` | Upstream: ${wrapped.upstreamBody}` : '';
+      throw new Error(errMsg + upstream);
     }
 
     const result = wrapped?.data || {};

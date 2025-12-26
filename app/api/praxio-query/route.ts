@@ -2,16 +2,25 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { payload, model } = await req.json();
+    const body = await req.json();
+    // Body already matches TaxQuery schema; no wrapper expected
+    // Decide endpoint based on optional "model" string in body; default to launch
+    const model = (body?.model || '').trim();
     const endpoint =
       model === 'Test AI'
         ? 'https://tax-law-api-test.onrender.com/query'
         : 'https://tax-law-api-launch.onrender.com/query';
 
+    const { model: _m, ...forwardBody } = body || {};
+
     const apiResp = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      // Strip the model flag before forwarding
+      body: JSON.stringify(forwardBody),
       // avoid any caching
       cache: 'no-store',
     });
@@ -30,6 +39,7 @@ export async function POST(req: Request) {
           ok: false,
           status: apiResp.status,
           error: data?.error || text || 'Upstream error',
+          upstreamBody: text,
         },
         { status: 502 }
       );
