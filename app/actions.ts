@@ -349,6 +349,84 @@ export async function updateChatWithConversation(input: {
   }
 }
 
+/**
+ * Save a research record for a chat (one row per run).
+ */
+export async function saveResearchEntry(input: { chat_id: number; content: string | null }) {
+  try {
+    const payload = {
+      chat_id: input.chat_id,
+      content: input.content ?? null,
+    };
+
+    const { data, error } = await svc().from('research').insert(payload).select('id').single();
+    if (error) throw error;
+
+    return { success: true, id: data?.id };
+  } catch (error) {
+    console.error('Error saving research entry:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Save citations for a chat (one row per run).
+ */
+export async function saveCitationsEntry(input: { chat_id: number; usedcitationsArray: any }) {
+  try {
+    const payload = {
+      chat_id: input.chat_id,
+      usedcitationsArray: input.usedcitationsArray ?? null,
+    };
+
+    const { data, error } = await svc().from('citations').insert(payload).select('id').single();
+    if (error) throw error;
+
+    return { success: true, id: data?.id };
+  } catch (error) {
+    console.error('Error saving citations entry:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Fetch research history for a chat, newest first.
+ */
+export async function getResearchHistory(chatId: number) {
+  try {
+    const { data, error } = await svc()
+      .from('research')
+      .select('id, created_at, content, chat_id')
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, rows: data ?? [] };
+  } catch (error) {
+    console.error('Error fetching research history:', error);
+    return { success: false, error: String(error), rows: [] };
+  }
+}
+
+/**
+ * Fetch citations history for a chat, newest first.
+ */
+export async function getCitationsHistory(chatId: number) {
+  try {
+    const { data, error } = await svc()
+      .from('citations')
+      .select('id, created_at, usedcitationsArray, chat_id')
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, rows: data ?? [] };
+  } catch (error) {
+    console.error('Error fetching citations history:', error);
+    return { success: false, error: String(error), rows: [] };
+  }
+}
+
 export async function updateChatTitle(chatId: number, newTitle: string) {
   try {
     const { error } = await svc()

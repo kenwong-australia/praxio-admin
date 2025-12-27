@@ -14,9 +14,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus, History, X } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation, saveResearchEntry, saveCitationsEntry, getResearchHistory, getCitationsHistory } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
@@ -97,6 +97,8 @@ export default function PraxioPage() {
     includeCitations: false,
     includeQuestions: false,
     includeConversation: false,
+    includeResearchHistory: false,
+    includeCitationsHistory: false,
   });
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,6 +109,12 @@ export default function PraxioPage() {
   const progressTimersRef = useRef<NodeJS.Timeout[]>([]);
   const progressPersistentToastRef = useRef<string | number | null>(null);
   const [showButtonText, setShowButtonText] = useState(true);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyItems, setHistoryItems] = useState<
+    { created_at: string | null; research: string | null; citations: any }[]
+  >([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -121,6 +129,18 @@ export default function PraxioPage() {
     });
     return () => unsub();
   }, []);
+
+  // Reset history state when switching chats
+  useEffect(() => {
+    setHistoryItems([]);
+    setHistoryError(null);
+    setHistoryDialogOpen(false);
+    setCompileOptions((prev) => ({
+      ...prev,
+      includeResearchHistory: false,
+      includeCitationsHistory: false,
+    }));
+  }, [fullChatData?.id]);
 
   // Fetch chats from Supabase when user ID is available
   useEffect(() => {
@@ -740,6 +760,68 @@ export default function PraxioPage() {
     setPrompt('');
   };
 
+  const persistResearchArtifacts = async (chatId: number, researchContent: string | null | undefined, citations: any) => {
+    try {
+      const [researchRes, citationsRes] = await Promise.all([
+        saveResearchEntry({ chat_id: chatId, content: researchContent ?? null }),
+        saveCitationsEntry({ chat_id: chatId, usedcitationsArray: citations }),
+      ]);
+
+      if (!researchRes?.success) {
+        console.error('Failed to save research entry:', researchRes?.error);
+      }
+      if (!citationsRes?.success) {
+        console.error('Failed to save citations entry:', citationsRes?.error);
+      }
+    } catch (persistError) {
+      console.error('Error saving research/citations history:', persistError);
+    }
+  };
+
+  const loadHistoryData = async (chatId: number) => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const [researchRes, citationsRes] = await Promise.all([
+        getResearchHistory(chatId),
+        getCitationsHistory(chatId),
+      ]);
+
+      if (!researchRes.success) {
+        setHistoryError(researchRes.error || 'Failed to load research history');
+      }
+      if (!citationsRes.success) {
+        setHistoryError((prev) => prev || citationsRes.error || 'Failed to load citations history');
+      }
+
+      const researchRows = researchRes.rows || [];
+      const citationRows = citationsRes.rows || [];
+      const maxLen = Math.max(researchRows.length, citationRows.length);
+      const combined = [];
+      for (let i = 0; i < maxLen; i++) {
+        combined.push({
+          created_at: researchRows[i]?.created_at || citationRows[i]?.created_at || null,
+          research: researchRows[i]?.content ?? null,
+          citations: citationRows[i]?.usedcitationsArray ?? null,
+        });
+      }
+      setHistoryItems(combined);
+    } catch (err: any) {
+      console.error('Error loading history data:', err);
+      setHistoryError(err?.message || 'Failed to load history');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleOpenHistory = async () => {
+    if (!fullChatData?.id) return;
+    setHistoryDialogOpen(true);
+    if (historyItems.length === 0 || historyError) {
+      await loadHistoryData(fullChatData.id);
+    }
+  };
+
   const handleRunResearch = async () => {
     if (!prompt.trim() || isRunning) return;
     if (!userId) {
@@ -838,6 +920,11 @@ export default function PraxioPage() {
           throw new Error(update.error || 'Failed to update research');
         }
 
+        const chatIdForHistory = update.chat.id ?? fullChatData?.id;
+        if (chatIdForHistory) {
+          await persistResearchArtifacts(chatIdForHistory, result.tax_research || '', usedCitationsArray);
+        }
+
         setFullChatData(update.chat);
         setPrompt('');
 
@@ -871,6 +958,10 @@ export default function PraxioPage() {
 
       if (!insert.success || !insert.chat) {
         throw new Error(insert.error || 'Failed to save research');
+      }
+
+      if (insert.chat?.id) {
+        await persistResearchArtifacts(insert.chat.id, result.tax_research || '', usedCitationsArray);
       }
 
       await refreshChats();
@@ -1163,6 +1254,45 @@ export default function PraxioPage() {
       output += fullChatData.questions.trim();
       output += '\n\n';
     }
+
+    if (compileOptions.includeResearchHistory && historyItems.length > 0) {
+      output += '---\n\n';
+      output += '# Research History\n\n';
+      historyItems.forEach((item, index) => {
+        const label = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
+        output += `## Run ${index + 1} - ${label}\n\n`;
+        if (item.research?.trim()) {
+          output += item.research.trim();
+        } else {
+          output += '_No research text_';
+        }
+        output += '\n\n';
+      });
+    }
+
+    if (compileOptions.includeCitationsHistory && historyItems.length > 0) {
+      output += '---\n\n';
+      output += '# Citations History\n\n';
+      historyItems.forEach((item, index) => {
+        const label = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
+        output += `## Run ${index + 1} - ${label}\n\n`;
+        const histCitations = parseCitations(item.citations);
+        if (histCitations.length === 0) {
+          output += '_No citations_\n\n';
+        } else {
+          histCitations.forEach((c, i) => {
+            output += `${i + 1}. **${c.title || 'Citation'}**`;
+            if (c.url) {
+              output += ` - ${c.url}`;
+            } else {
+              output += ' (Legislation reference)';
+            }
+            output += '\n';
+          });
+          output += '\n';
+        }
+      });
+    }
     
     return output.trim();
   };
@@ -1256,6 +1386,8 @@ export default function PraxioPage() {
       if (compileOptions.includeResearch) selectedSections.push('Research');
       if (compileOptions.includeCitations) selectedSections.push('Citations');
       if (compileOptions.includeQuestions) selectedSections.push('Questions');
+      if (compileOptions.includeResearchHistory) selectedSections.push('ResearchHistory');
+      if (compileOptions.includeCitationsHistory) selectedSections.push('CitationsHistory');
       const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'ClientDraft';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
@@ -1328,6 +1460,8 @@ export default function PraxioPage() {
       if (compileOptions.includeResearch) selectedSections.push('Research');
       if (compileOptions.includeCitations) selectedSections.push('Citations');
       if (compileOptions.includeQuestions) selectedSections.push('Questions');
+      if (compileOptions.includeResearchHistory) selectedSections.push('ResearchHistory');
+      if (compileOptions.includeCitationsHistory) selectedSections.push('CitationsHistory');
       const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'ClientDraft';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
@@ -1748,6 +1882,18 @@ export default function PraxioPage() {
                                     className="h-6 w-6 text-muted-foreground hover:text-foreground"
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      handleOpenHistory();
+                                    }}
+                                    title="History"
+                                  >
+                                    <History className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       copyToClipboard(fullChatData.research || '');
                                     }}
                                   >
@@ -2048,6 +2194,8 @@ export default function PraxioPage() {
                                 includeCitations: true,
                                 includeQuestions: false,
                                 includeConversation: false,
+                                includeResearchHistory: false,
+                                includeCitationsHistory: false,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -2065,6 +2213,8 @@ export default function PraxioPage() {
                                 includeCitations: false,
                                 includeQuestions: false,
                                 includeConversation: false,
+                                includeResearchHistory: false,
+                                includeCitationsHistory: false,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -2493,6 +2643,38 @@ export default function PraxioPage() {
                         Conversation ({conversations.length})
                       </label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-research-history"
+                        checked={compileOptions.includeResearchHistory}
+                        onCheckedChange={async (checked) => {
+                          const next = checked === true;
+                          if (next && fullChatData?.id && historyItems.length === 0) {
+                            await loadHistoryData(fullChatData.id);
+                          }
+                          setCompileOptions({ ...compileOptions, includeResearchHistory: next });
+                        }}
+                      />
+                      <label htmlFor="include-research-history" className="text-sm font-medium cursor-pointer">
+                        Research history ({historyItems.length})
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-citations-history"
+                        checked={compileOptions.includeCitationsHistory}
+                        onCheckedChange={async (checked) => {
+                          const next = checked === true;
+                          if (next && fullChatData?.id && historyItems.length === 0) {
+                            await loadHistoryData(fullChatData.id);
+                          }
+                          setCompileOptions({ ...compileOptions, includeCitationsHistory: next });
+                        }}
+                      />
+                      <label htmlFor="include-citations-history" className="text-sm font-medium cursor-pointer">
+                        Citations history ({historyItems.length})
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -2575,6 +2757,124 @@ export default function PraxioPage() {
               </div>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Dialog */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>Research & Citations History</DialogTitle>
+                <DialogDescription>
+                  Latest runs first. Research and citations are paired by run order.
+                </DialogDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Share"
+                  onClick={() => {
+                    setCompileOptions((prev) => ({
+                      ...prev,
+                      includeResearchHistory: true,
+                      includeCitationsHistory: true,
+                    }));
+                    setDraftDialogOpen(true);
+                    setDraftStep('compile');
+                    setHistoryDialogOpen(false);
+                  }}
+                >
+                  <Share className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Close"
+                  onClick={() => setHistoryDialogOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="mt-2">
+            {historyLoading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Loading history...</div>
+            ) : historyError ? (
+              <div className="py-6 text-center text-sm text-red-600">
+                {historyError}
+                <div className="mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fullChatData?.id && loadHistoryData(fullChatData.id)}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            ) : historyItems.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No history found for this chat yet.
+              </div>
+            ) : (
+              <ScrollArea className="max-h-[60vh] pr-2">
+                <div className="space-y-4">
+                  {historyItems.map((item, idx) => {
+                    const histCitations = parseCitations(item.citations);
+                    return (
+                      <div key={`${item.created_at || 'run'}-${idx}`} className="border rounded-lg p-3 bg-muted/40">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm font-semibold">
+                            Run {idx + 1}
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
+                            {item.research?.trim() ? (
+                              <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base">
+                                <ReactMarkdown>{item.research}</ReactMarkdown>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground italic">No research text</p>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-muted-foreground mb-1">
+                              Citations ({histCitations.length})
+                            </div>
+                            {histCitations.length > 0 ? (
+                              <div className="space-y-2">
+                                {histCitations.map((c, i) => (
+                                  <div key={i} className="text-xs">
+                                    <span className="font-medium">{i + 1}. {c.title}</span>
+                                    <span className="text-muted-foreground">
+                                      {c.url ? ` - ${c.url}` : ' (Legislation reference)'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground italic">No citations</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
