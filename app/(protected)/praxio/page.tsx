@@ -2762,34 +2762,36 @@ export default function PraxioPage() {
 
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle>Research & Citations History</DialogTitle>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title="Share"
-                  onClick={() => {
-                    setCompileOptions((prev) => ({
-                      ...prev,
-                      includeResearchHistory: true,
-                      includeCitationsHistory: true,
-                    }));
-                    setDraftDialogOpen(true);
-                    setDraftStep('compile');
-                    setHistoryDialogOpen(false);
-                  }}
-                >
-                  <Share className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </DialogHeader>
+
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title="Share history"
+              onClick={() => {
+                setCompileOptions((prev) => ({
+                  ...prev,
+                  includeResearchHistory: true,
+                  includeCitationsHistory: true,
+                }));
+                setDraftDialogOpen(true);
+                setDraftStep('compile');
+                setHistoryDialogOpen(false);
+              }}
+            >
+              <Share className="h-4 w-4" />
+            </Button>
+          </div>
+
           <div className="mt-2">
             {historyLoading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">Loading history...</div>
@@ -2811,56 +2813,73 @@ export default function PraxioPage() {
                 No history found for this chat yet.
               </div>
             ) : (
-              <ScrollArea className="max-h-[70vh] pr-2">
-                <div className="space-y-4 pb-2">
+              <ScrollArea className="max-h-[70vh] pr-4">
+                <Accordion
+                  type="single"
+                  collapsible
+                  defaultValue="run-0"
+                  className="space-y-3 pb-4"
+                >
                   {historyItems.map((item, idx) => {
                     const histCitations = parseCitations(item.citations);
-                    const runLabel = idx === 0 ? 'Latest' : `Run ${idx + 1}`;
+                    const runLabel = idx === 0 ? 'Latest' : 'Previous';
+                    const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
                     return (
-                      <div key={`${item.created_at || 'run'}-${idx}`} className="border rounded-lg p-3 bg-muted/40">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-semibold">
-                            {runLabel}
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              {item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
-                            {item.research?.trim() ? (
-                              <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base">
-                                <ReactMarkdown>{item.research}</ReactMarkdown>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-muted-foreground italic">No research text</p>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-xs font-semibold text-muted-foreground mb-1">
-                              Citations ({histCitations.length})
+                      <AccordionItem
+                        key={`${item.created_at || 'run'}-${idx}`}
+                        value={`run-${idx}`}
+                        className="border rounded-lg px-3"
+                      >
+                        <AccordionTrigger className="hover:no-underline py-2">
+                          <div className="flex items-center justify-between w-full pr-2">
+                            <div className="flex flex-col gap-0.5 text-left">
+                              <span className="text-sm font-semibold">{runLabel}</span>
+                              <span className="text-xs text-muted-foreground">{headerDate}</span>
                             </div>
-                            {histCitations.length > 0 ? (
-                              <div className="space-y-2">
-                                {histCitations.map((c, i) => (
-                                  <div key={i} className="text-xs">
-                                    <span className="font-medium">{i + 1}. {c.title}</span>
-                                    <span className="text-muted-foreground">
-                                      {c.url ? ` - ${c.url}` : ' (Legislation reference)'}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-muted-foreground italic">No citations</p>
-                            )}
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>Research</span>
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                              <span>Citations: {histCitations.length}</span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 pb-3">
+                          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
+                              {item.research?.trim() ? (
+                                <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base">
+                                  <ReactMarkdown>{item.research}</ReactMarkdown>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic">No research text</p>
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-1">
+                                Citations ({histCitations.length})
+                              </div>
+                              {histCitations.length > 0 ? (
+                                <div className="space-y-2">
+                                  {histCitations.map((c, i) => (
+                                    <div key={i} className="text-xs">
+                                      <span className="font-medium">{i + 1}. {c.title}</span>
+                                      <span className="text-muted-foreground">
+                                        {c.url ? ` - ${c.url}` : ' (Legislation reference)'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic">No citations</p>
+                              )}
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
                     );
                   })}
-                </div>
+                </Accordion>
               </ScrollArea>
             )}
           </div>
