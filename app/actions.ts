@@ -241,7 +241,7 @@ export async function createChatWithConversation(input: {
   model: string | null;
   user_id: string;
   email?: string | null;
-  conversation?: { type: 'user' | 'assistant'; content: string }[];
+  conversation?: { type: 'user' | 'Praxio AI'; content: string }[];
 }) {
   try {
     const insertData: any = {

@@ -802,10 +802,10 @@ export default function PraxioPage() {
           }))
         : [];
 
-      const conversationRows: { type: 'user' | 'assistant'; content: string }[] | undefined = isFollowUp
+      const conversationRows: { type: 'user' | 'Praxio AI'; content: string }[] | undefined = isFollowUp
         ? [
             { type: 'user', content: prompt.trim() },
-            { type: 'assistant', content: result.tax_research || '' },
+            { type: 'Praxio AI', content: result.confirmation || '' },
           ]
         : undefined; // For initial runs, skip creating conversation rows
 
