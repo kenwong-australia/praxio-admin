@@ -244,6 +244,7 @@ export async function createChatWithConversation(input: {
   conversation?: { type: 'user' | 'Praxio AI'; content: string }[];
 }) {
   try {
+    const nowIso = new Date().toISOString();
     const insertData: any = {
       title: (input.title || '').trim() || null,
       scenario: (input.scenario || '').trim(),
@@ -255,12 +256,13 @@ export async function createChatWithConversation(input: {
       model: input.model,
       user_id: input.user_id,
       email: input.email ?? null,
+      updated_on: nowIso,
     };
 
     const { data: chatRow, error } = await svc()
       .from('chat')
       .insert(insertData)
-      .select('id,created_at,title,scenario,model,processTime')
+      .select('id,created_at,title,scenario,model,processTime,updated_on,email')
       .single();
 
     if (error) throw error;
@@ -285,6 +287,64 @@ export async function createChatWithConversation(input: {
     return { success: true, chat: chatRow };
   } catch (error) {
     console.error('Error creating chat with conversation:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Update a chat row for follow-up responses and optionally add conversation rows.
+ * Skips immutable fields (uid, created_at, user_id, title, scenario).
+ */
+export async function updateChatWithConversation(input: {
+  chat_id: number;
+  research: string;
+  usedcitationsArray: any;
+  questions?: string | null;
+  draft?: string | null;
+  processTime?: number | null;
+  model: string | null;
+  email?: string | null;
+  conversation?: { type: 'user' | 'Praxio AI'; content: string }[];
+}) {
+  try {
+    const updateData: any = {
+      research: (input.research || '').trim(),
+      usedcitationsArray: input.usedcitationsArray ?? null,
+      questions: (input.questions || '').trim() || null,
+      draft: (input.draft || '').trim() || null,
+      processTime: input.processTime ?? null,
+      model: input.model,
+      email: input.email ?? null,
+      updated_on: new Date().toISOString(),
+    };
+
+    const { data: chatRow, error } = await svc()
+      .from('chat')
+      .update(updateData)
+      .eq('id', input.chat_id)
+      .select('id,created_at,title,scenario,model,processTime,research,usedcitationsArray,questions,draft,email,updated_on,feedback,comment_selection,comment_additional')
+      .single();
+
+    if (error) throw error;
+
+    if (chatRow?.id && Array.isArray(input.conversation) && input.conversation.length > 0) {
+      const convoRows = input.conversation
+        .filter((c) => c?.content && c.content.trim())
+        .map((c) => ({
+          chat_id: chatRow.id,
+          type: c.type,
+          content: c.content.trim(),
+        }));
+
+      if (convoRows.length > 0) {
+        const { error: convoError } = await svc().from('conversation').insert(convoRows);
+        if (convoError) throw convoError;
+      }
+    }
+
+    return { success: true, chat: chatRow };
+  } catch (error) {
+    console.error('Error updating chat with conversation:', error);
     return { success: false, error: String(error) };
   }
 }

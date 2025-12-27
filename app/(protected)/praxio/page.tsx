@@ -16,8 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
-import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
-import { createChatWithConversation } from '@/app/actions';
+import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
@@ -37,6 +36,7 @@ interface ChatItem {
 interface FullChatData {
   id: number;
   created_at: string;
+  updated_on?: string | null;
   title: string | null;
   email: string | null;
   model: string | null;
@@ -68,6 +68,7 @@ export default function PraxioPage() {
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loadingChats, setLoadingChats] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,14 +159,24 @@ export default function PraxioPage() {
     }
   }, []);
 
-  // Fetch user role from Firestore to gate model selector
+  // Fetch user role from Firestore to gate model selector and load stored email
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setUserRole(null);
+      setUserEmail(null);
+      return;
+    }
     const fetchRole = async () => {
       try {
         const db = getDb();
         const snap = await getDoc(doc(db, 'users', userId));
-        const role = snap.exists() ? (snap.data()?.role as string | null) : null;
+        const data = snap.exists() ? snap.data() : null;
+        const role = data?.role as string | null;
+        const profileEmail = typeof data?.email === 'string' ? data.email.trim() : '';
+        const authEmail = getFirebaseAuth().currentUser?.email || '';
+        const resolvedEmail = (profileEmail || authEmail || '').trim();
+
+        setUserEmail(resolvedEmail || null);
         setUserRole(role ?? null);
         if (role !== 'admin') {
           setSelectedModel('Praxio AI');
@@ -176,6 +187,7 @@ export default function PraxioPage() {
       } catch (error) {
         console.error('Error fetching user role:', error);
         setUserRole(null);
+        setUserEmail(null);
         if (typeof window !== 'undefined') {
           sessionStorage.setItem(MODEL_STORAGE_KEY, 'Praxio AI');
         }
@@ -809,6 +821,40 @@ export default function PraxioPage() {
           ]
         : undefined; // For initial runs, skip creating conversation rows
 
+      if (isFollowUp && fullChatData?.id) {
+        const update = await updateChatWithConversation({
+          chat_id: fullChatData.id,
+          research: result.tax_research || '',
+          usedcitationsArray: usedCitationsArray,
+          questions: result.clarifying_questions || '',
+          draft: result.draft_client_response || '',
+          processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
+          model: result.model || selectedModel,
+          email: userEmail ?? null,
+          conversation: conversationRows,
+        });
+
+        if (!update.success || !update.chat) {
+          throw new Error(update.error || 'Failed to update research');
+        }
+
+        setFullChatData(update.chat);
+        setPrompt('');
+
+        try {
+          const refreshedConversations = await getConversationsByChatId(update.chat.id);
+          setConversations(refreshedConversations);
+        } catch (refreshError) {
+          console.error('Error refreshing conversations after follow-up:', refreshError);
+        }
+
+        toast.success('Research updated', {
+          description: update.chat.title || 'Chat updated',
+        });
+        playChime();
+        return;
+      }
+
       const insert = await createChatWithConversation({
         title: result.title || prompt.trim().slice(0, 80) || 'Untitled',
         scenario: prompt.trim(),
@@ -819,6 +865,7 @@ export default function PraxioPage() {
         processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
         model: result.model || selectedModel,
         user_id: userId,
+        email: userEmail ?? null,
         conversation: conversationRows,
       });
 
