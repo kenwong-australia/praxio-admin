@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   Clock,
   Building2,
-  Loader2
+  Loader2,
+  ArrowUp
 } from 'lucide-react';
 import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
@@ -43,6 +44,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const INACTIVITY_TIMEOUT_STORAGE_KEY = 'inactivity_timeout_hours';
+const BUTTON_TEXT_PREF_KEY = 'praxio_show_button_text';
 const DEFAULT_TIMEOUT_HOURS = 2;
 
 interface UserData {
@@ -75,6 +77,7 @@ export default function SettingsPage() {
   const [subscriptionCancelOpen, setSubscriptionCancelOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [showButtonTextPref, setShowButtonTextPref] = useState(true);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -188,6 +191,11 @@ export default function SettingsPage() {
   // Load timeout preference from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const buttonPref = localStorage.getItem(BUTTON_TEXT_PREF_KEY);
+      if (buttonPref !== null) {
+        setShowButtonTextPref(buttonPref === 'true');
+      }
+
       const stored = localStorage.getItem(INACTIVITY_TIMEOUT_STORAGE_KEY);
       if (stored) {
         const hours = parseFloat(stored);
@@ -218,6 +226,16 @@ export default function SettingsPage() {
         duration: 3000,
       });
     }
+  };
+
+  const handleButtonTextPrefChange = (checked: boolean) => {
+    setShowButtonTextPref(checked);
+    localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(checked));
+    window.dispatchEvent(new Event('praxioButtonTextPreferenceChanged'));
+    toast.success(`Button labels ${checked ? 'shown' : 'hidden'}`, {
+      description: checked ? 'Action buttons will display text.' : 'Action buttons will use icons only.',
+      duration: 2500,
+    });
   };
 
   const handleCopyEmail = () => {
@@ -728,6 +746,24 @@ export default function SettingsPage() {
                 setIsDarkMode(checked);
                 toast.info('Theme change will be implemented soon');
               }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center">
+                <ArrowUp className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Action Button Labels</p>
+                <p className="text-xs text-muted-foreground">
+                  Toggle text vs icons for Praxio research actions
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={showButtonTextPref}
+              onCheckedChange={handleButtonTextPrefChange}
             />
           </div>
 

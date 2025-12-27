@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback } from '@/app/actions';
 import { createChatWithConversation } from '@/app/actions';
@@ -58,6 +58,7 @@ interface Citation {
 
 type ModelOption = 'Praxio AI' | 'Test AI';
 const MODEL_STORAGE_KEY = 'praxio_model_selection';
+const BUTTON_TEXT_PREF_KEY = 'praxio_show_button_text';
 
 export default function PraxioPage() {
   const [isPreviousOpen, setIsPreviousOpen] = useState(true);
@@ -104,6 +105,7 @@ export default function PraxioPage() {
   const [isRunning, setIsRunning] = useState(false);
   const progressTimersRef = useRef<NodeJS.Timeout[]>([]);
   const progressPersistentToastRef = useRef<string | number | null>(null);
+  const [showButtonText, setShowButtonText] = useState(true);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -187,6 +189,19 @@ export default function PraxioPage() {
     if (typeof window === 'undefined') return;
     sessionStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
+
+  // Load button text preference
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const loadPref = () => {
+      const stored = localStorage.getItem(BUTTON_TEXT_PREF_KEY);
+      setShowButtonText(stored === null ? true : stored === 'true');
+    };
+    loadPref();
+    const handler = () => loadPref();
+    window.addEventListener('praxioButtonTextPreferenceChanged', handler);
+    return () => window.removeEventListener('praxioButtonTextPreferenceChanged', handler);
+  }, []);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
@@ -1401,6 +1416,13 @@ export default function PraxioPage() {
     }
   };
 
+  const renderActionLabel = (label: string, IconComp: typeof ArrowUp) =>
+    showButtonText ? (
+      label
+    ) : (
+      <IconComp className="h-4 w-4" aria-hidden="true" />
+    );
+
   const scheduleProgressToasts = (isFollowUp: boolean) => {
     clearProgressToasts();
     const messages = isFollowUp
@@ -1940,8 +1962,9 @@ export default function PraxioPage() {
                               onClick={handleRunResearch}
                               disabled={!prompt.trim() || isRunning}
                               className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
+                              aria-label={showButtonText ? undefined : fullChatData ? 'Re-run Research' : 'Run Research'}
                             >
-                              {fullChatData ? 'Re-run Research' : 'Run Research'}
+                              {renderActionLabel(fullChatData ? 'Re-run Research' : 'Run Research', ArrowUp)}
                             </Button>
                             </div>
                           </div>
@@ -1963,8 +1986,9 @@ export default function PraxioPage() {
                           <Button
                             onClick={handleNewResearch}
                             className="bg-green-600 hover:bg-green-700 text-white text-xs h-8 px-3"
+                            aria-label={showButtonText ? undefined : 'New Scenario'}
                           >
-                            New Scenario
+                            {renderActionLabel('New Scenario', PlusCircle)}
                           </Button>
                           <Button
                             onClick={() => {
@@ -1981,8 +2005,9 @@ export default function PraxioPage() {
                               setDraftDialogOpen(true);
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
+                            aria-label={showButtonText ? undefined : 'Send Results to Me'}
                           >
-                            Send Results to Me
+                            {renderActionLabel('Send Results to Me', Share)}
                           </Button>
                           <Button
                             onClick={() => {
@@ -1997,8 +2022,9 @@ export default function PraxioPage() {
                               setDraftDialogOpen(true);
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
+                            aria-label={showButtonText ? undefined : 'Create Client Draft'}
                           >
-                            Create Client Draft
+                            {renderActionLabel('Create Client Draft', FilePlus)}
                           </Button>
                         </div>
                         {/* Disclaimer */}
@@ -2033,8 +2059,9 @@ export default function PraxioPage() {
                 <Button
                   onClick={handleNewResearch}
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3"
+                  aria-label={showButtonText ? undefined : 'Start New Research'}
                 >
-                  Start New Research
+                  {renderActionLabel('Start New Research', PlusCircle)}
                 </Button>
               </div>
             </div>
@@ -2074,8 +2101,9 @@ export default function PraxioPage() {
                         onClick={handleRunResearch}
                         disabled={!prompt.trim() || isRunning}
                         className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
+                    aria-label={showButtonText ? undefined : fullChatData ? 'Re-run Research' : 'Run Research'}
                       >
-                        {fullChatData ? 'Re-run Research' : 'Run Research'}
+                    {renderActionLabel(fullChatData ? 'Re-run Research' : 'Run Research', ArrowUp)}
                       </Button>
                     </div>
                   </div>
