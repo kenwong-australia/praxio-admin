@@ -2506,7 +2506,7 @@ export default function PraxioPage() {
 
       {/* Create Client Draft Dialog */}
       <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-        <DialogContent className={`w-[80vw] ${draftStep === 'compile' ? 'max-w-[520px] h-[360px] max-h-[360px]' : 'max-w-[1200px] h-[800px] max-h-[800px]'} overflow-hidden flex flex-col p-0`}>
+        <DialogContent className={`w-[80vw] ${draftStep === 'compile' ? 'max-w-[600px] h-[520px] max-h-[520px]' : 'max-w-[1200px] h-[800px] max-h-[800px]'} overflow-hidden flex flex-col p-0`}>
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
               <div>
