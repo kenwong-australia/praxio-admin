@@ -1925,7 +1925,7 @@ export default function PraxioPage() {
                               }`}>
                                 <div className="mb-3 pb-2 border-b border-slate-200">
                                   <p className="text-xs text-muted-foreground">
-                                    Research Date: {toSydneyDateTime(fullChatData.created_at)}
+                                    Research Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}
                                   </p>
                                 </div>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
@@ -2767,9 +2767,6 @@ export default function PraxioPage() {
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle>Research & Citations History</DialogTitle>
-                <DialogDescription>
-                  Latest runs first. Research and citations are paired by run order.
-                </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -2789,15 +2786,6 @@ export default function PraxioPage() {
                   }}
                 >
                   <Share className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title="Close"
-                  onClick={() => setHistoryDialogOpen(false)}
-                >
-                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -2823,15 +2811,16 @@ export default function PraxioPage() {
                 No history found for this chat yet.
               </div>
             ) : (
-              <ScrollArea className="max-h-[60vh] pr-2">
-                <div className="space-y-4">
+              <ScrollArea className="max-h-[70vh] pr-2">
+                <div className="space-y-4 pb-2">
                   {historyItems.map((item, idx) => {
                     const histCitations = parseCitations(item.citations);
+                    const runLabel = idx === 0 ? 'Latest' : `Run ${idx + 1}`;
                     return (
                       <div key={`${item.created_at || 'run'}-${idx}`} className="border rounded-lg p-3 bg-muted/40">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-sm font-semibold">
-                            Run {idx + 1}
+                            {runLabel}
                             <span className="ml-2 text-xs text-muted-foreground">
                               {item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date'}
                             </span>
