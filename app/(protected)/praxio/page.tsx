@@ -2762,7 +2762,7 @@ export default function PraxioPage() {
 
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden">
+        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden top-1/2 -translate-y-1/2">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -2771,11 +2771,11 @@ export default function PraxioPage() {
             </div>
           </DialogHeader>
 
-          <div className="absolute right-3 top-3 flex items-center gap-2">
+          <div className="absolute right-12 top-3 flex items-center gap-2 z-10">
             <Button
-              variant="ghost"
+              variant="default"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white"
               title="Share history"
               onClick={() => {
                 setCompileOptions((prev) => ({
