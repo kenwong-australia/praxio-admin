@@ -127,6 +127,21 @@ export function Sidebar() {
       </nav>
       
       <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'} space-y-2`}>
+        {pathname.startsWith('/praxio') && (
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('praxioOpenTutorial'));
+              }
+            }}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition`}
+            title="Open tutorial"
+          >
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            {!isCollapsed && <span>Open tutorial</span>}
+          </button>
+        )}
         {/* Inactivity Timer */}
         <InactivityTimer isCollapsed={isCollapsed} />
         <SignOutButton isCollapsed={isCollapsed} />

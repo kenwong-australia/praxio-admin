@@ -254,6 +254,21 @@ export default function PraxioPage() {
     }
   }, [showTutorialFlag]);
 
+  useEffect(() => {
+    const openHandler = () => {
+      setTutorialVisible(true);
+      setTutorialStep(0);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('praxioOpenTutorial', openHandler);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('praxioOpenTutorial', openHandler);
+      }
+    };
+  }, []);
+
   // Fetch full chat data when a chat is selected
   useEffect(() => {
     if (selectedChat?.id) {
@@ -1869,21 +1884,6 @@ export default function PraxioPage() {
         </div>
       )}
 
-      {/* Manual re-open for existing users */}
-      {!tutorialVisible && (
-        <div className="absolute top-3 right-4 z-30 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTutorialRestart}
-            className="text-xs"
-            title="Open tutorial"
-          >
-            Tutorial
-          </Button>
-        </div>
-      )}
-
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
@@ -2266,7 +2266,21 @@ export default function PraxioPage() {
                 <ResizablePanel defaultSize={50} className="min-w-0">
                   <div className="h-full flex flex-col">
                     <ScrollArea className="flex-shrink-0">
-                      <div className="p-5 pb-3">
+                      <div className="p-5 pb-3 space-y-4">
+                        {/* Tutorial entry for existing users */}
+                        {!tutorialVisible && (
+                          <div className="flex justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleTutorialRestart}
+                              className="text-xs"
+                              title="Open tutorial"
+                            >
+                              Tutorial
+                            </Button>
+                          </div>
+                        )}
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
                           <Accordion 
