@@ -911,7 +911,7 @@ export default function PraxioPage() {
           questions: result.clarifying_questions || '',
           draft: result.draft_client_response || '',
           processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
-          model: result.model || selectedModel,
+          model: selectedModel, // persist the user's chosen model (e.g., "Praxio AI", "Test AI")
           email: userEmail ?? null,
           conversation: conversationRows,
         });
@@ -950,7 +950,7 @@ export default function PraxioPage() {
         questions: result.clarifying_questions || '',
         draft: result.draft_client_response || '',
         processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
-        model: result.model || selectedModel,
+        model: selectedModel, // persist the user's chosen model (e.g., "Praxio AI", "Test AI")
         user_id: userId,
         email: userEmail ?? null,
         conversation: conversationRows,
