@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getDb, getFirebaseAuth } from '@/lib/firebase';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -115,6 +115,10 @@ export default function PraxioPage() {
     { created_at: string | null; research: string | null; citations: any }[]
   >([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [showTutorialFlag, setShowTutorialFlag] = useState(false);
+  const [tutorialVisible, setTutorialVisible] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialSaving, setTutorialSaving] = useState(false);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -204,6 +208,13 @@ export default function PraxioPage() {
             sessionStorage.setItem(MODEL_STORAGE_KEY, 'Praxio AI');
           }
         }
+
+        const shouldShowTutorial = Boolean(data?.show_tutorial);
+        setShowTutorialFlag(shouldShowTutorial);
+        if (shouldShowTutorial) {
+          setTutorialVisible(true);
+          setTutorialStep(0);
+        }
       } catch (error) {
         console.error('Error fetching user role:', error);
         setUserRole(null);
@@ -211,6 +222,7 @@ export default function PraxioPage() {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem(MODEL_STORAGE_KEY, 'Praxio AI');
         }
+        setShowTutorialFlag(false);
       }
     };
     fetchRole();
@@ -234,6 +246,13 @@ export default function PraxioPage() {
     window.addEventListener('praxioButtonTextPreferenceChanged', handler);
     return () => window.removeEventListener('praxioButtonTextPreferenceChanged', handler);
   }, []);
+
+  useEffect(() => {
+    if (showTutorialFlag) {
+      setTutorialVisible(true);
+      setTutorialStep(0);
+    }
+  }, [showTutorialFlag]);
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
@@ -1552,6 +1571,43 @@ export default function PraxioPage() {
 
   const citations = fullChatData ? parseCitations(fullChatData.usedcitationsArray || fullChatData.usedcitationsArray) : [];
 
+  // Tutorial helpers
+  const markTutorialFlag = async (value: boolean) => {
+    if (!userId) return;
+    setTutorialSaving(true);
+    try {
+      const db = getDb();
+      await setDoc(
+        doc(db, 'users', userId),
+        { show_tutorial: value },
+        { merge: true }
+      );
+      setShowTutorialFlag(value);
+    } catch (error) {
+      console.error('Failed to update tutorial flag', error);
+      toast.error('Could not update tutorial preference');
+    } finally {
+      setTutorialSaving(false);
+    }
+  };
+
+  const handleTutorialComplete = async () => {
+    setTutorialVisible(false);
+    setTutorialStep(0);
+    await markTutorialFlag(false);
+  };
+
+  const handleTutorialSkip = async () => {
+    setTutorialVisible(false);
+    setTutorialStep(0);
+    await markTutorialFlag(false);
+  };
+
+  const handleTutorialRestart = () => {
+    setTutorialVisible(true);
+    setTutorialStep(0);
+  };
+
   // Utility: play short chime when work completes
   const playChime = () => {
     try {
@@ -1634,8 +1690,200 @@ export default function PraxioPage() {
     });
   };
 
+  const tutorialSteps = [
+    {
+      title: 'Verify your email',
+      description: 'Confirm your address; use the resend link or switch email if needed.',
+      placeholder: 'Email verification screenshot placeholder',
+    },
+    {
+      title: 'Describe your scenario',
+      description: 'Enter the tax scenario or pick a template chip to prefill.',
+      placeholder: 'Scenario input screenshot placeholder',
+    },
+    {
+      title: 'Run research',
+      description: 'We pull legislation and draft findings; progress shows in-line.',
+      placeholder: 'Research progress screenshot placeholder',
+    },
+    {
+      title: 'Refine with questions',
+      description: 'Add follow-up details or pick suggested questions, then re-run.',
+      placeholder: 'Refine questions screenshot placeholder',
+    },
+    {
+      title: 'Review draft',
+      description: 'View the client draft with research/citations toggles and actions.',
+      placeholder: 'Client draft screenshot placeholder',
+    },
+    {
+      title: 'Resume past work',
+      description: 'Use chat history to continue scenarios or start a new one.',
+      placeholder: 'History/resume screenshot placeholder',
+    },
+  ];
+
   return (
     <div className="h-screen flex flex-col relative">
+      {/* Tutorial overlay */}
+      {tutorialVisible && (
+        <div className="fixed inset-0 z-50 bg-white/90 backdrop-blur-sm overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase text-blue-700 tracking-wide">Welcome</p>
+                <h1 className="text-2xl font-semibold">Quick tour of Praxio AI</h1>
+                <p className="text-sm text-muted-foreground">6 steps · about 2 minutes</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTutorialSkip}
+                disabled={tutorialSaving}
+              >
+                Skip
+              </Button>
+            </div>
+
+            <div className="grid lg:grid-cols-[240px,1fr] gap-6">
+              {/* Step rail */}
+              <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Step {tutorialStep + 1} of {tutorialSteps.length}</span>
+                  <span>{Math.round(((tutorialStep + 1) / tutorialSteps.length) * 100)}%</span>
+                </div>
+                <div className="space-y-2">
+                  {tutorialSteps.map((step, idx) => {
+                    const active = idx === tutorialStep;
+                    const completed = idx < tutorialStep;
+                    return (
+                      <button
+                        key={step.title}
+                        type="button"
+                        onClick={() => setTutorialStep(idx)}
+                        className={`w-full text-left px-3 py-2 rounded-md border transition ${
+                          active
+                            ? 'border-blue-300 bg-blue-50'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {completed ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <div className={`h-4 w-4 rounded-full border ${
+                              active ? 'border-blue-500' : 'border-slate-300'
+                            }`} />
+                          )}
+                          <span className="text-sm font-medium">{step.title}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {step.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step content */}
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase text-blue-700 font-semibold tracking-wide">
+                      Step {tutorialStep + 1} of {tutorialSteps.length}
+                    </p>
+                    <h2 className="text-xl font-semibold">{tutorialSteps[tutorialStep].title}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {tutorialSteps[tutorialStep].description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {tutorialSteps.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`h-2 w-2 rounded-full ${
+                          idx === tutorialStep ? 'bg-blue-600' : 'bg-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-center p-6 text-sm text-muted-foreground">
+                  {tutorialSteps[tutorialStep].placeholder}
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  These screens mirror your live workspace: research, citations, questions, draft, and history.
+                  Add screenshots later to match your branding.
+                </div>
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="sticky bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-slate-200 py-4">
+              <div className="flex items-center justify-between gap-3 max-w-6xl mx-auto px-2">
+                <Button
+                  variant="outline"
+                  onClick={handleTutorialComplete}
+                  disabled={tutorialSaving}
+                >
+                  Close
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setTutorialStep((s) => Math.max(0, s - 1))}
+                    disabled={tutorialStep === 0}
+                  >
+                    Back
+                  </Button>
+                  {tutorialStep < tutorialSteps.length - 1 ? (
+                    <Button
+                      onClick={() => setTutorialStep((s) => Math.min(tutorialSteps.length - 1, s + 1))}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Next
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleTutorialComplete}
+                      disabled={tutorialSaving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Finish
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={handleTutorialSkip}
+                    disabled={tutorialSaving}
+                  >
+                    Skip
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual re-open for existing users */}
+      {!tutorialVisible && (
+        <div className="absolute top-3 right-4 z-30 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTutorialRestart}
+            className="text-xs"
+            title="Open tutorial"
+          >
+            Tutorial
+          </Button>
+        </div>
+      )}
+
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
