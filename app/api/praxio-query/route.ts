@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 
+const API_TOKEN = process.env.PRAXIO_API_TOKEN;
+
 export async function POST(req: Request) {
   try {
+    if (!API_TOKEN) {
+      console.error('Missing PRAXIO_API_TOKEN env var for Praxio query proxy');
+      return NextResponse.json(
+        { ok: false, error: 'Server misconfigured: missing PRAXIO_API_TOKEN' },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     // Body should match TaxQuery schema; we may get a hint for model selection via __model
     const model = (body?.__model || '').trim();
@@ -17,6 +27,7 @@ export async function POST(req: Request) {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        Authorization: `Bearer ${API_TOKEN}`,
       },
       // Strip the model flag before forwarding
       body: JSON.stringify(forwardBody),
@@ -33,6 +44,9 @@ export async function POST(req: Request) {
     }
 
     if (!apiResp.ok) {
+      if (apiResp.status === 401) {
+        console.warn(`Upstream unauthorized (check PRAXIO_API_TOKEN) for ${endpoint}`);
+      }
       return NextResponse.json(
         {
           ok: false,
@@ -40,7 +54,7 @@ export async function POST(req: Request) {
           error: data?.error || text || 'Upstream error',
           upstreamBody: text,
         },
-        { status: 502 }
+        { status: apiResp.status }
       );
     }
 
