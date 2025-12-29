@@ -1551,14 +1551,18 @@ export default function PraxioPage() {
     }
     
     if (Array.isArray(usedcitationsArray)) {
+      // Handle arrays of objects or strings
       return usedcitationsArray
-        .filter(item => item && 
-                      typeof item === 'object' && 
-                      item.fullreference?.trim())
-        .map(item => ({
-          title: item.fullreference,
-          url: item.url?.trim() || null
-        }));
+        .map(item => {
+          if (item && typeof item === 'object' && item.fullreference?.trim()) {
+            return { title: item.fullreference, url: item.url?.trim() || null };
+          }
+          if (typeof item === 'string' && item.trim()) {
+            return { title: item.trim(), url: null };
+          }
+          return null;
+        })
+        .filter(Boolean) as Citation[];
     }
     
     if (typeof usedcitationsArray === 'string') {
@@ -1566,13 +1570,16 @@ export default function PraxioPage() {
         const parsed = JSON.parse(usedcitationsArray);
         if (Array.isArray(parsed)) {
           return parsed
-            .filter(item => item && 
-                          typeof item === 'object' && 
-                          item.fullreference?.trim())
-            .map(item => ({
-              title: item.fullreference,
-              url: item.url?.trim() || null
-            }));
+            .map(item => {
+              if (item && typeof item === 'object' && item.fullreference?.trim()) {
+                return { title: item.fullreference, url: item.url?.trim() || null };
+              }
+              if (typeof item === 'string' && item.trim()) {
+                return { title: item.trim(), url: null };
+              }
+              return null;
+            })
+            .filter(Boolean) as Citation[];
         }
       } catch (error) {
         // Silent fallback for parsing errors
@@ -3023,7 +3030,7 @@ export default function PraxioPage() {
 
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden">
+        <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-4xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
