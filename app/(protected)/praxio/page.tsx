@@ -851,9 +851,7 @@ export default function PraxioPage() {
   const handleOpenHistory = async () => {
     if (!fullChatData?.id) return;
     setHistoryDialogOpen(true);
-    if (historyItems.length === 0 || historyError) {
-      await loadHistoryData(fullChatData.id);
-    }
+    await loadHistoryData(fullChatData.id);
   };
 
   const handleRunResearch = async () => {
@@ -3025,7 +3023,7 @@ export default function PraxioPage() {
 
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden top-1/2 -translate-y-1/2">
+        <DialogContent className="relative max-w-4xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
