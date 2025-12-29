@@ -1925,7 +1925,8 @@ export default function PraxioPage() {
                               }`}>
                                 <div className="mb-3 pb-2 border-b border-slate-200">
                                   <p className="text-xs text-muted-foreground">
-                                    Research Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}
+                                    Research Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}{' '}
+                                    Research Model: {fullChatData?.model || selectedModel || '—'}
                                   </p>
                                 </div>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
