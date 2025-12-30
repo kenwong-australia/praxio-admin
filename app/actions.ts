@@ -311,12 +311,19 @@ export async function updateChatWithConversation(input: {
       research: (input.research || '').trim(),
       usedcitationsArray: input.usedcitationsArray ?? null,
       questions: (input.questions || '').trim() || null,
-      draft: (input.draft || '').trim() || null,
       processTime: input.processTime ?? null,
       model: input.model,
       email: input.email ?? null,
       updated_on: new Date().toISOString(),
     };
+
+    // Only update draft when the caller provides a non-empty value.
+    if (input.draft !== undefined) {
+      const trimmedDraft = (input.draft || '').trim();
+      if (trimmedDraft) {
+        updateData.draft = trimmedDraft;
+      }
+    }
 
     const { data: chatRow, error } = await svc()
       .from('chat')

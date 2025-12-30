@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus, History, X } from 'lucide-react';
+import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle, Sparkles, Copy, Download, Save, Mail, CheckCircle2, ThumbsUp, ThumbsDown, PanelLeftClose, PanelLeftOpen, ArrowUp, PlusCircle, Share, FilePlus, History, X, AlertCircle } from 'lucide-react';
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation, saveResearchEntry, saveCitationsEntry, getResearchHistory, getCitationsHistory } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
@@ -102,6 +102,7 @@ export default function PraxioPage() {
   });
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [draftMissingWarning, setDraftMissingWarning] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelOption>('Praxio AI');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -146,6 +147,11 @@ export default function PraxioPage() {
       includeResearchHistory: false,
       includeCitationsHistory: false,
     }));
+  }, [fullChatData?.id]);
+
+  // Clear draft warning when switching chats
+  useEffect(() => {
+    setDraftMissingWarning(false);
   }, [fullChatData?.id]);
 
   // Fetch chats from Supabase when user ID is available
@@ -928,6 +934,9 @@ export default function PraxioPage() {
     }
 
     const result = wrapped?.data || {};
+    const rawDraftFromApi = typeof result.draft_client_response === 'string' ? result.draft_client_response : '';
+    const trimmedDraftFromApi = rawDraftFromApi.trim();
+    const draftPayload = trimmedDraftFromApi ? rawDraftFromApi : undefined;
 
       const usedCitationsArray = Array.isArray(result.citations)
         ? result.citations
@@ -946,12 +955,13 @@ export default function PraxioPage() {
         : undefined; // For initial runs, skip creating conversation rows
 
       if (isFollowUp && fullChatData?.id) {
+        const draftMissing = !trimmedDraftFromApi;
         const update = await updateChatWithConversation({
           chat_id: fullChatData.id,
           research: result.tax_research || '',
           usedcitationsArray: usedCitationsArray,
           questions: result.clarifying_questions || '',
-          draft: result.draft_client_response || '',
+          draft: draftPayload,
           processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
           model: selectedModel, // persist the user's chosen model (e.g., "Praxio AI", "Test AI")
           email: userEmail ?? null,
@@ -968,6 +978,7 @@ export default function PraxioPage() {
         }
 
         setFullChatData(update.chat);
+        setDraftMissingWarning(draftMissing);
         setPrompt('');
 
         try {
@@ -990,7 +1001,7 @@ export default function PraxioPage() {
         research: result.tax_research || '',
         usedcitationsArray: usedCitationsArray,
         questions: result.clarifying_questions || '',
-        draft: result.draft_client_response || '',
+        draft: draftPayload ?? null,
         processTime: typeof result.processing_time === 'number' ? result.processing_time : null,
         model: selectedModel, // persist the user's chosen model (e.g., "Praxio AI", "Test AI")
         user_id: userId,
@@ -1012,6 +1023,7 @@ export default function PraxioPage() {
         title: insert.chat.title || `Chat #${insert.chat.id}`,
         created_at: insert.chat.created_at,
       });
+      setDraftMissingWarning(false);
       setPrompt('');
 
       toast.success('Research ready', {
@@ -2851,6 +2863,12 @@ export default function PraxioPage() {
                 )}
               </div>
             </div>
+        {draftMissingWarning && (
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            <AlertCircle className="h-4 w-4 mt-0.5" />
+            <span>Latest follow-up did not include a client draft. Showing the previous draft.</span>
+          </div>
+        )}
           </DialogHeader>
 
           <Tabs value={draftStep} onValueChange={(v) => setDraftStep(v as 'edit' | 'compile' | 'share')} className="flex-1 flex flex-col min-h-0">
