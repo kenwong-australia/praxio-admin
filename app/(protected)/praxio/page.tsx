@@ -3159,7 +3159,7 @@ export default function PraxioPage() {
                     const histCitations = parseCitations(item.citations);
                     const runLabel = idx === 0 ? 'Latest' : 'Previous';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
-                    const showScenarioBox = historyItems.length === 1;
+                    const showScenarioBox = idx === historyItems.length - 1;
                     const pairOffset = idx * 2;
                     const conv1 = historyConversations[pairOffset];
                     const conv2 = historyConversations[pairOffset + 1];
@@ -3188,21 +3188,34 @@ export default function PraxioPage() {
                                   {fullChatData?.scenario || 'No scenario provided.'}
                                 </div>
                               ) : conv1 || conv2 ? (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   {[conv1, conv2].filter(Boolean).map((c, i) => {
                                     const isUser = c?.type === 'user';
+                                    const bubbleBase = 'max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm';
+                                    const time = c?.created_at ? toSydneyDateTime(c.created_at) : '';
                                     return (
                                       <div
                                         key={i}
-                                        className={`p-2 rounded-md text-xs leading-snug ${
-                                          isUser ? 'bg-white border' : 'bg-blue-50 border border-blue-100'
-                                        }`}
+                                        className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
                                       >
-                                        <div className="font-semibold text-[11px] mb-1">
-                                          {isUser ? 'User' : 'Assistant'}
-                                        </div>
-                                        <div className="whitespace-pre-wrap break-words">
-                                          {c?.content || ''}
+                                        <div
+                                          className={`${bubbleBase} ${
+                                            isUser
+                                              ? 'bg-slate-50 border border-slate-200 text-slate-900'
+                                              : 'bg-blue-50 border border-blue-100 text-slate-900'
+                                          }`}
+                                        >
+                                          <div className="text-[11px] font-semibold mb-2 text-slate-600">
+                                            {isUser ? 'User' : 'Assistant'}
+                                          </div>
+                                          <div className="whitespace-pre-wrap break-words">
+                                            {c?.content || ''}
+                                          </div>
+                                          {time && (
+                                            <div className="text-[11px] text-slate-500 mt-2">
+                                              {time}
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
                                     );
