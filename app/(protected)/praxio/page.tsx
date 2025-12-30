@@ -93,13 +93,10 @@ export default function PraxioPage() {
   const [draftContent, setDraftContent] = useState('');
   const [draftStep, setDraftStep] = useState<'edit' | 'compile' | 'share'>('edit');
   const [compileOptions, setCompileOptions] = useState({
-    includeResearch: false,
-    includeCitations: false,
-    includeQuestions: false,
-    includeConversation: false,
-    includeResearchHistory: false,
-    includeCitationsHistory: false,
+    includeClientDraft: false,
+    includeHistory: false,
   });
+  const prevDraftStepRef = useRef<'edit' | 'compile' | 'share'>('edit');
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const draftSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [draftMissingWarning, setDraftMissingWarning] = useState(false);
@@ -142,17 +139,41 @@ export default function PraxioPage() {
     setHistoryError(null);
     setHistoryDialogOpen(false);
     setHistoryConversations([]);
-    setCompileOptions((prev) => ({
-      ...prev,
-      includeResearchHistory: false,
-      includeCitationsHistory: false,
-    }));
+    setCompileOptions({
+      includeClientDraft: false,
+      includeHistory: false,
+    });
   }, [fullChatData?.id]);
 
   // Clear draft warning when switching chats
   useEffect(() => {
     setDraftMissingWarning(false);
   }, [fullChatData?.id]);
+
+  // Pre-select compile options based on entry path
+  useEffect(() => {
+    const prevStep = prevDraftStepRef.current;
+    if (draftStep === 'compile' && prevStep !== 'compile') {
+      const cameFromEdit = prevStep === 'edit';
+      const nextOptions = cameFromEdit
+        ? { includeClientDraft: true, includeHistory: false }
+        : { includeClientDraft: false, includeHistory: true };
+
+      setCompileOptions(nextOptions);
+
+      if (nextOptions.includeHistory && fullChatData?.id && !historyLoading && historyItems.length === 0) {
+        loadHistoryData(fullChatData.id);
+      }
+    }
+    prevDraftStepRef.current = draftStep;
+  }, [draftStep, fullChatData?.id, historyItems.length, historyLoading]);
+
+  // Auto-fetch history when requested (any entry point)
+  useEffect(() => {
+    if (compileOptions.includeHistory && fullChatData?.id && historyItems.length === 0 && !historyLoading && !historyError) {
+      loadHistoryData(fullChatData.id);
+    }
+  }, [compileOptions.includeHistory, fullChatData?.id, historyItems.length, historyLoading, historyError]);
 
   // Fetch chats from Supabase when user ID is available
   useEffect(() => {
@@ -1271,84 +1292,96 @@ export default function PraxioPage() {
 
   // Generate compiled output preview
   const getCompiledOutput = (): string => {
-    let output = '';
-    
-    // Always include Client Draft
-    if (draftContent.trim()) {
-      output += '# Client Draft\n\n';
-      output += draftContent.trim();
-      output += '\n\n';
-    }
-    
-    // Include selected sections
-    if (compileOptions.includeResearch && fullChatData?.research?.trim()) {
-      output += '---\n\n';
-      output += '# Research\n\n';
-      output += fullChatData.research.trim();
-      output += '\n\n';
-    }
-    
-    if (compileOptions.includeCitations && citations.length > 0) {
-      output += '---\n\n';
-      output += '# Citations\n\n';
-      citations.forEach((citation, index) => {
-        output += `${index + 1}. **${citation.title}**\n`;
-        if (citation.url) {
-          output += `   ${citation.url}\n`;
-        } else {
-          output += `   Legislation reference\n`;
-        }
-        output += '\n';
-      });
-    }
-    
-    if (compileOptions.includeQuestions && fullChatData?.questions?.trim()) {
-      output += '---\n\n';
-      output += '# Questions to Refine Research\n\n';
-      output += fullChatData.questions.trim();
-      output += '\n\n';
+    const sections: string[] = [];
+
+    if (compileOptions.includeClientDraft) {
+      sections.push(
+        '# Client Draft\n\n' +
+          (draftContent.trim() ? draftContent.trim() : '_No client draft available._')
+      );
     }
 
-    if (compileOptions.includeResearchHistory && historyItems.length > 0) {
-      output += '---\n\n';
-      output += '# Research History\n\n';
-      historyItems.forEach((item, index) => {
-        const label = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
-        output += `## Run ${index + 1} - ${label}\n\n`;
-        if (item.research?.trim()) {
-          output += item.research.trim();
-        } else {
-          output += '_No research text_';
+    if (compileOptions.includeHistory) {
+      const buildHistoryMarkdown = (): string => {
+        if (historyLoading) {
+          return 'History is loading...';
         }
-        output += '\n\n';
-      });
-    }
+        if (historyError) {
+          return `History unavailable: ${historyError}`;
+        }
+        if (historyItems.length === 0) {
+          return 'No history available.';
+        }
 
-    if (compileOptions.includeCitationsHistory && historyItems.length > 0) {
-      output += '---\n\n';
-      output += '# Citations History\n\n';
-      historyItems.forEach((item, index) => {
-        const label = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
-        output += `## Run ${index + 1} - ${label}\n\n`;
-        const histCitations = parseCitations(item.citations);
-        if (histCitations.length === 0) {
-          output += '_No citations_\n\n';
-        } else {
-          histCitations.forEach((c, i) => {
-            output += `${i + 1}. **${c.title || 'Citation'}**`;
-            if (c.url) {
-              output += ` - ${c.url}`;
-            } else {
-              output += ' (Legislation reference)';
+        const parts: string[] = [];
+
+        historyItems.forEach((item, index) => {
+          const label = index === 0 ? 'Latest' : 'Previous';
+          const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
+          const pairOffset = index * 2;
+          const conv1 = historyConversations[pairOffset];
+          const conv2 = historyConversations[pairOffset + 1];
+          const histCitations = parseCitations(item.citations);
+
+          const formatConversation = (conv?: ConversationRow) => {
+            if (!conv) return '';
+            const isUser = conv.type === 'user';
+            const roleLabel = isUser ? 'User' : 'Assistant';
+            const time = conv.created_at ? ` (${toSydneyDateTime(conv.created_at)})` : '';
+            const content = (conv.content || '').split('\n').map((line) => `> ${line || ''}`).join('\n');
+            return `> **${roleLabel}**${time}\n${content}\n`;
+          };
+
+          const conversationBlock = (() => {
+            if (conv1 || conv2) {
+              const blocks: string[] = [];
+              if (conv1) blocks.push(formatConversation(conv1));
+              if (conv2) blocks.push(formatConversation(conv2));
+              return blocks.join('\n');
             }
-            output += '\n';
-          });
-          output += '\n';
-        }
-      });
+            return '_No conversation available._\n';
+          })();
+
+          const researchBlock =
+            item.research?.trim() || '_No research text_';
+
+          const citationsBlock = (() => {
+            if (histCitations.length === 0) return '_No citations_';
+            return histCitations
+              .map((c, i) => `${i + 1}. **${c.title || 'Citation'}**${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`)
+              .join('\n');
+          })();
+
+          const runParts: string[] = [];
+          runParts.push(`## ${label} - ${headerDate}\n`);
+
+          if (index === historyItems.length - 1) {
+            runParts.push('### Scenario\n');
+            runParts.push((fullChatData?.scenario || 'No scenario provided.').trim());
+            runParts.push('');
+          }
+
+          runParts.push('### Conversation\n');
+          runParts.push(conversationBlock.trim());
+          runParts.push('');
+
+          runParts.push('### Research\n');
+          runParts.push(researchBlock);
+          runParts.push('');
+
+          runParts.push(`### Citations (${histCitations.length})\n`);
+          runParts.push(citationsBlock);
+
+          parts.push(runParts.join('\n').trim());
+        });
+
+        return parts.join('\n\n---\n\n');
+      };
+
+      sections.push(`# History\n\n${buildHistoryMarkdown()}`);
     }
-    
-    return output.trim();
+
+    return sections.join('\n\n---\n\n').trim();
   };
 
   // Share functions
@@ -1361,53 +1394,30 @@ export default function PraxioPage() {
       return;
     }
 
-    // Prepare data for loops.so template - all optional, fetched from chatID record
-    // Draft from chat record (or use draftContent if user has edited it)
-    const draftFromRecord = fullChatData?.draft || '';
-    const draftHtml = draftFromRecord.trim() 
-      ? markdownToHtml(draftFromRecord)
-      : null;
-    
-    // Research from chat record
-    const researchHtml = compileOptions.includeResearch && fullChatData?.research?.trim()
-      ? markdownToHtml(fullChatData.research) 
-      : null;
-    
-    // Citations from chat record (usedcitationsArray)
-    const citationsText = compileOptions.includeCitations && citations.length > 0
-      ? citations.map(c => `${c.title}${c.url ? ` - ${c.url}` : ' (Legislation reference)'}`).join('\n')
-      : null;
-    
-    // Questions from chat record
-    const questionsHtml = compileOptions.includeQuestions && fullChatData?.questions?.trim()
-      ? markdownToHtml(fullChatData.questions)
-      : null;
-    
-    // Format conversation from conversations array
-    let conversationHtml: string | null = null;
-    if (compileOptions.includeConversation && conversations.length > 0) {
-      const conversationParts = conversations.map((conv) => {
-        const isUser = conv.type === 'user';
-        const role = isUser ? 'User' : 'Assistant';
-        const contentHtml = markdownToHtml(conv.content || '');
-        return `<div style="margin-bottom: 16px; padding: 12px; border-radius: 8px; ${isUser ? 'background-color: #f3f4f6; text-align: left;' : 'background-color: #eff6ff; text-align: right;'}">
-          <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 8px; ${isUser ? 'text-align: left;' : 'text-align: right;'}">${role}</div>
-          <div style="font-size: 14px; line-height: 1.5; word-wrap: break-word;">${contentHtml}</div>
-          <div style="font-size: 10px; color: #6b7280; margin-top: 8px; ${isUser ? 'text-align: left;' : 'text-align: right;'}">${toSydneyDateTime(conv.created_at)}</div>
-        </div>`;
+    const compiledContent = getCompiledOutput();
+    if (!compiledContent.trim()) {
+      toast.error('Nothing to share', {
+        description: 'Select at least one section before sending',
+        duration: 2500,
       });
-      conversationHtml = conversationParts.join('');
+      return;
     }
-    
+
+    const applyBubbleStyles = (html: string) =>
+      html
+        .replace(
+          /<blockquote>/g,
+          '<blockquote style="background-color: #f7f8fb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; margin: 14px 0;">'
+        )
+        .replace(
+          /<p>/g,
+          '<p style="margin: 10px 0; line-height: 1.6; color: #333;">'
+        );
+
+    const compiledHtml = applyBubbleStyles(markdownToHtml(compiledContent));
+
     try {
-      const result = await sendDraftEmail(
-        fullChatData.email,
-        draftHtml,   // Draft section HTML (optional, from chat record)
-        researchHtml, // Research section HTML (optional, from chat record)
-        citationsText,  // Citations as text (optional, from chat record)
-        questionsHtml,  // Questions HTML (optional, from chat record)
-        conversationHtml  // Conversation HTML (optional, from conversation table)
-      );
+      const result = await sendDraftEmail(fullChatData.email, compiledHtml, null, null, null, null);
       
       if (result.success) {
         toast.success('Email Sent', {
@@ -1437,15 +1447,19 @@ export default function PraxioPage() {
       
       // Build filename
       const selectedSections = [];
-      if (compileOptions.includeResearch) selectedSections.push('Research');
-      if (compileOptions.includeCitations) selectedSections.push('Citations');
-      if (compileOptions.includeQuestions) selectedSections.push('Questions');
-      if (compileOptions.includeResearchHistory) selectedSections.push('ResearchHistory');
-      if (compileOptions.includeCitationsHistory) selectedSections.push('CitationsHistory');
-      const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'ClientDraft';
+      if (compileOptions.includeClientDraft) selectedSections.push('ClientDraft');
+      if (compileOptions.includeHistory) selectedSections.push('History');
+      const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'Output';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
       const compiledContent = getCompiledOutput();
+      if (!compiledContent.trim()) {
+        toast.error('Nothing to download', {
+          description: 'Select at least one section before downloading',
+          duration: 2500,
+        });
+        return;
+      }
       const lines = compiledContent.split('\n');
       
       for (const line of lines) {
@@ -1511,15 +1525,19 @@ export default function PraxioPage() {
       
       // Build filename
       const selectedSections = [];
-      if (compileOptions.includeResearch) selectedSections.push('Research');
-      if (compileOptions.includeCitations) selectedSections.push('Citations');
-      if (compileOptions.includeQuestions) selectedSections.push('Questions');
-      if (compileOptions.includeResearchHistory) selectedSections.push('ResearchHistory');
-      if (compileOptions.includeCitationsHistory) selectedSections.push('CitationsHistory');
-      const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'ClientDraft';
+      if (compileOptions.includeClientDraft) selectedSections.push('ClientDraft');
+      if (compileOptions.includeHistory) selectedSections.push('History');
+      const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'Output';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
       const compiledContent = getCompiledOutput();
+      if (!compiledContent.trim()) {
+        toast.error('Nothing to download', {
+          description: 'Select at least one section before downloading',
+          duration: 2500,
+        });
+        return;
+      }
       const htmlContent = markdownToHtml(compiledContent);
       
       const container = document.createElement('div');
@@ -1563,6 +1581,13 @@ export default function PraxioPage() {
 
   const handleShareCopy = async () => {
     const compiledContent = getCompiledOutput();
+    if (!compiledContent.trim()) {
+      toast.error('Nothing to copy', {
+        description: 'Select at least one section before copying',
+        duration: 2000,
+      });
+      return;
+    }
     await copyToClipboard(compiledContent);
   };
 
@@ -2519,12 +2544,8 @@ export default function PraxioPage() {
                               setDraftContent(fullChatData?.draft || '');
                               setDraftStep('share');
                               setCompileOptions({
-                                includeResearch: true,
-                                includeCitations: true,
-                                includeQuestions: false,
-                                includeConversation: false,
-                                includeResearchHistory: false,
-                                includeCitationsHistory: false,
+                                includeClientDraft: false,
+                                includeHistory: true,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -2538,12 +2559,8 @@ export default function PraxioPage() {
                               setDraftContent(fullChatData.draft || '');
                               setDraftStep('edit');
                               setCompileOptions({
-                                includeResearch: false,
-                                includeCitations: false,
-                                includeQuestions: false,
-                                includeConversation: false,
-                                includeResearchHistory: false,
-                                includeCitationsHistory: false,
+                                includeClientDraft: true,
+                                includeHistory: false,
                               });
                               setDraftDialogOpen(true);
                             }}
@@ -2842,11 +2859,11 @@ export default function PraxioPage() {
                 <DialogTitle>
                   {draftStep === 'compile' ? 'Compile final output' : 'Create Client Draft'}
                 </DialogTitle>
-                <DialogDescription>
-                  {draftStep === 'compile' 
-                    ? 'Select section to include with Client Draft'
-                    : 'Edit the draft directly below and then move to compile it with supporting sections'}
-                </DialogDescription>
+                {draftStep !== 'compile' && (
+                  <DialogDescription>
+                    Edit the draft directly below and then move to compile it with supporting sections
+                  </DialogDescription>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {autoSaveStatus === 'saving' && (
@@ -2932,82 +2949,30 @@ export default function PraxioPage() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="include-research"
-                        checked={compileOptions.includeResearch}
+                        id="include-client-draft"
+                        checked={compileOptions.includeClientDraft}
                         onCheckedChange={(checked) =>
-                          setCompileOptions({ ...compileOptions, includeResearch: checked === true })
+                          setCompileOptions({ ...compileOptions, includeClientDraft: checked === true })
                         }
                       />
-                      <label htmlFor="include-research" className="text-sm font-medium cursor-pointer">
-                        Research
+                      <label htmlFor="include-client-draft" className="text-sm font-medium cursor-pointer">
+                        Client draft
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="include-citations"
-                        checked={compileOptions.includeCitations}
-                        onCheckedChange={(checked) =>
-                          setCompileOptions({ ...compileOptions, includeCitations: checked === true })
-                        }
-                      />
-                      <label htmlFor="include-citations" className="text-sm font-medium cursor-pointer">
-                        Citations ({citations.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-questions"
-                        checked={compileOptions.includeQuestions}
-                        onCheckedChange={(checked) =>
-                          setCompileOptions({ ...compileOptions, includeQuestions: checked === true })
-                        }
-                      />
-                      <label htmlFor="include-questions" className="text-sm font-medium cursor-pointer">
-                        Questions
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-conversation"
-                        checked={compileOptions.includeConversation}
-                        onCheckedChange={(checked) =>
-                          setCompileOptions({ ...compileOptions, includeConversation: checked === true })
-                        }
-                      />
-                      <label htmlFor="include-conversation" className="text-sm font-medium cursor-pointer">
-                        Conversation ({conversations.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-research-history"
-                        checked={compileOptions.includeResearchHistory}
+                        id="include-history"
+                        checked={compileOptions.includeHistory}
                         onCheckedChange={async (checked) => {
                           const next = checked === true;
-                          if (next && fullChatData?.id && historyItems.length === 0) {
+                          if (next && fullChatData?.id && historyItems.length === 0 && !historyLoading) {
                             await loadHistoryData(fullChatData.id);
                           }
-                          setCompileOptions({ ...compileOptions, includeResearchHistory: next });
+                          setCompileOptions({ ...compileOptions, includeHistory: next });
                         }}
                       />
-                      <label htmlFor="include-research-history" className="text-sm font-medium cursor-pointer">
-                        Research history ({historyItems.length})
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-citations-history"
-                        checked={compileOptions.includeCitationsHistory}
-                        onCheckedChange={async (checked) => {
-                          const next = checked === true;
-                          if (next && fullChatData?.id && historyItems.length === 0) {
-                            await loadHistoryData(fullChatData.id);
-                          }
-                          setCompileOptions({ ...compileOptions, includeCitationsHistory: next });
-                        }}
-                      />
-                      <label htmlFor="include-citations-history" className="text-sm font-medium cursor-pointer">
-                        Citations history ({historyItems.length})
+                      <label htmlFor="include-history" className="text-sm font-medium cursor-pointer">
+                        History ({historyLoading ? 'loading...' : historyItems.length})
                       </label>
                     </div>
                   </div>
@@ -3114,9 +3079,9 @@ export default function PraxioPage() {
               title="Share history"
               onClick={() => {
                 setCompileOptions((prev) => ({
-                  ...prev,
-                  includeResearchHistory: true,
-                  includeCitationsHistory: true,
+                ...prev,
+                includeClientDraft: prev.includeClientDraft || false,
+                includeHistory: true,
                 }));
                 setDraftDialogOpen(true);
                 setDraftStep('compile');
@@ -3287,4 +3252,5 @@ export default function PraxioPage() {
     </div>
   );
 }
+
 
