@@ -1564,6 +1564,27 @@ export default function PraxioPage() {
         })
         .filter(Boolean) as Citation[];
     }
+
+    if (typeof usedcitationsArray === 'object') {
+      // Handle objects that wrap the array (e.g., { citations: [...] })
+      const inner =
+        (usedcitationsArray as any).citations ||
+        (usedcitationsArray as any).usedcitationsArray ||
+        (usedcitationsArray as any).used_citations;
+      if (Array.isArray(inner)) {
+        return inner
+          .map((item: any) => {
+            if (item && typeof item === 'object' && item.fullreference?.trim()) {
+              return { title: item.fullreference, url: item.url?.trim() || null };
+            }
+            if (typeof item === 'string' && item.trim()) {
+              return { title: item.trim(), url: null };
+            }
+            return null;
+          })
+          .filter(Boolean) as Citation[];
+      }
+    }
     
     if (typeof usedcitationsArray === 'string') {
       try {
@@ -1580,6 +1601,24 @@ export default function PraxioPage() {
               return null;
             })
             .filter(Boolean) as Citation[];
+        } else if (parsed && typeof parsed === 'object') {
+          const inner =
+            (parsed as any).citations ||
+            (parsed as any).usedcitationsArray ||
+            (parsed as any).used_citations;
+          if (Array.isArray(inner)) {
+            return inner
+              .map((item: any) => {
+                if (item && typeof item === 'object' && item.fullreference?.trim()) {
+                  return { title: item.fullreference, url: item.url?.trim() || null };
+                }
+                if (typeof item === 'string' && item.trim()) {
+                  return { title: item.trim(), url: null };
+                }
+                return null;
+              })
+              .filter(Boolean) as Citation[];
+          }
         }
       } catch (error) {
         // Silent fallback for parsing errors
@@ -3105,8 +3144,6 @@ export default function PraxioPage() {
                               <span className="text-xs text-muted-foreground">{headerDate}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Research</span>
-                              <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
                               <span>Citations: {histCitations.length}</span>
                             </div>
                           </div>
