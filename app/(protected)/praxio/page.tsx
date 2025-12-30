@@ -3201,18 +3201,18 @@ export default function PraxioPage() {
                                         <div
                                           className={`${bubbleBase} ${
                                             isUser
-                                              ? 'bg-slate-50 border border-slate-200 text-slate-900'
-                                              : 'bg-blue-50 border border-blue-100 text-slate-900'
+                                              ? 'bg-slate-50 border border-slate-200 text-slate-900 text-left'
+                                              : 'bg-blue-50 border border-blue-100 text-slate-900 text-right'
                                           }`}
                                         >
-                                          <div className="text-[11px] font-semibold mb-2 text-slate-600">
+                                          <div className={`text-[11px] font-semibold mb-2 text-slate-600 ${isUser ? 'text-left' : 'text-right'}`}>
                                             {isUser ? 'User' : 'Assistant'}
                                           </div>
-                                          <div className="whitespace-pre-wrap break-words">
+                                          <div className={`whitespace-pre-wrap break-words ${isUser ? 'text-left' : 'text-right'}`}>
                                             {c?.content || ''}
                                           </div>
                                           {time && (
-                                            <div className="text-[11px] text-slate-500 mt-2">
+                                            <div className={`text-[11px] text-slate-500 mt-2 ${isUser ? 'text-left' : 'text-right'}`}>
                                               {time}
                                             </div>
                                           )}
