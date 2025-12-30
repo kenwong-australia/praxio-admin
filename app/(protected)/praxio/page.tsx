@@ -3167,11 +3167,20 @@ export default function PraxioPage() {
                               {histCitations.length > 0 ? (
                                 <div className="space-y-2">
                                   {histCitations.map((c, i) => (
-                                    <div key={i} className="text-xs">
-                                      <span className="font-medium">{i + 1}. {c.title}</span>
-                                      <span className="text-muted-foreground">
-                                        {c.url ? ` - ${c.url}` : ' (Legislation reference)'}
-                                      </span>
+                                    <div key={i} className="text-xs leading-snug">
+                                      <span className="font-medium">{i + 1}. {c.title}</span>{' '}
+                                      {c.url ? (
+                                        <a
+                                          href={c.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-800 break-all"
+                                        >
+                                          {c.url}
+                                        </a>
+                                      ) : (
+                                        <span className="text-muted-foreground">(Legislation reference)</span>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
