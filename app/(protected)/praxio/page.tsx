@@ -2171,14 +2171,14 @@ export default function PraxioPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    className="h-6 w-6 text-green-600 hover:text-green-700"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleOpenHistory();
                                     }}
                                     title="History"
                                   >
-                                    <History className="h-3.5 w-3.5" />
+                                    <History className="h-3.5 w-3.5 text-green-600" />
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -2217,8 +2217,8 @@ export default function PraxioPage() {
                               }`}>
                                 <div className="mb-3 pb-2 border-b border-slate-200">
                                   <p className="text-xs text-muted-foreground">
-                                    Research Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}{' '}
-                                    Research Model: {fullChatData?.model || selectedModel || '—'}
+                                    Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}{' '}
+                                    Model: {fullChatData?.model || selectedModel || '—'}
                                   </p>
                                 </div>
                                 <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
