@@ -115,6 +115,7 @@ export default function PraxioPage() {
     { created_at: string | null; research: string | null; citations: any }[]
   >([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyConversations, setHistoryConversations] = useState<ConversationRow[]>([]);
   const [showTutorialFlag, setShowTutorialFlag] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -139,6 +140,7 @@ export default function PraxioPage() {
     setHistoryItems([]);
     setHistoryError(null);
     setHistoryDialogOpen(false);
+    setHistoryConversations([]);
     setCompileOptions((prev) => ({
       ...prev,
       includeResearchHistory: false,
@@ -816,9 +818,10 @@ export default function PraxioPage() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const [researchRes, citationsRes] = await Promise.all([
+      const [researchRes, citationsRes, convRes] = await Promise.all([
         getResearchHistory(chatId),
         getCitationsHistory(chatId),
+        getConversationsByChatId(chatId),
       ]);
 
       if (!researchRes.success) {
@@ -830,6 +833,13 @@ export default function PraxioPage() {
 
       const researchRows = researchRes.rows || [];
       const citationRows = citationsRes.rows || [];
+      const convRows: ConversationRow[] = Array.isArray(convRes) ? convRes : [];
+      const convDesc = [...convRows].sort((a, b) => {
+        const da = new Date(a.created_at || '').getTime();
+        const db = new Date(b.created_at || '').getTime();
+        return isNaN(db) ? -1 : isNaN(da) ? 1 : db - da;
+      });
+      setHistoryConversations(convDesc);
       const maxLen = Math.max(researchRows.length, citationRows.length);
       const combined = [];
       for (let i = 0; i < maxLen; i++) {
@@ -3131,6 +3141,10 @@ export default function PraxioPage() {
                     const histCitations = parseCitations(item.citations);
                     const runLabel = idx === 0 ? 'Latest' : 'Previous';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
+                    const showScenarioBox = historyItems.length === 1;
+                    const pairOffset = idx * 2;
+                    const conv1 = historyConversations[pairOffset];
+                    const conv2 = historyConversations[pairOffset + 1];
                     return (
                       <AccordionItem
                         key={`${item.created_at || 'run'}-${idx}`}
@@ -3150,6 +3164,36 @@ export default function PraxioPage() {
                         </AccordionTrigger>
                         <AccordionContent className="pt-2 pb-3">
                           <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                            <div className="border border-slate-200 rounded-md p-3 bg-muted/30">
+                              {showScenarioBox ? (
+                                <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                  {fullChatData?.scenario || 'No scenario provided.'}
+                                </div>
+                              ) : conv1 || conv2 ? (
+                                <div className="space-y-2">
+                                  {[conv1, conv2].filter(Boolean).map((c, i) => {
+                                    const isUser = c?.type === 'user';
+                                    return (
+                                      <div
+                                        key={i}
+                                        className={`p-2 rounded-md text-xs leading-snug ${
+                                          isUser ? 'bg-white border' : 'bg-blue-50 border border-blue-100'
+                                        }`}
+                                      >
+                                        <div className="font-semibold text-[11px] mb-1">
+                                          {isUser ? 'User' : 'Assistant'}
+                                        </div>
+                                        <div className="whitespace-pre-wrap break-words">
+                                          {c?.content || ''}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground italic">No conversation available.</div>
+                              )}
+                            </div>
                             <div>
                               <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
                               {item.research?.trim() ? (
