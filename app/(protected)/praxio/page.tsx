@@ -1378,7 +1378,7 @@ export default function PraxioPage() {
         return parts.join('\n\n---\n\n');
       };
 
-      sections.push(`# History\n\n${buildHistoryMarkdown()}`);
+      sections.push(`# Research History\n\n${buildHistoryMarkdown()}`);
     }
 
     return sections.join('\n\n---\n\n').trim();
@@ -1448,7 +1448,7 @@ export default function PraxioPage() {
       // Build filename
       const selectedSections = [];
       if (compileOptions.includeClientDraft) selectedSections.push('ClientDraft');
-      if (compileOptions.includeHistory) selectedSections.push('History');
+      if (compileOptions.includeHistory) selectedSections.push('ResearchHistory');
       const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'Output';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
@@ -1526,7 +1526,7 @@ export default function PraxioPage() {
       // Build filename
       const selectedSections = [];
       if (compileOptions.includeClientDraft) selectedSections.push('ClientDraft');
-      if (compileOptions.includeHistory) selectedSections.push('History');
+      if (compileOptions.includeHistory) selectedSections.push('ResearchHistory');
       const sectionStr = selectedSections.length > 0 ? selectedSections.join('_') : 'Output';
       const filename = formatFilename(fullChatData?.title || 'Untitled', `ClientDraft_${sectionStr}`, chatDate);
       
@@ -2972,7 +2972,7 @@ export default function PraxioPage() {
                         }}
                       />
                       <label htmlFor="include-history" className="text-sm font-medium cursor-pointer">
-                        History ({historyLoading ? 'loading...' : historyItems.length})
+                        Research History ({historyLoading ? 'loading...' : historyItems.length})
                       </label>
                     </div>
                   </div>
