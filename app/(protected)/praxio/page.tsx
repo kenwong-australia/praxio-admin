@@ -114,6 +114,7 @@ export default function PraxioPage() {
   >([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyConversations, setHistoryConversations] = useState<ConversationRow[]>([]);
+  const [compileBackTarget, setCompileBackTarget] = useState<'edit' | 'share'>('edit');
   const [showTutorialFlag, setShowTutorialFlag] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -159,6 +160,7 @@ export default function PraxioPage() {
         ? { includeClientDraft: true, includeHistory: false }
         : { includeClientDraft: false, includeHistory: true };
 
+      setCompileBackTarget(prevStep === 'share' ? 'share' : 'edit');
       setCompileOptions(nextOptions);
 
       if (nextOptions.includeHistory && fullChatData?.id && !historyLoading && historyItems.length === 0) {
@@ -2358,20 +2360,6 @@ export default function PraxioPage() {
                   <div className="h-full flex flex-col">
                     <ScrollArea className="flex-shrink-0">
                       <div className="p-5 pb-3 space-y-4">
-                        {/* Tutorial entry for existing users */}
-                        {!tutorialVisible && (
-                          <div className="flex justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleTutorialRestart}
-                              className="text-xs"
-                              title="Open tutorial"
-                            >
-                              Tutorial
-                            </Button>
-                          </div>
-                        )}
                         {/* Questions */}
                         {fullChatData.questions?.trim() && (
                           <Accordion 
@@ -2981,16 +2969,16 @@ export default function PraxioPage() {
                 <div className="mt-4 flex justify-between gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => setDraftStep('edit')}
+                    onClick={() => setDraftStep(compileBackTarget)}
                     className="text-xs h-8 px-3"
                   >
-                    Back to Edit
+                    Back
                   </Button>
                   <Button
                     onClick={() => setDraftStep('share')}
                     className="text-xs h-8 px-3"
                   >
-                    Next: Share
+                    Select Share Format
                   </Button>
                 </div>
               </div>
