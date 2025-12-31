@@ -2503,20 +2503,6 @@ export default function PraxioPage() {
                             </Button>
                             </div>
                           </div>
-                        {userRole === 'admin' && fullChatData && (
-                          <div className="flex flex-wrap gap-2 items-start">
-                            <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
-                              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white border border-slate-200">
-                                <SelectValue placeholder="Select model" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Praxio AI">Praxio AI</SelectItem>
-                                <SelectItem value="Test AI">Test AI</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                        </div>
                         <div className="flex gap-2 justify-end flex-wrap">
                           <Button
                             onClick={handleNewResearch}
@@ -2557,6 +2543,20 @@ export default function PraxioPage() {
                           >
                             {renderActionLabel('Create Client Draft', FilePlus)}
                           </Button>
+                        </div>
+                        {userRole === 'admin' && fullChatData && (
+                          <div className="flex flex-wrap gap-2 items-start">
+                            <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
+                              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white border border-slate-200">
+                                <SelectValue placeholder="Select model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Praxio AI">Praxio AI</SelectItem>
+                                <SelectItem value="Test AI">Test AI</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         </div>
                         {/* Disclaimer */}
                         <div className="pt-3 border-t border-slate-200">
