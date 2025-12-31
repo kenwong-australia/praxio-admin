@@ -231,6 +231,20 @@ export default function PraxioPage() {
         const authEmail = getFirebaseAuth().currentUser?.email || '';
         const resolvedEmail = (profileEmail || authEmail || '').trim();
 
+        if (typeof window !== 'undefined') {
+          const storedPref = localStorage.getItem(BUTTON_TEXT_PREF_KEY);
+          if (storedPref !== null) {
+            setShowButtonText(storedPref === 'true');
+          } else if (typeof data?.show_icons === 'boolean') {
+            const showTextFromIcons = !data.show_icons;
+            setShowButtonText(showTextFromIcons);
+            localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(showTextFromIcons));
+          } else {
+            setShowButtonText(true);
+            localStorage.setItem(BUTTON_TEXT_PREF_KEY, 'true');
+          }
+        }
+
         setUserEmail(resolvedEmail || null);
         setUserRole(role ?? null);
         if (role !== 'admin') {

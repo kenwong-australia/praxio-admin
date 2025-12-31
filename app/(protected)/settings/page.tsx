@@ -59,6 +59,7 @@ interface UserData {
   selected_frequency?: string;
   stripe_trial_end_date?: Date;
   email_verified?: boolean;
+  show_icons?: boolean;
 }
 
 export default function SettingsPage() {
@@ -78,6 +79,7 @@ export default function SettingsPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showButtonTextPref, setShowButtonTextPref] = useState(true);
+  const [buttonPrefSaving, setButtonPrefSaving] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -108,6 +110,22 @@ export default function SettingsPage() {
           return undefined;
         };
 
+        const showIconsField =
+          typeof data?.show_icons === 'boolean' ? Boolean(data.show_icons) : null;
+        if (typeof window !== 'undefined') {
+          const storedPref = localStorage.getItem(BUTTON_TEXT_PREF_KEY);
+          if (storedPref !== null) {
+            setShowButtonTextPref(storedPref === 'true');
+          } else if (showIconsField !== null) {
+            const showTextFromIcons = !showIconsField;
+            setShowButtonTextPref(showTextFromIcons);
+            localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(showTextFromIcons));
+          } else {
+            setShowButtonTextPref(true);
+            localStorage.setItem(BUTTON_TEXT_PREF_KEY, 'true');
+          }
+        }
+
         const userData: UserData = {
           display_name: data?.display_name || '',
           email: data?.email || user.email || '',
@@ -120,6 +138,7 @@ export default function SettingsPage() {
           selected_frequency: data?.selected_frequency,
           stripe_trial_end_date: toDateSafe(data?.stripe_trial_end_date),
           email_verified: Boolean(data?.email_verified),
+          show_icons: showIconsField ?? undefined,
         };
 
         setUserData(userData);
@@ -228,14 +247,37 @@ export default function SettingsPage() {
     }
   };
 
-  const handleButtonTextPrefChange = (checked: boolean) => {
-    setShowButtonTextPref(checked);
-    localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(checked));
+  const handleButtonTextPrefChange = async (iconOnly: boolean) => {
+    if (!authUser) {
+      toast.error('No signed-in user found.');
+      return;
+    }
+    const prevShowText = showButtonTextPref;
+    const nextShowText = !iconOnly;
+    setShowButtonTextPref(nextShowText);
+    localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(nextShowText));
     window.dispatchEvent(new Event('praxioButtonTextPreferenceChanged'));
-    toast.success(`Button labels ${checked ? 'shown' : 'hidden'}`, {
-      description: checked ? 'Action buttons will display text.' : 'Action buttons will use icons only.',
-      duration: 2500,
-    });
+
+    try {
+      setButtonPrefSaving(true);
+      const db = getDb();
+      await updateDoc(doc(db, 'users', authUser.uid), { show_icons: iconOnly });
+      setUserData(prev => (prev ? { ...prev, show_icons: iconOnly } : prev));
+      toast.success(iconOnly ? 'Icons enabled for action buttons.' : 'Text labels enabled for action buttons.', {
+        description: iconOnly
+          ? 'Action buttons will use icons only.'
+          : 'Action buttons will display text.',
+        duration: 2500,
+      });
+    } catch (error) {
+      console.error('Error updating button preference:', error);
+      setShowButtonTextPref(prevShowText);
+      localStorage.setItem(BUTTON_TEXT_PREF_KEY, String(prevShowText));
+      window.dispatchEvent(new Event('praxioButtonTextPreferenceChanged'));
+      toast.error('Could not update preference. Please try again.');
+    } finally {
+      setButtonPrefSaving(false);
+    }
   };
 
   const handleCopyEmail = () => {
@@ -762,8 +804,10 @@ export default function SettingsPage() {
               </div>
             </div>
             <Switch
-              checked={showButtonTextPref}
-              onCheckedChange={handleButtonTextPrefChange}
+              checked={!showButtonTextPref}
+              onCheckedChange={(checked) => handleButtonTextPrefChange(checked)}
+              disabled={buttonPrefSaving}
+              className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-200"
             />
           </div>
 
