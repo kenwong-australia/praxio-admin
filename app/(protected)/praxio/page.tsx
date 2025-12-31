@@ -3054,7 +3054,7 @@ export default function PraxioPage() {
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle>Research & Citations History</DialogTitle>
+                <DialogTitle>Research History</DialogTitle>
               </div>
             </div>
           </DialogHeader>
@@ -3110,7 +3110,12 @@ export default function PraxioPage() {
                 >
                   {historyItems.map((item, idx) => {
                     const histCitations = parseCitations(item.citations);
-                    const runLabel = idx === 0 ? 'Latest' : 'Previous';
+                    const isInitial = idx === historyItems.length - 1;
+                    const runLabel = isInitial
+                      ? 'Initial Research'
+                      : idx === 0
+                      ? 'Latest Research'
+                      : 'Previous Research';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
                     const showScenarioBox = idx === historyItems.length - 1;
                     const pairOffset = idx * 2;
