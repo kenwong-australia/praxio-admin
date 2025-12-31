@@ -3105,7 +3105,7 @@ export default function PraxioPage() {
                 <Accordion
                   type="single"
                   collapsible
-                  defaultValue="run-0"
+                  defaultValue={undefined}
                   className="space-y-3 pb-4"
                 >
                   {historyItems.map((item, idx) => {
