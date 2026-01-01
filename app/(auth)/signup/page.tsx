@@ -11,9 +11,6 @@ import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function SignUpPage() {
   const router = useRouter();
-
-  // Temporary kill-switch to prevent new self-serve signups
-  const SIGNUPS_DISABLED = true;
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -350,14 +347,6 @@ export default function SignUpPage() {
     // Mark that user has engaged (tried to submit)
     setHasEngaged(true);
 
-    if (SIGNUPS_DISABLED) {
-      toast.info('Signups are temporarily disabled', {
-        description: 'Please check back soon or contact support.',
-        duration: 4000,
-      });
-      return;
-    }
-    
     if (!validateForm() || emailExists === true) {
       return;
     }
@@ -452,6 +441,8 @@ export default function SignUpPage() {
       description: 'Your data is protected with industry-leading security',
     },
   ];
+
+  const isSubmitDisabled = loading || !isFormReady();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -842,11 +833,14 @@ export default function SignUpPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={true} // temporarily disabled to block new signups
-                  className={`w-full rounded-lg text-white font-medium py-2.5 px-4 transition-colors bg-slate-400 cursor-not-allowed`}
-                  title="Signups are temporarily disabled"
+                  disabled={isSubmitDisabled}
+                  className={`w-full rounded-lg text-white font-medium py-2.5 px-4 transition-colors ${
+                    isSubmitDisabled
+                      ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                  }`}
                 >
-                  Signups temporarily disabled
+                  {loading ? 'Creating your account…' : 'Create account'}
                 </button>
               </form>
 
