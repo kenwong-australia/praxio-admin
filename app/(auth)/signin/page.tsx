@@ -116,6 +116,16 @@ function SignInForm() {
         </div>
         <h1 className="text-xl font-semibold mb-4">Admin sign in</h1>
 
+        {reason === 'admin_only' && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-amber-800">
+              We&apos;re temporarily limiting access to admin accounts only. Please sign in with an admin email or
+              contact your Praxio admin.
+            </p>
+          </div>
+        )}
+
         {reason === 'not_admin' && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />

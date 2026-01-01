@@ -31,8 +31,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Temporary kill-switch: keep true to gate to admins only, set to false to restore previous behavior.
+  const ADMIN_ONLY_GATE = process.env.NEXT_PUBLIC_ADMIN_ONLY_GATE !== 'false';
+
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const [smallScreenOverride, setSmallScreenOverride] = useState(false);
+  const [denyReason, setDenyReason] = useState<'not_admin' | 'admin_only'>('not_admin');
 
   const [phase, setPhase] = useState<
     'auth-loading' | 'role-loading' | 'trial-check' | 'in' | 'not-admin' | 'out' | 'trial-expired'
@@ -96,6 +100,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Temporary gate: block non-admins entirely
+        if (ADMIN_ONLY_GATE) {
+          setDenyReason('admin_only');
+          setPhase('not-admin');
+          return;
+        }
+
         // For non-admin users, check trial/subscription status
         // Redirect to pricing if subscription is not active AND:
         // - Trial has expired (trial_end_date < now), OR
@@ -120,6 +131,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Error checking user status:', error);
         // If check fails, treat as not-admin for safety
+        setDenyReason('not_admin');
         setPhase('not-admin');
       }
     });
@@ -141,7 +153,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       <NotAuthorized
         onDone={async () => {
           await signOut(getFirebaseAuth());
-          router.replace('/signin?reason=not_admin');
+          router.replace(`/signin?reason=${denyReason}`);
         }}
       />
     );
