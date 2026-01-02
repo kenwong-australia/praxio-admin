@@ -114,8 +114,6 @@ function SignInForm() {
           />
           <span className="text-sm font-medium text-neutral-700">Praxio AI</span>
         </div>
-        <h1 className="text-xl font-semibold mb-4">Admin sign in</h1>
-
         {reason === 'admin_only' && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
