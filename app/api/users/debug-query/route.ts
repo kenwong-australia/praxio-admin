@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase';
+import { guardAdminApi } from '@/lib/auth-server';
 
 // Debug endpoint to run the same Firestore filters used by getUsers
 // Usage: /api/users/debug-query?search=&role=&plan=&status=&limit=10
 export async function GET(request: NextRequest) {
   try {
+    const guard = await guardAdminApi(request);
+    if (guard) return guard;
+
     const { searchParams } = new URL(request.url);
 
     const search = searchParams.get('search') || undefined;

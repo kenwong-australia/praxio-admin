@@ -2,6 +2,7 @@
 // Server Actions - run on server, can be called from client components
 import { svc, ingest } from '@/lib/supabase';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase';
+import { assertAdmin } from '@/lib/auth-server';
 import { z } from 'zod';
 import { User, UserFilters, UserStats } from '@/lib/types';
 
@@ -14,8 +15,13 @@ const F = z.object({
   pageSize: z.number().int().min(10).max(100).default(25),
 });
 
+async function ensureAdmin() {
+  await assertAdmin();
+}
+
 export async function getDistinctEmails() {
   try {
+    await ensureAdmin();
     const { data, error } = await svc()
       .from('chat')
       .select('email')
@@ -34,6 +40,7 @@ export async function getDistinctEmails() {
 
 export async function getKPIs(input: unknown) {
   try {
+    await ensureAdmin();
     const f = F.parse(input);
     const sb = svc();
 
@@ -104,6 +111,7 @@ export async function getKPIs(input: unknown) {
 
 export async function getLatest5(input: unknown) {
   try {
+    await ensureAdmin();
     const f = F.partial({ page: true, pageSize: true }).parse(input);
     let q = svc()
       .from('chat')
@@ -128,6 +136,7 @@ export async function getLatest5(input: unknown) {
 
 export async function getScenariosPage(input: unknown) {
   try {
+    await ensureAdmin();
     const f = F.parse(input);
     const offset = (f.page - 1) * f.pageSize;
 
@@ -155,6 +164,7 @@ export async function getScenariosPage(input: unknown) {
 
 export async function getConversationsByChatId(chatId: number) {
   try {
+    await ensureAdmin();
     const { data, error } = await svc()
       .from('conversation')
       .select('id,created_at,type,content,chat_id')
@@ -172,6 +182,7 @@ export async function getConversationsByChatId(chatId: number) {
 
 export async function getChatById(chatId: number) {
   try {
+    await ensureAdmin();
     const { data, error } = await svc()
       .from('chat')
       .select('id,created_at,title,email,model,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
@@ -603,6 +614,7 @@ export async function sendDraftEmail(
 // User management functions
 export async function getUsers(input: unknown) {
   try {
+    await ensureAdmin();
     console.log('getUsers called with input:', input);
     
     const f = z.object({
@@ -831,6 +843,7 @@ export async function getUsers(input: unknown) {
 
 export async function getUserStats(input: unknown) {
   try {
+    await ensureAdmin();
     console.log('getUserStats called with input:', input);
     
     const f = z.object({}).parse(input);
@@ -916,6 +929,7 @@ export async function getUserStats(input: unknown) {
 
 export async function getUserDetails(uid: string) {
   try {
+    await ensureAdmin();
     const db = getAdminDb();
     const userDoc = await db.collection('users').doc(uid).get();
     
@@ -971,6 +985,7 @@ export async function getUserDetails(uid: string) {
 // ==========================
 export async function verifyEmailByEmail(input: { uid: string; email: string }) {
   try {
+    await ensureAdmin();
     const { uid, email } = input;
     const auth = getAdminAuth();
 
@@ -1046,6 +1061,7 @@ export type VBEventRow = {
 };
 
 export async function getVBRuns(input: unknown) {
+  await ensureAdmin();
   const f = VBFilters.pick({ component: true, fromISO: true, toISO: true, page: true, pageSize: true }).parse(input);
   const sb = ingest();
   const from = f.fromISO;
@@ -1070,6 +1086,7 @@ export async function getVBRuns(input: unknown) {
 }
 
 export async function getVBEvents(input: unknown) {
+  await ensureAdmin();
   const f = VBFilters.parse(input);
   const sb = ingest();
   const offset = (f.page - 1) * f.pageSize;

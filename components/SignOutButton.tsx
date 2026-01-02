@@ -9,9 +9,15 @@ interface SignOutButtonProps {
 }
 
 export function SignOutButton({ isCollapsed = false }: SignOutButtonProps) {
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     const auth = getFirebaseAuth();
-    signOut(auth);
+    await signOut(auth);
+    // Clear session cookie on server
+    try {
+      await fetch('/api/session', { method: 'DELETE' });
+    } catch {
+      // ignore network errors on sign-out
+    }
   };
 
   return (

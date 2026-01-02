@@ -73,6 +73,20 @@ function SignInForm() {
     try {
       const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email.trim(), password);
+
+      // Exchange the ID token for a session cookie (server-side auth)
+      const idToken = await auth.currentUser?.getIdToken(true);
+      if (idToken) {
+        const resp = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        if (!resp.ok) {
+          throw new Error('Session setup failed');
+        }
+      }
+
       router.replace(redirectTo);
     } catch (err: any) {
       setError(friendlyError(err?.code || ''));

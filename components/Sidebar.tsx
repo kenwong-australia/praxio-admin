@@ -32,6 +32,7 @@ function InactivityTimer({ isCollapsed }: { isCollapsed: boolean }) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const variant = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'user' : 'admin';
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
@@ -65,6 +66,15 @@ export function Sidebar() {
         : 'text-muted-foreground hover:bg-slate-100 hover:text-foreground'
     }`;
   };
+
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: BarChart3, variants: ['admin'] },
+    { href: '/users', label: 'Users', icon: Users, variants: ['admin'] },
+    { href: '/chats', label: 'Chats', icon: MessageSquare, variants: ['admin'] },
+    { href: '/praxio', label: 'Praxio', icon: Sparkles, variants: ['admin', 'user'] },
+    { href: '/vb-processing', label: 'VB Processing', icon: Database, variants: ['admin'] },
+    { href: '/settings', label: 'Settings', icon: Settings, variants: ['admin', 'user'] },
+  ].filter((item) => item.variants.includes(variant));
 
   return (
     <aside
@@ -100,30 +110,12 @@ export function Sidebar() {
       </div>
       
       <nav className={`space-y-1 ${isCollapsed ? 'p-2' : 'p-3'}`}>
-        <Link href="/admin" className={navClasses('/admin')}>
-          <BarChart3 className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Dashboard</span>}
-        </Link>
-        <Link href="/users" className={navClasses('/users')}>
-          <Users className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Users</span>}
-        </Link>
-        <Link href="/chats" className={navClasses('/chats')}>
-          <MessageSquare className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Chats</span>}
-        </Link>
-        <Link href="/praxio" className={navClasses('/praxio')}>
-          <Sparkles className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Praxio</span>}
-        </Link>
-        <Link href="/vb-processing" className={navClasses('/vb-processing')}>
-          <Database className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">VB Processing</span>}
-        </Link>
-        <Link href="/settings" className={navClasses('/settings')}>
-          <Settings className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">Settings</span>}
-        </Link>
+        {navItems.map((item) => (
+          <Link key={item.href} href={item.href} className={navClasses(item.href)}>
+            <item.icon className="h-4 w-4 flex-shrink-0" />
+            {!isCollapsed && <span className="truncate">{item.label}</span>}
+          </Link>
+        ))}
       </nav>
       
       <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'} space-y-2`}>

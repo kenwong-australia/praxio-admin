@@ -31,8 +31,13 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Temporary kill-switch: keep true to gate to admins only, set to false to restore previous behavior.
-  const ADMIN_ONLY_GATE = process.env.NEXT_PUBLIC_ADMIN_ONLY_GATE !== 'false';
+  const variant = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'user' : 'admin';
+  // Temporary kill-switch: gate to admins only unless explicitly disabled.
+  // For the user variant, always disable the admin-only gate.
+  const ADMIN_ONLY_GATE =
+    variant === 'admin'
+      ? process.env.NEXT_PUBLIC_ADMIN_ONLY_GATE !== 'false'
+      : false;
 
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const [smallScreenOverride, setSmallScreenOverride] = useState(false);
