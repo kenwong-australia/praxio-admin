@@ -12,6 +12,11 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 function isPublicAsset(pathname: string) {
+  // Treat any path with a file extension as a static asset (e.g., images under /public)
+  if (/\.[^/]+$/.test(pathname)) {
+    return true;
+  }
+
   return (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/assets/') ||
@@ -19,7 +24,7 @@ function isPublicAsset(pathname: string) {
   );
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Skip public assets and API routes
