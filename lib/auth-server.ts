@@ -21,7 +21,7 @@ function parseCookieHeader(header?: string | null): Record<string, string> {
   );
 }
 
-function getCookieValue(req?: NextRequest): string | undefined {
+async function getCookieValue(req?: NextRequest): Promise<string | undefined> {
   if (req) {
     const fromStore = req.cookies.get(SESSION_COOKIE_NAME)?.value;
     if (fromStore) return fromStore;
@@ -29,10 +29,10 @@ function getCookieValue(req?: NextRequest): string | undefined {
     return parseCookieHeader(header)[SESSION_COOKIE_NAME];
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await Promise.resolve(cookies());
   const fromStore = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (fromStore) return fromStore;
-  const header = headers().get('cookie');
+  const header = (await Promise.resolve(headers())).get('cookie');
   return parseCookieHeader(header)[SESSION_COOKIE_NAME];
 }
 
@@ -50,7 +50,7 @@ async function fetchUser(uid: string): Promise<SessionUser | null> {
 
 export async function getSessionUser(req?: NextRequest): Promise<SessionUser | null> {
   try {
-    const cookie = getCookieValue(req);
+    const cookie = await getCookieValue(req);
     if (!cookie) return null;
 
     const auth = getAdminAuth();
