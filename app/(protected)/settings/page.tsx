@@ -673,7 +673,7 @@ export default function SettingsPage() {
               setEditDisplayName(userData.display_name || '');
               setEditProfileOpen(true);
             }}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
@@ -691,7 +691,7 @@ export default function SettingsPage() {
             onClick={handleResendVerification}
             disabled={resendLoading}
             className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
-              resendLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-slate-50'
+              resendLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-muted'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -712,7 +712,7 @@ export default function SettingsPage() {
             className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
               userData.stripe_subscription_status?.toLowerCase() === 'trialing'
                 ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-slate-50'
+                : 'hover:bg-muted'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -742,7 +742,7 @@ export default function SettingsPage() {
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-border bg-muted p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">Current Plan</p>
@@ -754,8 +754,8 @@ export default function SettingsPage() {
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">Renews</p>
-                  <p className="text-slate-900">{formatDate(userData.stripe_plan_renewal_date)}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Renews</p>
+                  <p className="text-foreground">{formatDate(userData.stripe_plan_renewal_date)}</p>
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-wide text-slate-500">Trial Ends</p>
@@ -876,7 +876,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
                 {isDarkMode ? (
@@ -900,7 +900,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center">
                 <ArrowUp className="h-4 w-4 text-green-600" />
@@ -923,7 +923,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center gap-3 flex-1">
               <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
                 <Clock className="h-4 w-4 text-blue-600" />
@@ -970,7 +970,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-1">
           <button
             onClick={handleCopyEmail}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
@@ -994,7 +994,7 @@ export default function SettingsPage() {
             href="https://www.praxio-ai.com.au/terms-conditions"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
@@ -1012,7 +1012,7 @@ export default function SettingsPage() {
             href="https://www.praxio-ai.com.au/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
           >
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
@@ -1048,7 +1048,7 @@ export default function SettingsPage() {
             }}
           >
             <AlertDialogTrigger asChild>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors text-left">
+              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-destructive/10 transition-colors text-left">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center">
                     <Trash2 className="h-4 w-4 text-red-600" />
@@ -1075,14 +1075,14 @@ export default function SettingsPage() {
                     <li>All chat history and preferences will be removed from Praxio (Supabase and Firebase data).</li>
                     <li>This action cannot be recovered later.</li>
                   </ul>
-                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 space-y-1">
-                    <p className="font-medium text-slate-800">Want to keep your account?</p>
+                  <div className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground space-y-1">
+                    <p className="font-medium text-foreground">Want to keep your account?</p>
                     <p>
                       You can cancel your subscription instead and continue using Praxio until the end of the current billing period.
                     </p>
                     <button
                       type="button"
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-primary hover:underline font-medium"
                       onClick={() => {
                         setDeleteDialogOpen(false);
                         setSubscriptionDialogOpen(true);
@@ -1094,7 +1094,7 @@ export default function SettingsPage() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-2 pt-1">
-                <label className="text-xs font-medium text-slate-700" htmlFor="delete-confirm">
+                <label className="text-xs font-medium text-foreground" htmlFor="delete-confirm">
                   Type DELETE to confirm
                 </label>
                 <Input

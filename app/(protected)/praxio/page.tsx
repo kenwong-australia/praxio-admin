@@ -1849,7 +1849,7 @@ export default function PraxioPage() {
     <div className="h-screen flex flex-col relative">
       {/* Tutorial overlay */}
       {tutorialVisible && (
-        <div className="fixed inset-0 z-50 bg-white/90 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -1869,7 +1869,7 @@ export default function PraxioPage() {
 
             <div className="grid lg:grid-cols-[240px,1fr] gap-6">
               {/* Step rail */}
-              <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+              <div className="bg-card border border-border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Step {tutorialStep + 1} of {tutorialSteps.length}</span>
                   <span>{Math.round(((tutorialStep + 1) / tutorialSteps.length) * 100)}%</span>
@@ -1886,7 +1886,7 @@ export default function PraxioPage() {
                         className={`w-full text-left px-3 py-2 rounded-md border transition ${
                           active
                             ? 'border-blue-300 bg-blue-50'
-                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                            : 'border-border bg-card hover:bg-muted'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -1909,7 +1909,7 @@ export default function PraxioPage() {
               </div>
 
               {/* Step content */}
-              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+              <div className="bg-card border border-border rounded-lg p-6 shadow-sm space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase text-blue-700 font-semibold tracking-wide">
@@ -1944,7 +1944,7 @@ export default function PraxioPage() {
             </div>
 
             {/* Footer actions */}
-            <div className="sticky bottom-0 left-0 right-0 bg-white/90 backdrop-blur border-t border-slate-200 py-4">
+            <div className="sticky bottom-0 left-0 right-0 bg-card/90 backdrop-blur border-t border-border py-4">
               <div className="flex items-center justify-between gap-3 max-w-6xl mx-auto px-2">
                 <Button
                   variant="outline"
@@ -1993,12 +1993,12 @@ export default function PraxioPage() {
 
       {/* Main 3-column research layout. Resizable panels are used on desktop widths;
           the app-shell wrapper in ProtectedLayout keeps the whole UI centered. */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
+      <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0 bg-background">
         {/* Previous Research Sidebar - collapsible */}
         {isPreviousOpen ? (
-          <div className="w-[240px] h-full flex flex-col bg-white border-r border-slate-200 flex-shrink-0">
+          <div className="w-[240px] h-full flex flex-col bg-card border-r border-border flex-shrink-0">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Previous</h2>
                 <div className="flex items-center gap-1">
@@ -2043,8 +2043,8 @@ export default function PraxioPage() {
                       group relative flex w-full items-start gap-2
                       rounded-lg cursor-pointer transition-colors
                       ${selectedChat?.id === chat.id
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'hover:bg-slate-50 border border-transparent'}
+                        ? 'bg-primary/10 border border-primary/40'
+                        : 'hover:bg-muted border border-transparent'}
                     `}
                   >
                   {/* TEXT COLUMN - wrap long titles */}
@@ -2090,7 +2090,7 @@ export default function PraxioPage() {
           </ScrollArea>
           </div>
         ) : (
-          <div className="w-[44px] h-full flex flex-col items-center justify-start bg-white border-r border-slate-200 flex-shrink-0">
+          <div className="w-[44px] h-full flex flex-col items-center justify-start bg-card border-r border-border flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -2110,7 +2110,7 @@ export default function PraxioPage() {
           {userRole === 'admin' && !fullChatData && (
             <div className="absolute top-4 left-4 z-20">
               <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
-                <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white/90 backdrop-blur border border-slate-200">
+              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-card/90 backdrop-blur border border-border">
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2123,7 +2123,7 @@ export default function PraxioPage() {
 
           {selectedChat && loadingChatData ? (
               // Loading state
-              <div className="h-full flex items-center justify-center bg-white">
+              <div className="h-full flex items-center justify-center bg-background">
                 <div className="text-center text-muted-foreground">
                   <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
                   <p className="text-lg">Loading chat data...</p>
@@ -2131,7 +2131,7 @@ export default function PraxioPage() {
               </div>
             ) : selectedChat && !loadingChatData && fullChatData ? (
               // When chat is selected and data loaded: Show split columns
-              <div className="h-full flex flex-col bg-white">
+              <div className="h-full flex flex-col bg-card">
                 <ResizablePanelGroup direction="horizontal" className="flex-1 min-w-0">
                   {/* Left Column - Scenario, Research, Citations */}
                   <ResizablePanel defaultSize={50} className="min-w-0">
@@ -2146,7 +2146,7 @@ export default function PraxioPage() {
                       >
                       {/* Scenario */}
                       {fullChatData.scenario?.trim() && (
-                          <AccordionItem value="scenario" className="border rounded-lg px-3">
+                          <AccordionItem value="scenario" className="border border-border rounded-lg px-3">
                             <AccordionTrigger className="hover:no-underline py-2">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
@@ -2191,7 +2191,7 @@ export default function PraxioPage() {
 
                       {/* Research */}
                       {fullChatData.research?.trim() && (
-                          <AccordionItem value="research" className="border rounded-lg px-3">
+                          <AccordionItem value="research" className="border border-border rounded-lg px-3">
                             <AccordionTrigger className="hover:no-underline py-2">
                               <div className="flex items-center justify-between w-full pr-2">
                                 <div className="flex items-center gap-2">
