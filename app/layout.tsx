@@ -1,9 +1,11 @@
 import "./globals.css";
 import type { Metadata } from 'next';
 
+const VARIANT = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'User' : 'Admin';
+
 export const metadata: Metadata = {
-  title: 'Praxio AI – Admin',
-  description: 'Admin dashboard for Praxio AI analytics and management',
+  title: `Praxio AI${VARIANT === 'Admin' ? ' – Admin' : ''}`,
+  description: 'Praxio AI application',
 };
 
 export default function RootLayout({
