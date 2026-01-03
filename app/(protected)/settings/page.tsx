@@ -25,7 +25,7 @@ import {
   Loader2,
   ArrowUp
 } from 'lucide-react';
-import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, sendEmailVerification, reload, signOut } from 'firebase/auth';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -93,6 +93,9 @@ export default function SettingsPage() {
   const [showButtonTextPref, setShowButtonTextPref] = useState(true);
   const [buttonPrefSaving, setButtonPrefSaving] = useState(false);
   const [themeSaving, setThemeSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -341,9 +344,62 @@ export default function SettingsPage() {
     setTimeout(() => setEmailCopied(false), 2000);
   };
 
-  const handleDeleteAccount = () => {
-    // Placeholder - will be wired up later
-    toast.info('Delete account functionality will be implemented soon');
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm');
+      return;
+    }
+
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('No signed-in user found.');
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      const idToken = await user.getIdToken(true);
+
+      const res = await fetch('/api/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        const message = data?.errors?.join(', ') || data?.error || 'Delete failed';
+        throw new Error(message);
+      }
+
+      toast.success('Account deleted', {
+        description: 'Your account and data have been removed.',
+      });
+
+      try {
+        await fetch('/api/session', { method: 'DELETE' });
+      } catch {
+        // ignore
+      }
+
+      try {
+        await signOut(auth);
+      } catch {
+        // ignore
+      }
+
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
+      router.push('/signup');
+    } catch (error) {
+      console.error('Delete account failed', error);
+      toast.error('Delete account failed', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleSaveDisplayName = async () => {
@@ -981,7 +1037,16 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <AlertDialog>
+          <AlertDialog
+            open={deleteDialogOpen}
+            onOpenChange={open => {
+              setDeleteDialogOpen(open);
+              if (!open) {
+                setDeleteConfirmText('');
+                setDeleteLoading(false);
+              }
+            }}
+          >
             <AlertDialogTrigger asChild>
               <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-red-50 transition-colors text-left">
                 <div className="flex items-center gap-3">
@@ -1001,16 +1066,55 @@ export default function SettingsPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Account</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete your account? This action cannot be reversed and will permanently delete all your data, including research, chats, and settings.
+                <AlertDialogDescription className="space-y-3">
+                  <p className="font-medium text-red-700">
+                    This is permanent. Please read carefully before continuing.
+                  </p>
+                  <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                    <li>You will no longer be able to sign in or use Praxio, even if your subscription is active (your authentication account will be deleted).</li>
+                    <li>All chat history and preferences will be removed from Praxio (Supabase and Firebase data).</li>
+                    <li>This action cannot be recovered later.</li>
+                  </ul>
+                  <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 space-y-1">
+                    <p className="font-medium text-slate-800">Want to keep your account?</p>
+                    <p>
+                      You can cancel your subscription instead and continue using Praxio until the end of the current billing period.
+                    </p>
+                    <button
+                      type="button"
+                      className="text-blue-600 hover:underline font-medium"
+                      onClick={() => {
+                        setDeleteDialogOpen(false);
+                        setSubscriptionDialogOpen(true);
+                      }}
+                    >
+                      Open subscription settings
+                    </button>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-medium text-slate-700" htmlFor="delete-confirm">
+                  Type DELETE to confirm
+                </label>
+                <Input
+                  id="delete-confirm"
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="characters"
+                />
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel className="text-xs h-8 px-3">Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteAccount}
-                  className="bg-red-600 hover:bg-red-700 text-xs h-8 px-3"
+                  className="bg-red-600 hover:bg-red-700 text-xs h-8 px-3 inline-flex items-center gap-2"
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
                 >
+                  {deleteLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                   Delete Account
                 </AlertDialogAction>
               </AlertDialogFooter>
