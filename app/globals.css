@@ -89,6 +89,14 @@
   padding: 0 24px;
 }
 
+/* Invert prose content for dark backgrounds */
+.prose-invert {
+  color: hsl(var(--foreground));
+}
+.prose-invert :where(a, strong, em, code, h1, h2, h3, h4, h5, h6) {
+  color: hsl(var(--foreground));
+}
+
 @media (min-width: 1600px) {
   .app-shell {
     max-width: 1600px;

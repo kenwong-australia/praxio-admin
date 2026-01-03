@@ -2181,7 +2181,7 @@ export default function PraxioPage() {
                             </AccordionTrigger>
                             <AccordionContent className="pt-2">
                               <div className="max-h-[400px] overflow-y-auto pr-2">
-                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-invert">
                                   <ReactMarkdown>{fullChatData.scenario}</ReactMarkdown>
                                 </div>
                               </div>
@@ -2284,7 +2284,7 @@ export default function PraxioPage() {
                                     Model: {fullChatData?.model || selectedModel || '—'}
                                   </p>
                                 </div>
-                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs">
+                                <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs prose-invert">
                             <ReactMarkdown>{fullChatData.research}</ReactMarkdown>
                           </div>
                         </div>
@@ -2419,7 +2419,7 @@ export default function PraxioPage() {
                               </AccordionTrigger>
                               <AccordionContent className="pt-2">
                                 <div className="max-h-[400px] overflow-y-auto pr-2">
-                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
+                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-li:my-2 prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-invert">
                               <ReactMarkdown>{fullChatData.questions}</ReactMarkdown>
                             </div>
                           </div>
@@ -2469,7 +2469,7 @@ export default function PraxioPage() {
                                       <div className={`text-[10px] font-medium text-muted-foreground mb-1.5 ${isUser ? 'text-left' : 'text-right'}`}>
                                         {isUser ? 'User' : 'Assistant'}
                                       </div>
-                                      <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-sm prose-ul:text-sm prose-ol:text-sm prose-li:text-sm">
+                                      <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-sm prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-invert">
                                         <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
                                       </div>
                                       <div className={`mt-1.5 text-[10px] text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
@@ -3174,7 +3174,7 @@ export default function PraxioPage() {
                                           className={`${bubbleBase} ${
                                             isUser
                                               ? 'bg-muted border border-border text-foreground text-left'
-                                              : 'bg-primary/10 border border-primary/40 text-foreground text-right'
+                                              : 'bg-muted/60 border border-border text-foreground text-right'
                                           }`}
                                         >
                                           <div className={`text-[11px] font-semibold mb-2 text-slate-600 ${isUser ? 'text-left' : 'text-right'}`}>
@@ -3200,7 +3200,7 @@ export default function PraxioPage() {
                             <div>
                               <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
                               {item.research?.trim() ? (
-                                <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base">
+                                <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base prose-invert">
                                   <ReactMarkdown>{item.research}</ReactMarkdown>
                                 </div>
                               ) : (
