@@ -16,10 +16,10 @@ function NotAuthorized({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="min-h-screen grid place-items-center bg-neutral-100">
-      <div className="rounded-2xl bg-white p-6 shadow max-w-md text-center">
+    <div className="min-h-screen grid place-items-center bg-background text-foreground">
+      <div className="rounded-2xl bg-card text-card-foreground p-6 shadow max-w-md text-center border border-border">
         <h1 className="text-lg font-semibold mb-2">Access restricted</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-muted-foreground">
           This area is for <b>admins</b> only. You'll be signed out now.
         </p>
       </div>
@@ -145,12 +145,12 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   if (phase === 'auth-loading' || phase === 'role-loading' || phase === 'trial-check') {
-    return <div className="min-h-screen grid place-items-center bg-neutral-100">Loading…</div>;
+    return <div className="min-h-screen grid place-items-center bg-background text-foreground">Loading…</div>;
   }
 
   if (phase === 'trial-expired') {
     // Brief placeholder while redirect occurs
-    return <div className="min-h-screen grid place-items-center bg-neutral-100">Redirecting to pricing…</div>;
+    return <div className="min-h-screen grid place-items-center bg-background text-foreground">Redirecting to pricing…</div>;
   }
 
   if (phase === 'not-admin') {
@@ -166,7 +166,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
   if (phase === 'out') {
     // brief placeholder while redirect occurs
-    return <div className="min-h-screen grid place-items-center bg-neutral-100">Redirecting…</div>;
+    return <div className="min-h-screen grid place-items-center bg-background text-foreground">Redirecting…</div>;
   }
 
   // phase === 'in'
@@ -175,24 +175,24 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   if (isSmallScreen && !smallScreenOverride) {
     // Small-screen notice with explicit primary / secondary actions.
     return (
-      <div className="min-h-screen grid place-items-center bg-neutral-100 px-4">
-        <div className="max-w-md w-full rounded-2xl bg-white p-6 shadow">
+      <div className="min-h-screen grid place-items-center bg-background text-foreground px-4">
+        <div className="max-w-md w-full rounded-2xl bg-card text-card-foreground p-6 shadow border border-border">
           <h1 className="text-lg font-semibold mb-2">Praxio AI Admin works best on a larger screen</h1>
-          <p className="text-sm text-neutral-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             For readability and safety, the admin experience is designed for laptops and desktop monitors
             (1280px wide or more). You can switch devices or continue on this one if needed.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-end">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               onClick={() => setSmallScreenOverride(true)}
             >
               Continue on this device
             </button>
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               onClick={async () => {
                 await signOut(getFirebaseAuth());
                 const q = new URLSearchParams({ reason: 'small_screen' });
@@ -212,7 +212,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const isFullPage = pathname === '/pricing' || pathname === '/success';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       {isFullPage ? (
         // Full-page layout (no sidebar)
         <>{children}</>

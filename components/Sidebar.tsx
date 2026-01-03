@@ -15,15 +15,15 @@ function InactivityTimer({ isCollapsed }: { isCollapsed: boolean }) {
     return null;
   }
 
-  return (
-    <div
-      className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-xs font-mono transition-colors ${
-        isWarning
-          ? 'bg-red-50 text-red-700 border border-red-200'
-          : 'bg-slate-50 text-slate-600 border border-slate-200'
-      }`}
-      title={isCollapsed ? formatTimeRemaining(timeRemaining) : undefined}
-    >
+    return (
+      <div
+        className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-xs font-mono transition-colors ${
+          isWarning
+            ? 'bg-destructive/10 text-destructive border border-destructive/30'
+            : 'bg-muted text-muted-foreground border border-border'
+        }`}
+        title={isCollapsed ? formatTimeRemaining(timeRemaining) : undefined}
+      >
       <Clock className={`h-3 w-3 flex-shrink-0 ${isWarning ? 'text-red-600' : 'text-slate-500'}`} />
       {!isCollapsed && <span className="truncate">{formatTimeRemaining(timeRemaining)}</span>}
     </div>
@@ -62,8 +62,8 @@ export function Sidebar() {
     const isActive = pathname === href || pathname.startsWith(`${href}/`);
     return `flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2'} rounded-lg transition-colors ${
       isActive
-        ? 'bg-blue-50 text-blue-700 font-medium'
-        : 'text-muted-foreground hover:bg-slate-100 hover:text-foreground'
+        ? 'bg-primary/15 text-primary font-medium dark:bg-primary/25'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
     }`;
   };
 
@@ -78,11 +78,11 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`min-h-screen bg-white shadow-xl border-r border-slate-200 transition-all duration-200 flex flex-col ${
+      className={`min-h-screen bg-card text-card-foreground shadow-xl border-r border-border transition-all duration-200 flex flex-col ${
         isCollapsed ? 'w-[80px]' : 'w-56'
       }`}
     >
-      <div className={`border-b border-slate-200 flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-between p-3'}`}>
+      <div className={`border-b border-border flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-between p-3'}`}>
         <div 
           className="flex items-center gap-2 min-w-0 cursor-pointer"
           onClick={isCollapsed ? () => setIsCollapsed(false) : undefined}
@@ -101,7 +101,7 @@ export function Sidebar() {
           <button
             type="button"
             aria-label="Collapse sidebar"
-            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={() => setIsCollapsed((v) => !v)}
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function Sidebar() {
                 window.dispatchEvent(new CustomEvent('praxioOpenTutorial'));
               }
             }}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 transition`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'} px-3 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition`}
             title="Open tutorial"
           >
             <Sparkles className="h-4 w-4 text-blue-600" />

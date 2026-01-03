@@ -23,7 +23,7 @@ export function SignOutButton({ isCollapsed = false }: SignOutButtonProps) {
   return (
     <button
       onClick={handleSignOut}
-      className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors w-full`}
+      className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full`}
       title={isCollapsed ? 'Sign Out' : undefined}
     >
       <LogOut className="h-4 w-4 flex-shrink-0" />

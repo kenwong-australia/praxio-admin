@@ -116,8 +116,8 @@ function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="w-full max-w-sm rounded-2xl bg-card text-card-foreground p-6 shadow border border-border">
         <div className="flex items-center gap-2 mb-2">
           <Image
             src="/Praxio Logo clean-12 (logo only).png"
@@ -126,12 +126,12 @@ function SignInForm() {
             height={24}
             priority
           />
-          <span className="text-sm font-medium text-neutral-700">Praxio AI</span>
+          <span className="text-sm font-medium text-foreground">Praxio AI</span>
         </div>
         {reason === 'admin_only' && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
+          <div className="mb-4 p-3 bg-amber-100/20 border border-amber-200/60 rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
               We&apos;re temporarily limiting access to admin accounts only. Please sign in with an admin email or
               contact your Praxio admin.
             </p>
@@ -139,9 +139,9 @@ function SignInForm() {
         )}
 
         {reason === 'not_admin' && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-700">
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/40 rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
               Your account isn't authorized for admin access. Try another account or contact your administrator.
             </p>
           </div>
@@ -149,32 +149,32 @@ function SignInForm() {
 
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
-            <span className="text-sm">Email</span>
+            <span className="text-sm text-foreground">Email</span>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-[#2563EB]"
+              className="mt-1 w-full rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               autoComplete="email"
             />
           </label>
 
           <label className="block">
-            <span className="text-sm">Password</span>
+            <span className="text-sm text-foreground">Password</span>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-lg border px-3 py-2 pr-10 outline-none focus:ring-2 focus:ring-[#2563EB]"
+                className="mt-1 w-full rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground px-3 py-2 pr-10 outline-none focus:ring-2 focus:ring-primary"
                 autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-[#2563EB] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus:text-primary transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -190,7 +190,7 @@ function SignInForm() {
             <button
               type="button"
               onClick={() => setResetDialogOpen(true)}
-              className="text-xs font-medium text-blue-600 hover:underline"
+              className="text-xs font-medium text-primary hover:underline"
             >
               Forgot password?
             </button>
@@ -201,8 +201,7 @@ function SignInForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg py-2 text-white disabled:opacity-60 hover:bg-[#1D4ED8] transition-colors"
-            style={{ backgroundColor: '#2563EB' }}
+            className="w-full rounded-lg py-2 bg-primary text-primary-foreground disabled:opacity-60 hover:bg-primary/90 transition-colors"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
@@ -219,12 +218,12 @@ function SignInForm() {
 
             <div className="space-y-2">
               <label className="block">
-                <span className="text-sm">Email</span>
+                <span className="text-sm text-foreground">Email</span>
                 <input
                   type="email"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="mt-1 w-full rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                   autoComplete="email"
                   placeholder="you@example.com"
                 />
@@ -243,7 +242,7 @@ function SignInForm() {
               <button
                 type="button"
                 onClick={() => setResetDialogOpen(false)}
-                className="text-sm font-medium text-neutral-600 hover:text-neutral-800"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </button>
@@ -251,7 +250,7 @@ function SignInForm() {
                 type="button"
                 onClick={onResetPassword}
                 disabled={resetLoading}
-                className="rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white hover:bg-[#1D4ED8] disabled:opacity-60"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {resetLoading ? 'Sending…' : 'Send reset link'}
               </button>
@@ -259,9 +258,9 @@ function SignInForm() {
           </DialogContent>
         </Dialog>
 
-        <p className="mt-3 text-xs text-center text-neutral-500">
+        <p className="mt-3 text-xs text-center text-muted-foreground">
           Don't have an account?{' '}
-          <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+          <Link href="/signup" className="text-primary hover:underline font-medium">
             Sign up here
           </Link>
         </p>
@@ -273,16 +272,16 @@ function SignInForm() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-        <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow border border-border">
           <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-4"></div>
+            <div className="h-6 bg-muted rounded mb-4"></div>
             <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-16"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-20"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
-              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-muted rounded w-16"></div>
+              <div className="h-10 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded w-20"></div>
+              <div className="h-10 bg-muted rounded"></div>
+              <div className="h-10 bg-muted rounded"></div>
             </div>
           </div>
         </div>
