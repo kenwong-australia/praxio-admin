@@ -798,17 +798,20 @@ export default function SettingsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Action Button Labels</p>
-                <p className="text-xs text-muted-foreground">
-                  Toggle text vs icons for Praxio research actions
-                </p>
+                <p className="text-xs text-muted-foreground">Toggle Text vs Icons</p>
               </div>
             </div>
-            <Switch
-              checked={!showButtonTextPref}
-              onCheckedChange={(checked) => handleButtonTextPrefChange(checked)}
-              disabled={buttonPrefSaving}
-              className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-200"
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-10 text-right">
+                {showButtonTextPref ? 'Text' : 'Icon'}
+              </span>
+              <Switch
+                checked={!showButtonTextPref}
+                onCheckedChange={(checked) => handleButtonTextPrefChange(checked)}
+                disabled={buttonPrefSaving}
+                className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-200"
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
