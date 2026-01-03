@@ -37,7 +37,7 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
   const getFeedbackBadge = (feedback: number | null) => {
     if (feedback === null) return <Badge variant="outline">No feedback</Badge>;
     if (feedback === 1) return <Badge className="bg-green-500 text-white">👍 Positive</Badge>;
-    if (feedback === -1) return <Badge className="bg-red-500 text-white">👎 Negative</Badge>;
+    if (feedback === -1) return <Badge className="bg-destructive text-destructive-foreground">👎 Negative</Badge>;
     return <Badge variant="outline">Neutral</Badge>;
   };
 
@@ -64,7 +64,7 @@ export function ScenariosTable({ rows, total, currentPage, pageSize, onPageChang
   };
 
   return (
-    <Card className="bg-white border-0 shadow-sm">
+    <Card className="bg-card text-card-foreground border border-border shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">

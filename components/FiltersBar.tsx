@@ -51,7 +51,7 @@ export function FiltersBar({
   }
 
   return (
-    <Card className="mb-8 bg-white border-0 shadow-sm">
+    <Card className="mb-8 bg-card text-card-foreground border border-border shadow-sm">
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <FilterIcon className="h-4 w-4 text-muted-foreground" />

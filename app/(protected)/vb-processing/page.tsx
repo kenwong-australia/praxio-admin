@@ -213,7 +213,7 @@ export default function VBProcessingPage() {
                           <td className="py-2 pr-4 font-mono text-xs">{e.run_id ?? '-'}</td>
                         </tr>
                         {expanded[e.id] && (
-                          <tr className="bg-slate-50 border-b last:border-0">
+                          <tr className="bg-muted border-b last:border-0">
                             <td></td>
                             <td colSpan={7} className="py-3 pr-4">
                               <div className="flex items-center justify-between mb-2">
@@ -225,7 +225,7 @@ export default function VBProcessingPage() {
                                   <Copy className="h-3 w-3" /> Copy JSON
                                 </button>
                               </div>
-                              <pre className="text-[11px] leading-[1.25rem] whitespace-pre-wrap bg-white border rounded p-3 overflow-x-auto max-h-80">
+                              <pre className="text-[11px] leading-[1.25rem] whitespace-pre-wrap bg-card border border-border rounded p-3 overflow-x-auto max-h-80">
 {JSON.stringify(e.payload ?? {}, null, 2)}
                               </pre>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-xs">

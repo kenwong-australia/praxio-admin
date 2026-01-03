@@ -21,7 +21,7 @@ export function KpiCard({ title, value, change, trend = 'neutral' }: KpiCardProp
   const Icon = iconMap[title as keyof typeof iconMap] || Activity;
   
   return (
-    <Card className="relative overflow-hidden bg-white border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <Card className="relative overflow-hidden bg-card text-card-foreground border border-border shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}

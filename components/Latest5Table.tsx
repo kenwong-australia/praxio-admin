@@ -45,7 +45,7 @@ export function Latest5Table({ rows }: { rows: any[] }) {
 
   return (
     <>
-      <Card className="bg-white border-0 shadow-sm">
+      <Card className="bg-card text-card-foreground border border-border shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Clock className="h-5 w-5 text-blue-600" />

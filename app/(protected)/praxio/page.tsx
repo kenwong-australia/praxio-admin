@@ -1932,7 +1932,7 @@ export default function PraxioPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-center p-6 text-sm text-muted-foreground">
+                <div className="rounded-lg border-2 border-dashed border-border/60 bg-muted text-center p-6 text-sm text-muted-foreground">
                   {tutorialSteps[tutorialStep].placeholder}
                 </div>
 
@@ -2278,7 +2278,7 @@ export default function PraxioPage() {
                                   ? 'max-h-[500px]'
                                   : 'max-h-[600px]'
                               }`}>
-                                <div className="mb-3 pb-2 border-b border-slate-200">
+                                <div className="mb-3 pb-2 border-b border-border">
                                   <p className="text-xs text-muted-foreground">
                                     Date: {toSydneyDateTime(fullChatData.updated_on || fullChatData.created_at)}{' '}
                                     Model: {fullChatData?.model || selectedModel || '—'}
@@ -2431,7 +2431,7 @@ export default function PraxioPage() {
                     </ScrollArea>
 
                     {/* Conversation Widget - Messages + Prompt Box */}
-                    <div className="flex-1 flex flex-col border-t border-slate-200 bg-white min-h-0">
+                    <div className="flex-1 flex flex-col border-t border-border bg-card min-h-0">
                       {/* Conversation Messages */}
                       <ScrollArea className="flex-1">
                         <div className="p-4">
@@ -2486,7 +2486,7 @@ export default function PraxioPage() {
                       </ScrollArea>
 
                       {/* Prompt Box - Fixed at bottom */}
-                      <div className="border-t border-slate-200 p-4 bg-white space-y-2">
+                      <div className="border-t border-border p-4 bg-card space-y-2">
                       <div className="flex flex-col gap-3">
                         <div className="flex gap-3 flex-wrap">
                           <div className="flex-1 relative">
@@ -2561,7 +2561,7 @@ export default function PraxioPage() {
                         {userRole === 'admin' && fullChatData && (
                           <div className="flex flex-wrap gap-2 items-start">
                             <Select value={selectedModel} onValueChange={(value) => setSelectedModel(value as ModelOption)}>
-                              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-white border border-slate-200">
+                              <SelectTrigger className="h-9 w-[180px] text-sm shadow-sm bg-card border border-border">
                                 <SelectValue placeholder="Select model" />
                               </SelectTrigger>
                               <SelectContent>
@@ -2573,7 +2573,7 @@ export default function PraxioPage() {
                         )}
                         </div>
                         {/* Disclaimer */}
-                        <div className="pt-3 border-t border-slate-200">
+                        <div className="pt-3 border-t border-border">
                           <div className="text-center space-y-1">
                             <p className="text-[10px] text-slate-600">
                               Praxio AI may be inaccurate. Verify with official sources.
@@ -2596,7 +2596,7 @@ export default function PraxioPage() {
             </div>
           ) : selectedChat && !loadingChatData && !fullChatData ? (
             // Error/No data state - chat selected but data not found
-            <div className="h-full flex items-center justify-center bg-white">
+            <div className="h-full flex items-center justify-center bg-background">
               <div className="text-center text-muted-foreground">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <p className="text-lg mb-2">Chat data not found</p>
@@ -2612,7 +2612,7 @@ export default function PraxioPage() {
             </div>
           ) : (
             // Empty state - No chat selected
-            <div className="h-full flex flex-col bg-white relative">
+            <div className="h-full flex flex-col bg-card relative">
               {/* Icon above prompt */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center text-muted-foreground mb-40">
@@ -2691,7 +2691,7 @@ export default function PraxioPage() {
                         handleChatClick(chat);
                         setIsSearchOpen(false);
                       }}
-                      className="p-3 rounded-lg hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200 transition-colors"
+                      className="p-3 rounded-lg hover:bg-muted cursor-pointer border border-transparent hover:border-border transition-colors"
                     >
                       <div className="font-medium text-sm">{chat.title}</div>
                       <div className="text-xs text-muted-foreground mt-1">
@@ -2883,7 +2883,7 @@ export default function PraxioPage() {
               </div>
             </div>
         {draftMissingWarning && (
-          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200/70 bg-amber-100/20 px-3 py-2 text-sm text-amber-700">
             <AlertCircle className="h-4 w-4 mt-0.5" />
             <span>Latest follow-up did not include a client draft. Showing the previous draft.</span>
           </div>
@@ -3154,7 +3154,7 @@ export default function PraxioPage() {
                         </AccordionTrigger>
                         <AccordionContent className="pt-2 pb-3">
                           <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
-                            <div className="border border-slate-200 rounded-md p-3 bg-muted/30">
+                            <div className="border border-border rounded-md p-3 bg-muted/30">
                               {showScenarioBox ? (
                                 <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
                                   {fullChatData?.scenario || 'No scenario provided.'}
@@ -3173,8 +3173,8 @@ export default function PraxioPage() {
                                         <div
                                           className={`${bubbleBase} ${
                                             isUser
-                                              ? 'bg-slate-50 border border-slate-200 text-slate-900 text-left'
-                                              : 'bg-blue-50 border border-blue-100 text-slate-900 text-right'
+                                              ? 'bg-muted border border-border text-foreground text-left'
+                                              : 'bg-primary/10 border border-primary/40 text-foreground text-right'
                                           }`}
                                         >
                                           <div className={`text-[11px] font-semibold mb-2 text-slate-600 ${isUser ? 'text-left' : 'text-right'}`}>

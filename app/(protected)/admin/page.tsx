@@ -78,7 +78,7 @@ export default function AdminPage() {
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} className="bg-white border-0 shadow-sm">
+        <Card key={i} className="bg-card text-card-foreground border border-border shadow-sm">
           <CardContent className="p-6">
             <Skeleton className="h-4 w-32 mb-4" />
             <Skeleton className="h-8 w-20" />
@@ -138,7 +138,7 @@ export default function AdminPage() {
         </div>
 
         {/* === Printable area starts === */}
-        <section id="print-area" className="bg-white rounded-xl p-5 shadow-sm">
+        <section id="print-area" className="bg-card text-card-foreground rounded-xl p-5 shadow-sm border border-border">
           <PrintableHeader title="Admin Summary" />
 
           {/* Read-only filter summary for the PDF */}

@@ -478,7 +478,7 @@ export default function SignUpPage() {
                 {features.map((feature, index) => (
                   <div 
                     key={index} 
-                    className="bg-slate-50 rounded-lg p-4 border border-slate-200 hover:border-slate-300 transition-colors"
+                    className="bg-muted rounded-lg p-4 border border-border hover:border-border transition-colors"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -506,7 +506,7 @@ export default function SignUpPage() {
 
           {/* Right Section - Signup Form */}
           <div className="flex items-center justify-center">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-md bg-card text-card-foreground border border-border rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
               <div className="mb-4">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                   Start your 7 day free trial
@@ -583,7 +583,7 @@ export default function SignUpPage() {
                       <span>Account already exists.</span>
                       <Link
                         href="/signin"
-                        className="inline-flex items-center rounded-md border border-amber-300 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50"
+                        className="inline-flex items-center rounded-md border border-amber-300/70 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100/20"
                       >
                         Go to sign in
                       </Link>
@@ -696,7 +696,7 @@ export default function SignUpPage() {
 
                 {/* General Error Message */}
                 {Object.keys(errors).length > 0 && !errors.terms && (
-                  <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="p-2 bg-destructive/10 border border-destructive/40 rounded-lg">
                     <p className="text-xs text-red-600">
                       Please complete all fields above
                     </p>
@@ -808,7 +808,7 @@ export default function SignUpPage() {
 
                 {/* Form Completion Helper */}
                 {hasEngaged && !isFormReady() && !loading && (
-                  <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="p-2 bg-amber-100/20 border border-amber-200 rounded-lg">
                     <p className="text-xs font-medium text-amber-900 mb-1">
                       Complete the following to continue:
                     </p>
