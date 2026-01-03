@@ -113,6 +113,8 @@ export function getAdminAuth() {
   if (typeof window !== 'undefined') {
     throw new Error('Firebase Admin SDK can only be used on the server side');
   }
+  // Ensure the default admin app is initialized before returning auth
+  getFirebaseAdmin();
   return getFirebaseAdminAuth();
 }
 

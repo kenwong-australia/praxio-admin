@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth } from '@/lib/firebase';
 import { sessionCookie } from '@/lib/auth-server';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     const { idToken } = await req.json();
