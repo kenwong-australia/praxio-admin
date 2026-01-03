@@ -164,7 +164,6 @@ export async function getScenariosPage(input: unknown) {
 
 export async function getConversationsByChatId(chatId: number) {
   try {
-    await ensureAdmin();
     const { data, error } = await svc()
       .from('conversation')
       .select('id,created_at,type,content,chat_id')
@@ -182,7 +181,6 @@ export async function getConversationsByChatId(chatId: number) {
 
 export async function getChatById(chatId: number) {
   try {
-    await ensureAdmin();
     const { data, error } = await svc()
       .from('chat')
       .select('id,created_at,title,email,model,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
