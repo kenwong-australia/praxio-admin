@@ -42,10 +42,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTheme } from 'next-themes';
 
 const INACTIVITY_TIMEOUT_STORAGE_KEY = 'inactivity_timeout_hours';
 const BUTTON_TEXT_PREF_KEY = 'praxio_show_button_text';
 const DEFAULT_TIMEOUT_HOURS = 2;
+
+const parseThemeLight = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    if (value.toLowerCase() === 'true') return true;
+    if (value.toLowerCase() === 'false') return false;
+  }
+  return undefined;
+};
 
 interface UserData {
   display_name: string;
@@ -60,10 +70,12 @@ interface UserData {
   stripe_trial_end_date?: Date;
   email_verified?: boolean;
   show_icons?: boolean;
+  theme_light?: boolean;
 }
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
   const [timeoutHours, setTimeoutHours] = useState<number>(DEFAULT_TIMEOUT_HOURS);
@@ -80,6 +92,7 @@ export default function SettingsPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showButtonTextPref, setShowButtonTextPref] = useState(true);
   const [buttonPrefSaving, setButtonPrefSaving] = useState(false);
+  const [themeSaving, setThemeSaving] = useState(false);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -112,6 +125,7 @@ export default function SettingsPage() {
 
         const showIconsField =
           typeof data?.show_icons === 'boolean' ? Boolean(data.show_icons) : null;
+        const themeLight = parseThemeLight(data?.theme_light);
         if (typeof window !== 'undefined') {
           const storedPref = localStorage.getItem(BUTTON_TEXT_PREF_KEY);
           if (storedPref !== null) {
@@ -139,7 +153,13 @@ export default function SettingsPage() {
           stripe_trial_end_date: toDateSafe(data?.stripe_trial_end_date),
           email_verified: Boolean(data?.email_verified),
           show_icons: showIconsField ?? undefined,
+          theme_light: themeLight,
         };
+
+        if (themeLight !== undefined) {
+          setTheme(themeLight ? 'light' : 'dark');
+          setIsDarkMode(!themeLight);
+        }
 
         setUserData(userData);
       } catch (error) {
@@ -151,7 +171,12 @@ export default function SettingsPage() {
     });
 
     return () => unsub();
-  }, [router]);
+  }, [router, setTheme]);
+
+  useEffect(() => {
+    if (!resolvedTheme) return;
+    setIsDarkMode(resolvedTheme === 'dark');
+  }, [resolvedTheme]);
 
   // Sync Firestore when Auth email becomes verified
   useEffect(() => {
@@ -277,6 +302,35 @@ export default function SettingsPage() {
       toast.error('Could not update preference. Please try again.');
     } finally {
       setButtonPrefSaving(false);
+    }
+  };
+
+  const handleThemeToggle = async (checked: boolean) => {
+    if (!authUser) {
+      toast.error('No signed-in user found.');
+      return;
+    }
+
+    const nextTheme = checked ? 'dark' : 'light';
+    setIsDarkMode(checked);
+    setTheme(nextTheme);
+    setThemeSaving(true);
+
+    try {
+      const db = getDb();
+      await updateDoc(doc(db, 'users', authUser.uid), {
+        theme_light: nextTheme === 'light',
+      });
+      setUserData(prev => (prev ? { ...prev, theme_light: nextTheme === 'light' } : prev));
+      toast.success(`Switched to ${nextTheme} mode`);
+    } catch (error) {
+      console.error('Theme update failed', error);
+      const revertTheme = checked ? 'light' : 'dark';
+      setTheme(revertTheme);
+      setIsDarkMode(!checked);
+      toast.error('Unable to update theme preference');
+    } finally {
+      setThemeSaving(false);
     }
   };
 
@@ -784,10 +838,9 @@ export default function SettingsPage() {
             </div>
             <Switch
               checked={isDarkMode}
-              onCheckedChange={(checked) => {
-                setIsDarkMode(checked);
-                toast.info('Theme change will be implemented soon');
-              }}
+              onCheckedChange={handleThemeToggle}
+              disabled={themeSaving}
+              className="data-[state=checked]:!bg-blue-500"
             />
           </div>
 

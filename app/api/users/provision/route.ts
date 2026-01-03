@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         {
           email,
           role: 'regular',
+          theme_light: true,
           stripe_trial_end_date: trialEnd,
           stripe_subscription_status: 'trialing',
           first_name: firstName,

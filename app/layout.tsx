@@ -1,5 +1,6 @@
-import "./globals.css";
+import './globals.css';
 import type { Metadata } from 'next';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const VARIANT = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'User' : 'Admin';
 
@@ -14,10 +15,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
