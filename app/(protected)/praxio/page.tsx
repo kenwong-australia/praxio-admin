@@ -2454,25 +2454,35 @@ export default function PraxioPage() {
                             <div className="space-y-3">
                               {conversations.map((conv) => {
                                 const isUser = conv.type === 'user';
+                                const bubbleBase =
+                                  'max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm border';
                                 return (
                                   <div
                                     key={conv.id}
                                     className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
                                   >
                                     <div
-                                      className={`max-w-[80%] rounded-lg p-3 ${
+                                      className={`${bubbleBase} ${
                                         isUser
-                                          ? 'bg-muted/50 text-left'
-                                          : 'bg-blue-50 text-right'
+                                          ? 'bg-muted border-border text-foreground text-left'
+                                          : 'bg-muted/80 border-border text-foreground text-right'
                                       }`}
                                     >
-                                      <div className={`text-[10px] font-medium text-muted-foreground mb-1.5 ${isUser ? 'text-left' : 'text-right'}`}>
+                                      <div
+                                        className={`text-[10px] font-medium text-muted-foreground mb-1.5 ${
+                                          isUser ? 'text-left' : 'text-right'
+                                        }`}
+                                      >
                                         {isUser ? 'User' : 'Assistant'}
                                       </div>
                                       <div className="prose prose-sm max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-sm prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-invert">
                                         <ReactMarkdown>{conv.content || ''}</ReactMarkdown>
                                       </div>
-                                      <div className={`mt-1.5 text-[10px] text-muted-foreground ${isUser ? 'text-left' : 'text-right'}`}>
+                                      <div
+                                        className={`mt-1.5 text-[10px] text-muted-foreground ${
+                                          isUser ? 'text-left' : 'text-right'
+                                        }`}
+                                      >
                                         {toSydneyDateTime(conv.created_at)}
                                       </div>
                                     </div>
@@ -3156,7 +3166,7 @@ export default function PraxioPage() {
                           <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
                             <div className="border border-border rounded-md p-3 bg-muted/30">
                               {showScenarioBox ? (
-                                <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                                   {fullChatData?.scenario || 'No scenario provided.'}
                                 </div>
                               ) : conv1 || conv2 ? (
@@ -3174,7 +3184,7 @@ export default function PraxioPage() {
                                           className={`${bubbleBase} ${
                                             isUser
                                               ? 'bg-muted border border-border text-foreground text-left'
-                                              : 'bg-muted/60 border border-border text-foreground text-right'
+                                              : 'bg-muted/80 border border-border text-foreground text-right'
                                           }`}
                                         >
                                           <div className={`text-[11px] font-semibold mb-2 text-slate-600 ${isUser ? 'text-left' : 'text-right'}`}>
