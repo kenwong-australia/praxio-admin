@@ -71,7 +71,7 @@ export function PricingPage({
         duration: 3500,
       });
       // Small delay so the toast renders before redirecting
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       const auth = getFirebaseAuth();
       await signOut(auth);
       router.replace('/signin');
