@@ -443,9 +443,11 @@ export default function SignUpPage() {
   ];
 
   const isSubmitDisabled = loading || !isFormReady();
+  const inputBase =
+    'w-full rounded-lg border bg-background text-foreground placeholder:text-muted-foreground px-3 py-2 text-sm outline-none transition-colors';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Left Section - Features (Desktop only) */}
@@ -466,10 +468,10 @@ export default function SignUpPage() {
                     Praxio AI Tax Assistant
                   </h1>
                 </div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                <h2 className="text-3xl font-bold text-foreground mb-2">
                   Your AI-powered Australian tax assistant
                 </h2>
-                <p className="text-lg text-slate-600">
+                <p className="text-lg text-foreground">
                   Delivers fast, cited research and clear outputs
                 </p>
               </div>
@@ -481,14 +483,14 @@ export default function SignUpPage() {
                     className="bg-muted rounded-lg p-4 border border-border hover:border-border transition-colors"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <feature.icon className="h-6 w-6 text-blue-600" />
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <feature.icon className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-900 mb-1">
+                        <h3 className="font-semibold text-foreground mb-1">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-foreground">
                           {feature.description}
                         </p>
                       </div>
@@ -497,7 +499,7 @@ export default function SignUpPage() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-slate-600 mt-8">
+              <div className="flex items-center gap-2 text-sm text-foreground mt-8">
                 <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
                 <span>Trusted by tax and accounting professionals Australia wide</span>
               </div>
@@ -508,7 +510,7 @@ export default function SignUpPage() {
           <div className="flex items-center justify-center">
             <div className="w-full max-w-md bg-card text-card-foreground border border-border rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
               <div className="mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                   Start your 7 day free trial
                 </h2>
               </div>
@@ -517,7 +519,7 @@ export default function SignUpPage() {
                 {/* Name Fields */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                       First
                     </label>
                     <input
@@ -526,10 +528,10 @@ export default function SignUpPage() {
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="Enter first name"
-                      className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                      className={`${inputBase} ${
                         errors.firstName
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                          : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                          : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                       }`}
                     />
                     {errors.firstName && (
@@ -537,7 +539,7 @@ export default function SignUpPage() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                       Last
                     </label>
                     <input
@@ -546,10 +548,10 @@ export default function SignUpPage() {
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Enter last name"
-                      className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                      className={`${inputBase} ${
                         errors.lastName
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                          : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                          : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                       }`}
                     />
                     {errors.lastName && (
@@ -560,7 +562,7 @@ export default function SignUpPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     Email Address
                   </label>
                   <input
@@ -569,14 +571,14 @@ export default function SignUpPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your email"
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                    className={`${inputBase} ${
                       errors.email
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                        : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                     }`}
                   />
                   {emailCheckLoading && (
-                    <p className="mt-0.5 text-xs text-slate-500">Checking email...</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Checking email...</p>
                   )}
                   {emailExists === true && !emailCheckLoading && (
                     <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-amber-700">
@@ -596,7 +598,7 @@ export default function SignUpPage() {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     Phone Number
                   </label>
                   <input
@@ -606,10 +608,10 @@ export default function SignUpPage() {
                     onChange={handleChange}
                     onBlur={handlePhoneBlur}
                     placeholder="(02) 1234-5678 or (0412) 345-678"
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                    className={`${inputBase} ${
                       errors.phone || phoneFormatWarning
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                        : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                     }`}
                   />
                   {phoneNonDigitWarning && (
@@ -627,7 +629,7 @@ export default function SignUpPage() {
 
                 {/* Company */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     Company
                   </label>
                   <input
@@ -636,10 +638,10 @@ export default function SignUpPage() {
                     value={formData.company}
                     onChange={handleChange}
                     placeholder="Enter your company"
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                    className={`${inputBase} ${
                       errors.company
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                        : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                     }`}
                   />
                   {errors.company && (
@@ -650,12 +652,12 @@ export default function SignUpPage() {
                 {/* ABN */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-medium text-slate-700">
+                    <label className="block text-xs font-medium text-foreground">
                       ABN
                     </label>
                     <div className="flex items-center gap-2">
                       {abnLookupLoading && (
-                        <span className="text-xs text-slate-500 animate-pulse">Validating...</span>
+                        <span className="text-xs text-muted-foreground animate-pulse">Validating...</span>
                       )}
                       {abnValidated === true && !abnLookupLoading && (
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -663,7 +665,7 @@ export default function SignUpPage() {
                       {abnValidated === false && !abnLookupLoading && (
                         <span className="text-xs text-red-600">Not found</span>
                       )}
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {formData.abn.length}/11
                       </span>
                     </div>
@@ -676,14 +678,14 @@ export default function SignUpPage() {
                     placeholder="Enter your 11 digit ABN"
                     maxLength={11}
                     disabled={abnLookupLoading}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${
+                    className={`${inputBase} ${
                       errors.abn
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
                         : abnValidated === true
                         ? 'border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500'
                         : abnValidated === false
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                        : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                     } ${abnLookupLoading ? 'opacity-60 cursor-wait' : ''}`}
                   />
                   {abnNonDigitWarning && (
@@ -705,7 +707,7 @@ export default function SignUpPage() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -715,16 +717,16 @@ export default function SignUpPage() {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
-                      className={`w-full rounded-lg border px-3 py-2 pr-10 text-sm outline-none transition-colors ${
+                      className={`${inputBase} ${
                         errors.password
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                          : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                          : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? (
@@ -741,7 +743,7 @@ export default function SignUpPage() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     Confirm your password
                   </label>
                   <div className="relative">
@@ -751,16 +753,16 @@ export default function SignUpPage() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm your password"
-                      className={`w-full rounded-lg border px-3 py-2 pr-10 text-sm outline-none transition-colors ${
+                      className={`${inputBase} ${
                         errors.confirmPassword
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500'
-                          : 'border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                          : 'border-border focus:ring-2 focus:ring-primary focus:border-primary'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                       aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                     >
                       {showConfirmPassword ? (
@@ -790,7 +792,7 @@ export default function SignUpPage() {
                       }}
                       className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="text-xs text-slate-700">
+                    <span className="text-xs text-foreground">
                       Agree to{' '}
                       <Link href="https://www.praxio-ai.com.au/terms-conditions" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         Terms and Conditions
@@ -834,10 +836,10 @@ export default function SignUpPage() {
                 <button
                   type="submit"
                   disabled={isSubmitDisabled}
-                  className={`w-full rounded-lg text-white font-medium py-2.5 px-4 transition-colors ${
+                  className={`w-full rounded-lg font-medium py-2.5 px-4 transition-colors ${
                     isSubmitDisabled
-                      ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                      ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                      : 'bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer'
                   }`}
                 >
                   {loading ? 'Creating your account…' : 'Create account'}
@@ -845,9 +847,9 @@ export default function SignUpPage() {
               </form>
 
               {/* Sign In Link */}
-              <p className="mt-6 text-center text-sm text-slate-600">
+              <p className="mt-6 text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/signin" className="text-blue-600 hover:underline font-medium">
+                <Link href="/signin" className="text-primary hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>
