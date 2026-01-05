@@ -67,6 +67,9 @@ export function PricingPage({
 
   const handleLogout = async () => {
     try {
+      toast.info('Logging you out now. You can log back in anytime to subscribe.', {
+        duration: 3500,
+      });
       const auth = getFirebaseAuth();
       await signOut(auth);
       router.replace('/signin');
@@ -242,22 +245,13 @@ export function PricingPage({
             )}
           </Button>
           
-          <div className="flex gap-3">
-            {onMaybeLater && (
-              <Button
-                onClick={onMaybeLater}
-                variant="outline"
-                className="flex-1"
-              >
-                Maybe Later
-              </Button>
-            )}
+          <div className="flex justify-center">
             <Button
               onClick={handleLogout}
-              variant="ghost"
-              className="flex-1 text-muted-foreground"
+              variant="outline"
+              className="w-full max-w-xs"
             >
-              Log out
+              Maybe Later
             </Button>
           </div>
         </div>
