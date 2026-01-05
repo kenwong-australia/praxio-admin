@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
     const defaultSuccessUrl = baseUrl ? `${baseUrl}/pricing?success=true` : '/pricing?success=true';
     const defaultCancelUrl = baseUrl ? `${baseUrl}/pricing?canceled=true` : '/pricing?canceled=true';
 
+    const taxRateId = process.env.STRIPE_TAX_RATE_ID || 'txr_1RfyRgEVF5RQT3bLUK69hQnP';
+
     // Create Stripe checkout session
     const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
         customer: customer,
         'automatic_tax[enabled]': 'false',
         'allow_promotion_codes': 'true',
-        'subscription_data[default_tax_rates]': 'txr_1RfyRgEVF5RQT3bLUK69hQnP',
+        'subscription_data[default_tax_rates][0]': taxRateId,
       }),
     });
 

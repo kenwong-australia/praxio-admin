@@ -97,18 +97,7 @@ export function PricingPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-5xl space-y-8">
-        {/* Header with Logo */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">N</span>
-            </div>
-            <div className="text-left">
-              <div className="text-xl font-bold">Praxio AI</div>
-              <div className="text-xs text-muted-foreground">Tax Assistant</div>
-            </div>
-          </div>
-          
+        <div className="text-center space-y-4">
           {/* Trial Expiration Banner */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg">
             <Shield className="h-4 w-4 text-orange-600" />
@@ -117,7 +106,7 @@ export function PricingPage({
             </p>
           </div>
           
-          <h1 className="text-3xl font-bold mt-4">Choose Your Plan</h1>
+          <h1 className="text-3xl font-bold">Choose Your Plan</h1>
           <p className="text-muted-foreground">
             Select a plan to continue using Praxio AI Tax Assistant
           </p>
