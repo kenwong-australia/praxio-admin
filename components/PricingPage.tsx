@@ -70,6 +70,8 @@ export function PricingPage({
       toast.info('Logging you out now. You can log back in anytime to subscribe.', {
         duration: 3500,
       });
+      // Small delay so the toast renders before redirecting
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const auth = getFirebaseAuth();
       await signOut(auth);
       router.replace('/signin');
