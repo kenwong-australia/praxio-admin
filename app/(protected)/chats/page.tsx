@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { getDistinctEmails, getScenariosPage } from "@/app/actions";
 import { rangeLast30Sydney, toSydneyDateTime } from "@/lib/time";
 import { FiltersBar } from "@/components/FiltersBar";
@@ -21,6 +21,7 @@ export default function ChatsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 25;
   const [loading, setLoading] = useState(true);
+  const chimeRef = useRef<HTMLAudioElement | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const maxSelectable = 10;
@@ -51,6 +52,16 @@ export default function ChatsPage() {
       setRows(data.rows);
       setTotal(data.total);
       setSelectedIds([]);
+      // Play completion chime when data loads successfully
+      if (chimeRef.current) {
+        try {
+          chimeRef.current.currentTime = 0;
+          void chimeRef.current.play();
+        } catch (err) {
+          // Ignore autoplay failures (e.g., browser policies)
+          console.warn('Chime play blocked:', err);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -140,6 +151,8 @@ export default function ChatsPage() {
   return (
     <div className="p-8">
       <div className="max-w-none mx-4">
+        {/* Hidden audio element for response-complete chime */}
+        <audio ref={chimeRef} src="/agent_sound_2.mp3" preload="auto" className="hidden" />
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Chats</h1>
           <div className="flex items-center gap-2">

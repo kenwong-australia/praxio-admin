@@ -7,6 +7,11 @@ const VARIANT = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'User' : 'Admin
 export const metadata: Metadata = {
   title: `Praxio AI${VARIANT === 'Admin' ? ' – Admin' : ''}`,
   description: 'Praxio AI application',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
