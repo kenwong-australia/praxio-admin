@@ -1049,15 +1049,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground pt-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => toast.info('Tutorial will be implemented soon')}
-            className="text-blue-600 hover:underline"
-          >
-            Tutorial
-          </button>
-        </div>
+      <div className="flex items-center justify-end text-xs text-muted-foreground pt-4">
         <p>Version 1.3.1</p>
       </div>
       </div>

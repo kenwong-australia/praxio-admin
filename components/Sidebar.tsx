@@ -36,6 +36,8 @@ export function Sidebar() {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  const showTutorialButton =
+    pathname.startsWith('/praxio') || pathname.startsWith('/settings');
 
   // Simple responsive rule of thumb:
   // - ≥1440px: expanded by default
@@ -120,7 +122,7 @@ export function Sidebar() {
       </nav>
       
       <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-3'} space-y-2`}>
-        {pathname.startsWith('/praxio') && (
+        {showTutorialButton && (
           <button
             type="button"
             onClick={() => {
