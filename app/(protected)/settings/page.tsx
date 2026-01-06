@@ -30,17 +30,6 @@ import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTheme } from 'next-themes';
 
@@ -87,9 +76,7 @@ export default function SettingsPage() {
   const [editDisplayName, setEditDisplayName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
-  const [subscriptionCancelOpen, setSubscriptionCancelOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [cancelLoading, setCancelLoading] = useState(false);
   const [showButtonTextPref, setShowButtonTextPref] = useState(true);
   const [buttonPrefSaving, setButtonPrefSaving] = useState(false);
   const [themeSaving, setThemeSaving] = useState(false);
@@ -539,48 +526,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteSubscription = async () => {
-    if (!userData?.stripe_subscription_id) {
-      toast.error('No active subscription found');
-      return;
-    }
-    try {
-      setCancelLoading(true);
-      const response = await fetch('/api/stripe/delete-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscriptionId: userData.stripe_subscription_id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        const msg = errorData?.error || 'Failed to cancel subscription';
-        toast.error(msg);
-        return;
-      }
-
-      const data = await response.json();
-      if (!data?.success) {
-        toast.error(data?.error || 'Failed to cancel subscription');
-        return;
-      }
-
-      toast.success('Subscription canceled', {
-        description: 'Your subscription has been canceled in Stripe.',
-      });
-      setSubscriptionDialogOpen(false);
-      setSubscriptionCancelOpen(false);
-      setUserData(prev => (prev ? { ...prev, stripe_subscription_status: 'canceled' } : prev));
-    } catch (error) {
-      console.error('Cancel subscription error', error);
-      toast.error('Failed to cancel subscription');
-    } finally {
-      setCancelLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="p-6 space-y-6 max-w-4xl mx-auto">
@@ -737,7 +682,7 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle>Your Subscription</DialogTitle>
             <DialogDescription>
-              Manage billing details or cancel your plan. You will return here after visiting Stripe.
+              Manage billing details or cancel your plan in Stripe. You will return here after visiting the portal.
             </DialogDescription>
           </DialogHeader>
 
@@ -765,60 +710,26 @@ export default function SettingsPage() {
             </div>
 
             <div className="text-xs text-muted-foreground">
-              Use the buttons below to open the Stripe billing portal or cancel your subscription. Your return URL is set to this settings page.
+              Use Manage Subscription to open the Stripe billing portal to update billing or cancel. You will return to this settings page afterward.
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <AlertDialog open={subscriptionCancelOpen} onOpenChange={setSubscriptionCancelOpen}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  className="text-xs h-9 px-3"
-                  disabled={!userData.stripe_subscription_id || cancelLoading}
-                >
-                  {cancelLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cancel Subscription
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Cancel subscription?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will cancel your current subscription in Stripe. You will retain access through the end of the current billing period if applicable.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="text-xs h-8 px-3">Back</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteSubscription}
-                    className="bg-red-600 hover:bg-red-700 text-xs h-8 px-3"
-                    disabled={cancelLoading}
-                  >
-                    {cancelLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Confirm Cancel
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <div className="flex flex-1 justify-end gap-2">
-              <Button
-                variant="outline"
-                className="text-xs h-9 px-3"
-                onClick={() => setSubscriptionDialogOpen(false)}
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleOpenBillingPortal}
-                disabled={portalLoading}
-                className="text-xs h-9 px-3"
-              >
-                {portalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Manage in Stripe
-              </Button>
-            </div>
+          <DialogFooter className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              className="text-xs h-9 px-3"
+              onClick={() => setSubscriptionDialogOpen(false)}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handleOpenBillingPortal}
+              disabled={portalLoading}
+              className="text-xs h-9 px-3"
+            >
+              {portalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Manage Subscription
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1071,14 +982,14 @@ export default function SettingsPage() {
                     This is permanent. Please read carefully before continuing.
                   </p>
                   <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                    <li>You will no longer be able to sign in or use Praxio, even if your subscription is active (your authentication account will be deleted).</li>
-                    <li>All chat history and preferences will be removed from Praxio (Supabase and Firebase data).</li>
+                    <li>You will no longer be able to sign in or use Praxio AI, even if your subscription is active (your authentication account will be deleted).</li>
+                    <li>All chat history and preferences will be removed from Praxio AI.</li>
                     <li>This action cannot be recovered later.</li>
                   </ul>
                   <div className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground space-y-1">
                     <p className="font-medium text-foreground">Want to keep your account?</p>
                     <p>
-                      You can cancel your subscription instead and continue using Praxio until the end of the current billing period.
+                      You can cancel your subscription instead and continue using Praxio AI until the end of the current billing period.
                     </p>
                     <button
                       type="button"
