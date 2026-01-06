@@ -539,12 +539,14 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="min-h-screen bg-background">
+        <div className="p-6 space-y-6 max-w-5xl mx-auto w-full">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Loading...
           </p>
+        </div>
         </div>
       </div>
     );
@@ -555,7 +557,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <div className="p-6 space-y-6 max-w-5xl mx-auto w-full">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
@@ -1056,6 +1059,7 @@ export default function SettingsPage() {
           </button>
         </div>
         <p>Version 1.3.1</p>
+      </div>
       </div>
     </div>
   );

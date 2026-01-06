@@ -78,9 +78,10 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`min-h-screen bg-card text-card-foreground shadow-xl border-r border-border transition-all duration-200 flex flex-col ${
+      className={`bg-card text-card-foreground shadow-xl border-r border-border transition-all duration-200 flex flex-col sticky top-0 h-screen overflow-y-auto ${
         isCollapsed ? 'w-[80px]' : 'w-56'
       }`}
+      aria-label="Primary navigation"
     >
       <div className={`border-b border-border flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-between p-3'}`}>
         <div 
