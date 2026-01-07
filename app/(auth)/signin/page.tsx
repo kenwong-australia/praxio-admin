@@ -22,7 +22,7 @@ function friendlyError(code: string) {
     case 'auth/user-disabled':   return 'This account is disabled. Contact your administrator.';
     case 'auth/user-not-found':
     case 'auth/wrong-password':  return 'Email or password is incorrect. Please try again.';
-    default:                     return 'Sign-in failed. Please try again.';
+    default:                     return 'Sign-in failed. Please try again or sign up using the link below.';
   }
 }
 

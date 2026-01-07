@@ -375,6 +375,8 @@ export default function SettingsPage() {
         description: 'Your account and data have been removed.',
       });
 
+      await new Promise(resolve => setTimeout(resolve, 4000));
+
       try {
         await fetch('/api/session', { method: 'DELETE' });
       } catch {
