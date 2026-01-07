@@ -473,6 +473,56 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-4 sm:py-8">
+        {/* Mobile intro + features (stacked above the form) */}
+        <div className="lg:hidden mb-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/Praxio Logo clean-12 (logo only).png"
+              alt="Praxio AI"
+              width={32}
+              height={32}
+              priority
+              className="object-contain"
+            />
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Praxio AI</p>
+              <h1 className="text-lg font-semibold text-foreground">Tax Assistant</h1>
+            </div>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Your AI-powered Australian tax assistant</h2>
+            <p className="text-sm text-muted-foreground">
+              Delivers fast, cited research and clear outputs tailored for accountants and tax professionals.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-muted rounded-lg p-3 border border-border"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <feature.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground mb-0.5">
+                      {feature.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+            <span>Trusted by tax and accounting professionals Australia wide</span>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Left Section - Features (Desktop only) */}
           <div className="hidden lg:flex flex-col">
