@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { usePathname, useRouter } from 'next/navigation';
 import { getFirebaseAuth, getDb } from '@/lib/firebase';
@@ -40,7 +40,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
       : false;
 
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-  const [smallScreenOverride, setSmallScreenOverride] = useState(false);
+  const hasRedirectedForSmallScreen = useRef(false);
   const [denyReason, setDenyReason] = useState<'not_admin' | 'admin_only'>('not_admin');
 
   const [phase, setPhase] = useState<
@@ -144,6 +144,25 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [pathname, router]);
 
+  const isSmallScreen = viewportWidth !== null && viewportWidth < 1024;
+
+  useEffect(() => {
+    if (!isSmallScreen) return;
+    if (hasRedirectedForSmallScreen.current) return;
+    hasRedirectedForSmallScreen.current = true;
+
+    (async () => {
+      try {
+        await signOut(getFirebaseAuth());
+      } catch (error) {
+        console.error('Error signing out on small screen:', error);
+      } finally {
+        const q = new URLSearchParams({ reason: 'use_desktop' });
+        router.replace(`/signin?${q.toString()}`);
+      }
+    })();
+  }, [isSmallScreen, router]);
+
   if (phase === 'auth-loading' || phase === 'role-loading' || phase === 'trial-check') {
     return <div className="min-h-screen grid place-items-center bg-background text-foreground">Loading…</div>;
   }
@@ -169,39 +188,15 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
     return <div className="min-h-screen grid place-items-center bg-background text-foreground">Redirecting…</div>;
   }
 
-  // phase === 'in'
-  const isSmallScreen = viewportWidth !== null && viewportWidth < 1024;
-
-  if (isSmallScreen && !smallScreenOverride) {
-    // Small-screen notice with explicit primary / secondary actions.
+  if (isSmallScreen) {
     return (
       <div className="min-h-screen grid place-items-center bg-background text-foreground px-4">
-        <div className="max-w-md w-full rounded-2xl bg-card text-card-foreground p-6 shadow border border-border">
-          <h1 className="text-lg font-semibold mb-2">Praxio AI Admin works best on a larger screen</h1>
-          <p className="text-sm text-muted-foreground mb-4">
-            For readability and safety, the admin experience is designed for laptops and desktop monitors
-            (1280px wide or more). You can switch devices or continue on this one if needed.
+        <div className="max-w-md w-full rounded-2xl bg-card text-card-foreground p-6 shadow border border-border text-center">
+          <h1 className="text-lg font-semibold mb-2">Use a laptop or desktop</h1>
+          <p className="text-sm text-muted-foreground">
+            Praxio AI Admin requires a screen that&apos;s at least 1024px wide. Please switch to a larger device to
+            sign in and continue.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-end">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-              onClick={() => setSmallScreenOverride(true)}
-            >
-              Continue on this device
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              onClick={async () => {
-                await signOut(getFirebaseAuth());
-                const q = new URLSearchParams({ reason: 'small_screen' });
-                router.replace(`/signin?${q.toString()}`);
-              }}
-            >
-              Sign out &amp; switch device
-            </button>
-          </div>
         </div>
         <Toaster />
       </div>

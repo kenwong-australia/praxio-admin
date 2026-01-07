@@ -6,7 +6,7 @@ import { Eye, EyeOff, Users, Sparkles, Brain, Mail, Shield, CheckCircle2 } from 
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function SignUpPage() {
@@ -38,6 +38,20 @@ export default function SignUpPage() {
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [lastCheckedEmail, setLastCheckedEmail] = useState('');
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (typeof window !== 'undefined') {
+        setViewportWidth(window.innerWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  const isSmallScreen = viewportWidth !== null && viewportWidth < 1024;
 
   const formatAustralianPhone = (value: string): string => {
     // Remove all non-digits and limit to 10 digits
@@ -402,7 +416,17 @@ export default function SignUpPage() {
         description: 'Verification email sent. Check your inbox to verify.',
         duration: 3000,
       });
-      router.push('/praxio');
+      if (isSmallScreen) {
+        try {
+          await signOut(auth);
+        } catch (err) {
+          console.error('Sign out after mobile signup failed', err);
+        }
+        const q = new URLSearchParams({ reason: 'use_desktop' });
+        router.replace(`/signin?${q.toString()}`);
+      } else {
+        router.push('/praxio');
+      }
     } catch (error) {
       console.error('Signup failed', error);
       toast.error('Signup failed', {

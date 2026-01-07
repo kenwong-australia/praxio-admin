@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -49,6 +49,25 @@ function SignInForm() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (typeof window !== 'undefined') {
+        setViewportWidth(window.innerWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  const isSmallScreen = viewportWidth !== null && viewportWidth < 1024;
+
+  useEffect(() => {
+    if (!isSmallScreen) return;
+    signOut(getFirebaseAuth()).catch((err) => console.error('Small-screen signout failed', err));
+  }, [isSmallScreen]);
 
   // 🟢 Always clear fields when arriving on /signin
   useEffect(() => {
@@ -115,6 +134,24 @@ function SignInForm() {
     }
   };
 
+  if (isSmallScreen) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background text-foreground px-4">
+        <div className="max-w-md w-full rounded-2xl bg-card text-card-foreground p-6 shadow border border-border text-center">
+          <h1 className="text-lg font-semibold mb-2">Use a laptop or desktop to sign in</h1>
+          <p className="text-sm text-muted-foreground">
+            Sign-in is limited to screens 1024px or wider. Please switch to a larger device to continue.
+          </p>
+          {reason === 'use_desktop' && (
+            <p className="text-xs text-muted-foreground mt-3">
+              If you just created an account on mobile, sign in on a laptop or desktop to continue.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
       <div className="w-full max-w-sm rounded-2xl bg-card text-card-foreground p-6 shadow border border-border">
@@ -134,6 +171,15 @@ function SignInForm() {
             <p className="text-sm text-foreground">
               We&apos;re temporarily limiting access to admin accounts only. Please sign in with an admin email or
               contact your Praxio admin.
+            </p>
+          </div>
+        )}
+
+        {reason === 'use_desktop' && (
+          <div className="mb-4 p-3 bg-muted/40 border border-border rounded-lg flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
+              Please sign in from a laptop or desktop (screen 1024px or wider). Mobile sign-in is disabled.
             </p>
           </div>
         )}
