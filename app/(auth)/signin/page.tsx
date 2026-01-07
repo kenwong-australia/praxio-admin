@@ -34,6 +34,8 @@ function friendlyResetError(code: string) {
   }
 }
 
+const SESSION_TIMEOUT_MS = 12000; // fail fast if session cookie exchange stalls
+
 function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -60,6 +62,21 @@ function SignInForm() {
     updateWidth();
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Fire-and-forget ping to warm the /api/session function (reduces cold start)
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    fetch('/api/session', { method: 'OPTIONS', signal: controller.signal }).catch(() => {
+      // Ignore failures; goal is just to spin up the function
+    }).finally(() => {
+      clearTimeout(timer);
+    });
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, []);
 
   const isSmallScreen = viewportWidth !== null && viewportWidth < 1024;
@@ -89,6 +106,10 @@ function SignInForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SESSION_TIMEOUT_MS);
+
     try {
       const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -100,6 +121,7 @@ function SignInForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
+          signal: controller.signal,
         });
         if (!resp.ok) {
           throw new Error('Session setup failed');
@@ -108,7 +130,13 @@ function SignInForm() {
 
       router.replace(redirectTo);
     } catch (err: any) {
-      setError(friendlyError(err?.code || ''));
+      if (err?.name === 'AbortError') {
+        setError('Sign-in is taking too long. Please try again.');
+      } else {
+        setError(friendlyError(err?.code || ''));
+      }
+    } finally {
+      clearTimeout(timeout);
       setLoading(false);
     }
   };
