@@ -39,7 +39,9 @@ const SESSION_TIMEOUT_MS = 12000; // fail fast if session cookie exchange stalls
 function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirectTo = params.get('redirect') || '/admin';
+  const appVariant = process.env.NEXT_PUBLIC_APP_VARIANT === 'user' ? 'user' : 'admin';
+  const defaultRedirect = appVariant === 'user' ? '/praxio' : '/admin';
+  const redirectTo = params.get('redirect') || defaultRedirect;
   const reason = params.get('reason');
 
   const [email, setEmail] = useState('');
