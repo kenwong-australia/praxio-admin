@@ -499,7 +499,7 @@ export default function SignUpPage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-muted rounded-lg p-3 border border-border"
+                className="rounded-lg p-3 border bg-blue-50 border-blue-100/60 dark:bg-blue-950/30 dark:border-blue-900/40"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center">
@@ -552,19 +552,19 @@ export default function SignUpPage() {
 
               <div className="space-y-5">
                 {features.map((feature, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-muted rounded-lg p-4 border border-border hover:border-border transition-colors"
-                  >
+              <div
+                key={index}
+                className="rounded-lg p-4 border bg-blue-50 border-blue-100/60 dark:bg-blue-950/30 dark:border-blue-900/40 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
+              >
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center">
                         <feature.icon className="h-6 w-6 text-primary" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground mb-1">
                           {feature.title}
                         </h3>
-                        <p className="text-sm text-foreground">
+                    <p className="text-sm text-foreground">
                           {feature.description}
                         </p>
                       </div>
