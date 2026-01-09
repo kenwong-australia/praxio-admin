@@ -143,6 +143,13 @@ function SignInForm() {
     }
   };
 
+  const handlePasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    if (loading) return;
+    event.currentTarget.form?.requestSubmit();
+  };
+
   const onResetPassword = async () => {
     if (resetLoading) return;
     const trimmedEmail = resetEmail.trim();
@@ -244,6 +251,7 @@ function SignInForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handlePasswordKeyDown}
                 className="mt-1 w-full rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground px-3 py-2 pr-10 outline-none focus:ring-2 focus:ring-primary"
                 autoComplete="current-password"
               />
