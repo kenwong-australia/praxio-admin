@@ -3165,18 +3165,18 @@ export default function PraxioPage() {
                 </p>
               </div>
               <div>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-muted-foreground">Content</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-3 text-xs"
-                    onClick={() => handleAustliiSearch(selectedCitation)}
-                    disabled={!selectedCitation?.fullreference}
-                  >
-                    Search on AustLII (Beta)
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => handleAustliiSearch(selectedCitation)}
+                  disabled={!selectedCitation?.fullreference}
+                >
+                  Search on AustLII (Beta)
+                </Button>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Content</p>
                 <div className="max-w-none break-words space-y-2 text-sm leading-relaxed text-foreground">
                   <ReactMarkdown
                     components={{
