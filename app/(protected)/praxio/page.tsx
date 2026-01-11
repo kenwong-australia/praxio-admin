@@ -3142,11 +3142,7 @@ export default function PraxioPage() {
         }}
       >
         <DialogContent className="w-[90vw] max-w-2xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>Legislation Reference</DialogTitle>
-            <DialogDescription>Details for the selected citation</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-2">
+          <ScrollArea className="max-h-[60vh] pr-2 pt-2">
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground">Title</p>
@@ -3162,8 +3158,24 @@ export default function PraxioPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Content</p>
-                <div className="prose prose-sm max-w-none break-words prose-headings:text-base prose-p:text-sm prose-invert">
-                  <ReactMarkdown>{selectedCitation?.text || 'Not provided'}</ReactMarkdown>
+                <div className="max-w-none break-words">
+                  <ReactMarkdown
+                    className="space-y-2 text-sm leading-relaxed text-foreground"
+                    components={{
+                      strong: ({ children }) => <span className="font-normal">{children}</span>,
+                      b: ({ children }) => <span className="font-normal">{children}</span>,
+                      h1: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      h2: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      h3: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      h4: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      h5: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      h6: ({ children }) => <p className="text-sm font-medium mb-1">{children}</p>,
+                      p: ({ children }) => <p className="text-sm leading-relaxed">{children}</p>,
+                      li: ({ children }) => <li className="text-sm leading-relaxed list-disc ml-5">{children}</li>,
+                    }}
+                  >
+                    {selectedCitation?.text || 'Not provided'}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>
