@@ -1,15 +1,21 @@
 import { NextRequest } from 'next/server';
-import { svc } from '@/lib/supabase';
+import { userClient } from '@/lib/supabase';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 
 export async function POST(req: NextRequest) {
   try {
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7) : '';
+    if (!token) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
     const { ids, filename } = await req.json();
     if (!Array.isArray(ids) || ids.length === 0 || ids.length > 10) {
       return new Response('Invalid ids', { status: 400 });
     }
 
-    const sb = svc();
+    const sb = userClient(token);
     const { data, error } = await sb
       .from('chat')
       .select('id,created_at,title,scenario,research,questions,draft')

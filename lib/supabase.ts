@@ -26,3 +26,37 @@ export function ingest() {
     }
   );
 }
+
+/**
+ * Per-user Supabase client for RLS-enforced access using a Supabase JWT
+ * minted from Firebase (includes user_id/app_role claims).
+ *
+ * - Expects the caller to supply a valid access token (no refresh here).
+ * - Disables session persistence/auto-refresh; caller should refresh the token
+ *   and recreate the client when Firebase ID token rotates.
+ */
+export function userClient(accessToken: string, opts?: { schema?: string }) {
+  if (!accessToken) {
+    throw new Error('userClient: accessToken is required');
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error('userClient: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  return createClient(url, anon, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
+    db: opts?.schema ? { schema: opts.schema } : undefined,
+  });
+}

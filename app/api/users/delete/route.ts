@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase';
-import { svc } from '@/lib/supabase';
+import { userClient } from '@/lib/supabase';
 
 /**
  * DELETE user account and related data.
@@ -11,8 +11,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const idToken = typeof body?.idToken === 'string' ? body.idToken : '';
 
+    const authHeader = request.headers.get('authorization') || '';
+    const supabaseToken = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7) : '';
+
     if (!idToken) {
       return NextResponse.json({ ok: false, error: 'Missing idToken' }, { status: 401 });
+    }
+    if (!supabaseToken) {
+      return NextResponse.json({ ok: false, error: 'Missing Supabase bearer token' }, { status: 401 });
     }
 
     const adminAuth = getAdminAuth();
@@ -21,16 +27,9 @@ export async function POST(request: NextRequest) {
 
     const errors: string[] = [];
 
-    // Delete Supabase user row (cascades handle related chat data)
+    // Delete Supabase user row (RLS-enforced; user token required)
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-      if (!supabaseUrl || !supabaseServiceKey) {
-        throw new Error('Supabase configuration missing');
-      }
-
-      const client = svc();
+      const client = userClient(supabaseToken);
       const { error: userDeleteError } = await client.from('user').delete().eq('id', uid);
       if (userDeleteError) throw userDeleteError;
     } catch (supabaseError) {

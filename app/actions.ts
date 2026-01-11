@@ -1,6 +1,6 @@
 'use server';
 // Server Actions - run on server, can be called from client components
-import { svc, ingest } from '@/lib/supabase';
+import { svc, ingest, userClient } from '@/lib/supabase';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase';
 import { assertAdmin } from '@/lib/auth-server';
 import { z } from 'zod';
@@ -19,10 +19,14 @@ async function ensureAdmin() {
   await assertAdmin();
 }
 
-export async function getDistinctEmails() {
+function sb(accessToken?: string) {
+  return accessToken ? userClient(accessToken) : svc();
+}
+
+export async function getDistinctEmails(accessToken?: string) {
   try {
     await ensureAdmin();
-    const { data, error } = await svc()
+    const { data, error } = await sb(accessToken)
       .from('chat')
       .select('email')
       .not('email', 'is', null)
@@ -38,14 +42,14 @@ export async function getDistinctEmails() {
   }
 }
 
-export async function getKPIs(input: unknown) {
+export async function getKPIs(input: unknown, accessToken?: string) {
   try {
     await ensureAdmin();
     const f = F.parse(input);
-    const sb = svc();
+    const client = sb(accessToken);
 
     // Build base query for chats
-    let chatsQuery = sb
+    let chatsQuery = client
       .from('chat')
       .select('id,processTime,feedback')
       .gte('created_at', f.fromISO)
@@ -62,7 +66,7 @@ export async function getKPIs(input: unknown) {
 
     // Get user messages for engagement calculation
     const chatIds = chatRows.map((c: any) => c.id);
-    let userMessagesQuery = sb
+    let userMessagesQuery = client
       .from('conversation')
       .select('id,chat_id')
       .eq('type', 'user')
@@ -109,11 +113,11 @@ export async function getKPIs(input: unknown) {
   }
 }
 
-export async function getLatest5(input: unknown) {
+export async function getLatest5(input: unknown, accessToken?: string) {
   try {
     await ensureAdmin();
     const f = F.partial({ page: true, pageSize: true }).parse(input);
-    let q = svc()
+    let q = sb(accessToken)
       .from('chat')
       .select('id,created_at,title,email,model,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
       .gte('created_at', f.fromISO!)
@@ -134,13 +138,13 @@ export async function getLatest5(input: unknown) {
   }
 }
 
-export async function getScenariosPage(input: unknown) {
+export async function getScenariosPage(input: unknown, accessToken?: string) {
   try {
     await ensureAdmin();
     const f = F.parse(input);
     const offset = (f.page - 1) * f.pageSize;
 
-    let base = svc()
+    let base = sb(accessToken)
       .from('chat')
       .select('id,created_at,title,email,model,processTime,feedback,scenario,research,usedcitationsArray,questions,draft,comment_selection,comment_additional', { count: 'exact' })
       .gte('created_at', f.fromISO)
@@ -162,9 +166,9 @@ export async function getScenariosPage(input: unknown) {
   }
 }
 
-export async function getConversationsByChatId(chatId: number) {
+export async function getConversationsByChatId(chatId: number, accessToken?: string) {
   try {
-    const { data, error } = await svc()
+    const { data, error } = await sb(accessToken)
       .from('conversation')
       .select('id,created_at,type,content,chat_id')
       .eq('chat_id', chatId)
@@ -179,9 +183,9 @@ export async function getConversationsByChatId(chatId: number) {
   }
 }
 
-export async function getChatById(chatId: number) {
+export async function getChatById(chatId: number, accessToken?: string) {
   try {
-    const { data, error } = await svc()
+    const { data, error } = await sb(accessToken)
       .from('chat')
       .select('id,created_at,title,email,model,scenario,research,usedcitationsArray,questions,draft,processTime,feedback,comment_selection,comment_additional')
       .eq('id', chatId)
@@ -196,7 +200,7 @@ export async function getChatById(chatId: number) {
   }
 }
 
-export async function getPraxioChats(userId: string | null) {
+export async function getPraxioChats(userId: string | null, accessToken?: string) {
   try {
     if (!userId) {
       console.warn('getPraxioChats called without userId');
@@ -207,7 +211,7 @@ export async function getPraxioChats(userId: string | null) {
     
     // Try filtering by user_id first (more reliable than email)
     // Only get non-archived chats (archive is false or null)
-    let query = svc()
+    let query = sb(accessToken)
       .from('chat')
       .select('id,created_at,title,user_id,email')
       .eq('user_id', userId)
@@ -239,7 +243,8 @@ export async function getPraxioChats(userId: string | null) {
 /**
  * Create a new chat row and optional conversation rows in Supabase.
  */
-export async function createChatWithConversation(input: {
+export async function createChatWithConversation(
+  input: {
   title?: string | null;
   scenario: string;
   research: string;
@@ -251,7 +256,9 @@ export async function createChatWithConversation(input: {
   user_id: string;
   email?: string | null;
   conversation?: { type: 'user' | 'Praxio AI'; content: string }[];
-}) {
+},
+  accessToken?: string
+) {
   try {
     const nowIso = new Date().toISOString();
     const insertData: any = {
@@ -268,7 +275,7 @@ export async function createChatWithConversation(input: {
       updated_on: nowIso,
     };
 
-    const { data: chatRow, error } = await svc()
+    const { data: chatRow, error } = await sb(accessToken)
       .from('chat')
       .insert(insertData)
       .select('id,created_at,title,scenario,model,processTime,updated_on,email')
@@ -288,7 +295,7 @@ export async function createChatWithConversation(input: {
         }));
 
       if (convoRows.length > 0) {
-        const { error: convoError } = await svc().from('conversation').insert(convoRows);
+        const { error: convoError } = await sb(accessToken).from('conversation').insert(convoRows);
         if (convoError) throw convoError;
       }
     }
@@ -304,7 +311,8 @@ export async function createChatWithConversation(input: {
  * Update a chat row for follow-up responses and optionally add conversation rows.
  * Skips immutable fields (uid, created_at, user_id, title, scenario).
  */
-export async function updateChatWithConversation(input: {
+export async function updateChatWithConversation(
+  input: {
   chat_id: number;
   research: string;
   usedcitationsArray: any;
@@ -314,7 +322,9 @@ export async function updateChatWithConversation(input: {
   model: string | null;
   email?: string | null;
   conversation?: { type: 'user' | 'Praxio AI'; content: string }[];
-}) {
+},
+  accessToken?: string
+) {
   try {
     const updateData: any = {
       research: (input.research || '').trim(),
@@ -334,7 +344,7 @@ export async function updateChatWithConversation(input: {
       }
     }
 
-    const { data: chatRow, error } = await svc()
+    const { data: chatRow, error } = await sb(accessToken)
       .from('chat')
       .update(updateData)
       .eq('id', input.chat_id)
@@ -353,7 +363,7 @@ export async function updateChatWithConversation(input: {
         }));
 
       if (convoRows.length > 0) {
-        const { error: convoError } = await svc().from('conversation').insert(convoRows);
+        const { error: convoError } = await sb(accessToken).from('conversation').insert(convoRows);
         if (convoError) throw convoError;
       }
     }
@@ -368,14 +378,14 @@ export async function updateChatWithConversation(input: {
 /**
  * Save a research record for a chat (one row per run).
  */
-export async function saveResearchEntry(input: { chat_id: number; content: string | null }) {
+export async function saveResearchEntry(input: { chat_id: number; content: string | null }, accessToken?: string) {
   try {
     const payload = {
       chat_id: input.chat_id,
       content: input.content ?? null,
     };
 
-    const { data, error } = await svc().from('research').insert(payload).select('id').single();
+    const { data, error } = await sb(accessToken).from('research').insert(payload).select('id').single();
     if (error) throw error;
 
     return { success: true, id: data?.id };
@@ -388,14 +398,14 @@ export async function saveResearchEntry(input: { chat_id: number; content: strin
 /**
  * Save citations for a chat (one row per run).
  */
-export async function saveCitationsEntry(input: { chat_id: number; usedcitationsArray: any }) {
+export async function saveCitationsEntry(input: { chat_id: number; usedcitationsArray: any }, accessToken?: string) {
   try {
     const payload = {
       chat_id: input.chat_id,
       usedcitationsArray: input.usedcitationsArray ?? null,
     };
 
-    const { data, error } = await svc().from('citations').insert(payload).select('id').single();
+    const { data, error } = await sb(accessToken).from('citations').insert(payload).select('id').single();
     if (error) throw error;
 
     return { success: true, id: data?.id };
@@ -408,9 +418,9 @@ export async function saveCitationsEntry(input: { chat_id: number; usedcitations
 /**
  * Fetch research history for a chat, newest first.
  */
-export async function getResearchHistory(chatId: number) {
+export async function getResearchHistory(chatId: number, accessToken?: string) {
   try {
-    const { data, error } = await svc()
+    const { data, error } = await sb(accessToken)
       .from('research')
       .select('id, created_at, content, chat_id')
       .eq('chat_id', chatId)
@@ -427,9 +437,9 @@ export async function getResearchHistory(chatId: number) {
 /**
  * Fetch citations history for a chat, newest first.
  */
-export async function getCitationsHistory(chatId: number) {
+export async function getCitationsHistory(chatId: number, accessToken?: string) {
   try {
-    const { data, error } = await svc()
+    const { data, error } = await sb(accessToken)
       .from('citations')
       .select('id, created_at, usedcitationsArray, chat_id')
       .eq('chat_id', chatId)
@@ -443,9 +453,9 @@ export async function getCitationsHistory(chatId: number) {
   }
 }
 
-export async function updateChatTitle(chatId: number, newTitle: string) {
+export async function updateChatTitle(chatId: number, newTitle: string, accessToken?: string) {
   try {
-    const { error } = await svc()
+    const { error } = await sb(accessToken)
       .from('chat')
       .update({ title: newTitle.trim() })
       .eq('id', chatId);
@@ -458,9 +468,9 @@ export async function updateChatTitle(chatId: number, newTitle: string) {
   }
 }
 
-export async function deleteChat(chatId: number) {
+export async function deleteChat(chatId: number, accessToken?: string) {
   try {
-    const { error } = await svc()
+    const { error } = await sb(accessToken)
       .from('chat')
       .delete()
       .eq('id', chatId);
@@ -473,9 +483,9 @@ export async function deleteChat(chatId: number) {
   }
 }
 
-export async function archiveChat(chatId: number) {
+export async function archiveChat(chatId: number, accessToken?: string) {
   try {
-    const { error } = await svc()
+    const { error } = await sb(accessToken)
       .from('chat')
       .update({ archive: true })
       .eq('id', chatId);
@@ -488,9 +498,9 @@ export async function archiveChat(chatId: number) {
   }
 }
 
-export async function updateChatDraft(chatId: number, draft: string) {
+export async function updateChatDraft(chatId: number, draft: string, accessToken?: string) {
   try {
-    const { error } = await svc()
+    const { error } = await sb(accessToken)
       .from('chat')
       .update({ draft: draft.trim() })
       .eq('id', chatId);
@@ -514,7 +524,8 @@ export async function updateChatFeedback(
   chatId: number, 
   feedback: number, 
   commentSelection?: string[] | null, 
-  commentAdditional?: string | null
+  commentAdditional?: string | null,
+  accessToken?: string
 ) {
   try {
     const updateData: any = { feedback };
@@ -529,7 +540,7 @@ export async function updateChatFeedback(
       updateData.comment_additional = commentAdditional?.trim() || null;
     }
     
-    const { error } = await svc()
+    const { error } = await sb(accessToken)
       .from('chat')
       .update(updateData)
       .eq('id', chatId);
@@ -610,7 +621,7 @@ export async function sendDraftEmail(
 }
 
 // User management functions
-export async function getUsers(input: unknown) {
+export async function getUsers(input: unknown, accessToken?: string) {
   try {
     await ensureAdmin();
     console.log('getUsers called with input:', input);
@@ -746,7 +757,7 @@ export async function getUsers(input: unknown) {
         if (uids.length) parts.push(`id.in.(${uids.map(quote).join(',')})`);
         if (emails.length) parts.push(`email.in.(${emails.map(quote).join(',')})`);
 
-        const { data, error } = await svc()
+        const { data, error } = await sb(accessToken)
           .from('user')
           .select('id,email')
           .or(parts.join(','));
@@ -773,7 +784,7 @@ export async function getUsers(input: unknown) {
     try {
       const uids = Array.from(new Set((users.map(u => (u as any).uid).filter(Boolean))));
       if (uids.length > 0) {
-        const { data, error } = await svc().rpc('get_chat_counts', { user_ids: uids });
+        const { data, error } = await sb(accessToken).rpc('get_chat_counts', { user_ids: uids });
         if (error) {
           console.error('get_chat_counts RPC error:', error);
         } else {
@@ -793,7 +804,7 @@ export async function getUsers(input: unknown) {
       const emails = Array.from(new Set((users.map(u => u.email).filter(Boolean))));
       if (emails.length > 0) {
         // Query Supabase chat table to get latest created_at per email
-        const { data, error } = await svc()
+        const { data, error } = await sb(accessToken)
           .from('chat')
           .select('email,created_at')
           .in('email', emails)
@@ -839,7 +850,7 @@ export async function getUsers(input: unknown) {
   }
 }
 
-export async function getUserStats(input: unknown) {
+export async function getUserStats(input: unknown, accessToken?: string) {
   try {
     await ensureAdmin();
     console.log('getUserStats called with input:', input);
@@ -886,7 +897,7 @@ export async function getUserStats(input: unknown) {
     // Avg Chats/User: compute from Supabase (all-time): total chats / distinct users with chats
     let avgChatsPerUser = 0;
     try {
-      const { data, error } = await svc().rpc('chat_aggregate');
+      const { data, error } = await sb(accessToken).rpc('chat_aggregate');
       if (!error && Array.isArray(data) && data.length > 0) {
         const totalChatsSb = Number((data[0] as any).total_chats) || 0;
         const distinctUsersSb = Number((data[0] as any).distinct_users) || 0;

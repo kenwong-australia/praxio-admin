@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Database, FileDown, FileText, Brain, Clock } from "lucide-react";
 import { ChatDetailsModal } from "@/components/ChatDetailsModal";
+import { useSupabaseRls } from "@/contexts/SupabaseRlsContext";
 
 export default function ChatsPage() {
   const { fromUTC, toUTC } = rangeLast30Sydney();
@@ -22,6 +23,7 @@ export default function ChatsPage() {
   const pageSize = 25;
   const [loading, setLoading] = useState(true);
   const chimeRef = useRef<HTMLAudioElement | null>(null);
+  const { accessToken: supaToken, loading: supaLoading } = useSupabaseRls();
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const maxSelectable = 10;
@@ -32,7 +34,8 @@ export default function ChatsPage() {
     async function init() {
       setLoading(true);
       try {
-        const ems = await getDistinctEmails();
+        if (!supaToken) return;
+        const ems = await getDistinctEmails(supaToken);
         setEmails(ems);
         await apply(filters.email, filters.from, filters.to, 1);
       } finally {
@@ -41,14 +44,15 @@ export default function ChatsPage() {
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supaToken]);
 
   async function apply(email: string | null, from: string, to: string, newPage: number = page) {
+    if (!supaToken) return;
     setLoading(true);
     try {
       setFilters({ email, from, to });
       setPage(newPage);
-      const data = await getScenariosPage({ email, fromISO: from, toISO: to, page: newPage, pageSize });
+      const data = await getScenariosPage({ email, fromISO: from, toISO: to, page: newPage, pageSize }, supaToken);
       setRows(data.rows);
       setTotal(data.total);
       setSelectedIds([]);
@@ -83,6 +87,10 @@ export default function ChatsPage() {
     setSelectedChat(row);
     setIsModalOpen(true);
   };
+
+  if (supaLoading || !supaToken) {
+    return <div className="p-4">Loading chats…</div>;
+  }
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

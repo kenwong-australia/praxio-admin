@@ -16,6 +16,7 @@ import { verifyEmailByEmail } from '@/app/actions';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import CsvDownloadButton from '@/components/CsvDownloadButton';
+import { useSupabaseRls } from '@/contexts/SupabaseRlsContext';
 
 export default function UsersPage() {
   const router = useRouter();
@@ -31,15 +32,17 @@ export default function UsersPage() {
   // Request ID tracking prevents race conditions
   // Only applies results from the most recent request
   const requestIdRef = useRef(0);
+  const { accessToken: supaToken, loading: supaLoading } = useSupabaseRls();
 
   const loadUsers = async () => {
+    if (!supaToken) return;
     const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       console.log('Loading users with filters:', filters);
       const [usersResult, statsResult] = await Promise.all([
-        getUsers(filters),
-        getUserStats({ fromISO: filters.fromISO, toISO: filters.toISO }),
+        getUsers(filters, supaToken),
+        getUserStats({ fromISO: filters.fromISO, toISO: filters.toISO }, supaToken),
       ]);
       // Only apply the latest request's result
       if (requestId !== requestIdRef.current) return;
@@ -75,7 +78,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadUsers();
-  }, [filters]);
+  }, [filters, supaToken]);
 
   const handleFilterChange = (key: keyof UserFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
@@ -84,6 +87,10 @@ export default function UsersPage() {
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
   };
+
+  if (supaLoading || !supaToken) {
+    return <div className="p-4">Loading users…</div>;
+  }
 
   const formatDate = (date: Date | undefined) => {
     if (!date) return 'N/A';

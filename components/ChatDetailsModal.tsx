@@ -14,6 +14,7 @@ import { getConversationsByChatId, updateChatFeedback, getChatById } from '@/app
 import { ConversationRow } from '@/lib/types';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { toast } from 'sonner';
+import { useSupabaseRls } from '@/contexts/SupabaseRlsContext';
 
 interface ChatDetailsModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [localChatData, setLocalChatData] = useState(chatData);
+  const { accessToken: supaToken, loading: supaLoading } = useSupabaseRls();
 
   // Update local chat data when chatData prop changes
   useEffect(() => {
@@ -39,9 +41,9 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
 
   // Fetch conversations when modal opens
   useEffect(() => {
-    if (isOpen && localChatData?.id) {
+    if (isOpen && localChatData?.id && supaToken) {
       setLoadingConversations(true);
-      getConversationsByChatId(localChatData.id)
+      getConversationsByChatId(localChatData.id, supaToken)
         .then((data) => {
           setConversations(data);
         })
@@ -55,13 +57,17 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     } else {
       setConversations([]);
     }
-  }, [isOpen, localChatData?.id]);
+  }, [isOpen, localChatData?.id, supaToken]);
 
   const handleUpvote = async () => {
     if (!localChatData?.id) return;
+    if (!supaToken) {
+      toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+      return;
+    }
     
     try {
-      const result = await updateChatFeedback(localChatData.id, 1);
+      const result = await updateChatFeedback(localChatData.id, 1, undefined, undefined, supaToken);
       if (result.success) {
         // Update local state
         setLocalChatData((prev: any) => prev ? { ...prev, feedback: 1 } : null);
@@ -92,7 +98,8 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     // Refresh chat data to get updated feedback
     if (localChatData?.id) {
       try {
-        const data = await getChatById(localChatData.id);
+        if (!supaToken) return;
+        const data = await getChatById(localChatData.id, supaToken);
         if (data) {
           setLocalChatData(data);
         }
@@ -102,7 +109,7 @@ export function ChatDetailsModal({ isOpen, onClose, chatData }: ChatDetailsModal
     }
   };
 
-  if (!localChatData) return null;
+  if (!localChatData || supaLoading) return null;
 
   // Parse citations from Supabase JSONB field (already parsed by client)
   const parseCitations = (usedcitationsArray: any): Citation[] => {

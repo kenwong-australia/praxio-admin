@@ -14,6 +14,7 @@ import PdfDownloadButton from "@/components/PdfDownloadButton";
 import DocxDownloadButton from "@/components/DocxDownloadButton";
 import PrintableHeader from "@/components/PrintableHeader";
 import FilterSummary from "@/components/FilterSummary";
+import { useSupabaseRls } from "@/contexts/SupabaseRlsContext";
 
 export default function AdminPage() {
   const { fromUTC, toUTC } = rangeLast30Sydney();
@@ -31,13 +32,15 @@ export default function AdminPage() {
   const [latest, setLatest] = useState<any[]>([]);
   const [scenariosData, setScenariosData] = useState<{ rows: any[]; total: number }>({ rows: [], total: 0 });
   const [loading, setLoading] = useState(true);
+  const { accessToken: supaToken, loading: supaLoading } = useSupabaseRls();
 
   // Load emails + default data on mount
   useEffect(() => {
     async function initialize() {
       setLoading(true);
       try {
-        const ems = await getDistinctEmails();
+        if (!supaToken) return;
+        const ems = await getDistinctEmails(supaToken);
         setEmails(ems);
         await applyFilters(filters.email, filters.from, filters.to, 1);
       } catch (error) {
@@ -47,18 +50,19 @@ export default function AdminPage() {
       }
     }
     initialize();
-  }, []);
+  }, [supaToken]);
 
   async function applyFilters(email: string | null, from: string, to: string, page: number = currentPage) {
+    if (!supaToken) return;
     setLoading(true);
     try {
       setFilters({ email, from, to });
       setCurrentPage(page);
 
       const [k, l, s] = await Promise.all([
-        getKPIs({ email, fromISO: from, toISO: to }),
-        getLatest5({ email, fromISO: from, toISO: to }),
-        getScenariosPage({ email, fromISO: from, toISO: to, page, pageSize })
+        getKPIs({ email, fromISO: from, toISO: to }, supaToken),
+        getLatest5({ email, fromISO: from, toISO: to }, supaToken),
+        getScenariosPage({ email, fromISO: from, toISO: to, page, pageSize }, supaToken)
       ]);
 
       setKpis(k);
@@ -73,6 +77,10 @@ export default function AdminPage() {
 
   function handlePageChange(page: number) {
     applyFilters(filters.email, filters.from, filters.to, page);
+  }
+
+  if (supaLoading || !supaToken) {
+    return <div className="p-4">Loading analytics…</div>;
   }
 
   const LoadingSkeleton = () => (

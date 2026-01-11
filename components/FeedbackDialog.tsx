@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { updateChatFeedback } from '@/app/actions';
 import { toast } from 'sonner';
+import { useSupabaseRls } from '@/contexts/SupabaseRlsContext';
 
 interface FeedbackDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function FeedbackDialog({ isOpen, onClose, chatId, onFeedbackSubmitted }:
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [additionalComments, setAdditionalComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { accessToken: supaToken, loading: supaLoading } = useSupabaseRls();
 
   const handleOptionToggle = (option: string) => {
     setSelectedOptions(prev =>
@@ -39,13 +41,18 @@ export function FeedbackDialog({ isOpen, onClose, chatId, onFeedbackSubmitted }:
   };
 
   const handleSubmit = async () => {
+    if (!supaToken) {
+      toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const result = await updateChatFeedback(
         chatId,
         -1, // Down vote
         selectedOptions.length > 0 ? selectedOptions : null,
-        additionalComments.trim() || null
+        additionalComments.trim() || null,
+        supaToken
       );
 
       if (result.success) {

@@ -7,6 +7,7 @@ import { getFirebaseAuth, getDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Sidebar } from '@/components/Sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { SupabaseRlsProvider } from '@/contexts/SupabaseRlsContext';
 
 // Optional: small screen shown to non-admins
 function NotAuthorized({ onDone }: { onDone: () => void }) {
@@ -207,22 +208,24 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   const isFullPage = pathname === '/pricing' || pathname === '/success';
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {isFullPage ? (
-        // Full-page layout (no sidebar)
-        <>{children}</>
-      ) : (
-        // Standard layout with sidebar for other pages
-        <div className="app-shell">
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1 overflow-x-hidden">
-              {children}
-            </main>
+    <SupabaseRlsProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        {isFullPage ? (
+          // Full-page layout (no sidebar)
+          <>{children}</>
+        ) : (
+          // Standard layout with sidebar for other pages
+          <div className="app-shell">
+            <div className="flex">
+              <Sidebar />
+              <main className="flex-1 overflow-x-hidden">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
-      )}
-      <Toaster />
-    </div>
+        )}
+        <Toaster />
+      </div>
+    </SupabaseRlsProvider>
   );
 }

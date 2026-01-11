@@ -19,6 +19,7 @@ import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation, saveResearchEntry, saveCitationsEntry, getResearchHistory, getCitationsHistory } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
+import { useSupabaseRls } from '@/contexts/SupabaseRlsContext';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 import MDEditor from '@uiw/react-md-editor';
@@ -119,6 +120,7 @@ export default function PraxioPage() {
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialSaving, setTutorialSaving] = useState(false);
+  const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls();
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -180,7 +182,7 @@ export default function PraxioPage() {
   // Fetch chats from Supabase when user ID is available
   useEffect(() => {
     async function loadChats() {
-      if (!userId) {
+      if (!userId || !supaToken) {
         console.log('PraxioPage: Waiting for user ID...');
         return; // Wait for user ID
       }
@@ -188,7 +190,7 @@ export default function PraxioPage() {
       console.log('PraxioPage: Loading chats for user_id:', userId);
       setLoadingChats(true);
       try {
-        const data = await getPraxioChats(userId);
+        const data = await getPraxioChats(userId, supaToken);
         console.log('PraxioPage: Received chats:', data.length);
         setChats(data.map((chat: any) => ({
           id: chat.id,
@@ -203,7 +205,7 @@ export default function PraxioPage() {
       }
     }
     loadChats();
-  }, [userId]);
+  }, [userId, supaToken]);
 
   // Load persisted model from sessionStorage
   useEffect(() => {
@@ -316,10 +318,10 @@ export default function PraxioPage() {
 
   // Fetch full chat data when a chat is selected
   useEffect(() => {
-    if (selectedChat?.id) {
+    if (selectedChat?.id && supaToken) {
       setLoadingChatData(true);
       setFullChatData(null); // Clear previous data
-      getChatById(selectedChat.id)
+      getChatById(selectedChat.id, supaToken)
         .then((data) => {
           console.log('Chat data fetched:', data);
           if (data) {
@@ -339,13 +341,13 @@ export default function PraxioPage() {
     } else {
       setFullChatData(null);
     }
-  }, [selectedChat?.id]);
+  }, [selectedChat?.id, supaToken]);
 
   // Fetch conversations when a chat is selected
   useEffect(() => {
-    if (selectedChat?.id) {
+    if (selectedChat?.id && supaToken) {
       setLoadingConversations(true);
-      getConversationsByChatId(selectedChat.id)
+      getConversationsByChatId(selectedChat.id, supaToken)
         .then((data) => {
           setConversations(data);
         })
@@ -359,7 +361,7 @@ export default function PraxioPage() {
     } else {
       setConversations([]);
     }
-  }, [selectedChat?.id]);
+  }, [selectedChat?.id, supaToken]);
 
   // Auto-scroll to bottom when conversations update
   useEffect(() => {
@@ -840,10 +842,14 @@ export default function PraxioPage() {
   };
 
   const persistResearchArtifacts = async (chatId: number, researchContent: string | null | undefined, citations: any) => {
+    if (!supaToken) {
+      console.error('Supabase token missing; cannot persist research artifacts');
+      return;
+    }
     try {
       const [researchRes, citationsRes] = await Promise.all([
-        saveResearchEntry({ chat_id: chatId, content: researchContent ?? null }),
-        saveCitationsEntry({ chat_id: chatId, usedcitationsArray: citations }),
+        saveResearchEntry({ chat_id: chatId, content: researchContent ?? null }, supaToken),
+        saveCitationsEntry({ chat_id: chatId, usedcitationsArray: citations }, supaToken),
       ]);
 
       if (!researchRes?.success) {
@@ -858,13 +864,17 @@ export default function PraxioPage() {
   };
 
   const loadHistoryData = async (chatId: number) => {
+    if (!supaToken) {
+      setHistoryError('Missing Supabase token');
+      return;
+    }
     setHistoryLoading(true);
     setHistoryError(null);
     try {
       const [researchRes, citationsRes, convRes] = await Promise.all([
-        getResearchHistory(chatId),
-        getCitationsHistory(chatId),
-        getConversationsByChatId(chatId),
+        getResearchHistory(chatId, supaToken),
+        getCitationsHistory(chatId, supaToken),
+        getConversationsByChatId(chatId, supaToken),
       ]);
 
       if (!researchRes.success) {
@@ -991,6 +1001,10 @@ export default function PraxioPage() {
           ]
         : undefined; // For initial runs, skip creating conversation rows
 
+      if (!supaToken) {
+        throw new Error('Missing Supabase auth token');
+      }
+
       if (isFollowUp && fullChatData?.id) {
         const draftMissing = !trimmedDraftFromApi;
         const update = await updateChatWithConversation({
@@ -1003,7 +1017,7 @@ export default function PraxioPage() {
           model: selectedModel, // persist the user's chosen model (e.g., "Praxio AI", "Test AI")
           email: userEmail ?? null,
           conversation: conversationRows,
-        });
+        }, supaToken);
 
         if (!update.success || !update.chat) {
           throw new Error(update.error || 'Failed to update research');
@@ -1019,7 +1033,7 @@ export default function PraxioPage() {
         setPrompt('');
 
         try {
-          const refreshedConversations = await getConversationsByChatId(update.chat.id);
+          const refreshedConversations = await getConversationsByChatId(update.chat.id, supaToken);
           setConversations(refreshedConversations);
         } catch (refreshError) {
           console.error('Error refreshing conversations after follow-up:', refreshError);
@@ -1044,7 +1058,7 @@ export default function PraxioPage() {
         user_id: userId,
         email: userEmail ?? null,
         conversation: conversationRows,
-      });
+      }, supaToken);
 
       if (!insert.success || !insert.chat) {
         throw new Error(insert.error || 'Failed to save research');
@@ -1090,7 +1104,11 @@ export default function PraxioPage() {
     if (!fullChatData?.id) return;
     
     try {
-      const result = await updateChatFeedback(fullChatData.id, 1);
+      if (!supaToken) {
+        toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+        return;
+      }
+      const result = await updateChatFeedback(fullChatData.id, 1, undefined, undefined, supaToken);
       if (result.success) {
         // Update local state
         setFullChatData((prev: FullChatData | null) => prev ? { ...prev, feedback: 1 } : null);
@@ -1121,7 +1139,8 @@ export default function PraxioPage() {
     // Refresh chat data to get updated feedback
     if (fullChatData?.id) {
       try {
-        const data = await getChatById(fullChatData.id);
+        if (!supaToken) return;
+        const data = await getChatById(fullChatData.id, supaToken);
         if (data) {
           setFullChatData(data);
         }
@@ -1146,10 +1165,10 @@ export default function PraxioPage() {
 
   // Refresh chat list
   const refreshChats = async () => {
-    if (!userId) return;
+    if (!userId || !supaToken) return;
     setLoadingChats(true);
     try {
-      const data = await getPraxioChats(userId);
+      const data = await getPraxioChats(userId, supaToken);
       setChats(data.map((chat: any) => ({
         id: chat.id,
         title: chat.title || `Chat #${chat.id}`,
@@ -1173,8 +1192,12 @@ export default function PraxioPage() {
 
   const handleConfirmRename = async () => {
     if (!renameChatId || !renameTitle.trim()) return;
+    if (!supaToken) {
+      toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+      return;
+    }
     
-    const result = await updateChatTitle(renameChatId, renameTitle.trim());
+    const result = await updateChatTitle(renameChatId, renameTitle.trim(), supaToken);
     if (result.success) {
       setRenameDialogOpen(false);
       setRenameChatId(null);
@@ -1207,9 +1230,13 @@ export default function PraxioPage() {
 
   const handleConfirmDelete = async () => {
     if (!deleteChatId) return;
+    if (!supaToken) {
+      toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+      return;
+    }
     
     const chatTitle = deleteChatTitle; // Capture before clearing
-    const result = await deleteChat(deleteChatId);
+    const result = await deleteChat(deleteChatId, supaToken);
     if (result.success) {
       setDeleteDialogOpen(false);
       setDeleteChatId(null);
@@ -1243,9 +1270,13 @@ export default function PraxioPage() {
 
   const handleConfirmArchive = async () => {
     if (!archiveChatId) return;
+    if (!supaToken) {
+      toast.error('Missing auth', { description: 'Please wait for Supabase auth' });
+      return;
+    }
     
     const chatTitle = archiveChatTitle; // Capture before clearing
-    const result = await archiveChat(archiveChatId);
+    const result = await archiveChat(archiveChatId, supaToken);
     if (result.success) {
       setArchiveDialogOpen(false);
       setArchiveChatId(null);
@@ -1282,7 +1313,11 @@ export default function PraxioPage() {
 
     draftSaveTimeoutRef.current = setTimeout(async () => {
       setAutoSaveStatus('saving');
-      const result = await updateChatDraft(selectedChat.id, draftContent);
+      if (!supaToken) {
+        setAutoSaveStatus('idle');
+        return;
+      }
+      const result = await updateChatDraft(selectedChat.id, draftContent, supaToken);
       if (result.success) {
         setAutoSaveStatus('saved');
         // Update fullChatData to reflect the saved draft
