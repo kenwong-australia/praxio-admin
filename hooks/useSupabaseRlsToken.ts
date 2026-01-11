@@ -48,6 +48,19 @@ export function useSupabaseRlsToken() {
     }
 
     setTokenState({ accessToken, appRole: appRole ?? null, expiresIn: expiresIn ?? null });
+
+    // TEMP: debug mint payload in browser console
+    if (typeof window !== 'undefined') {
+      (window as any).__supaToken = accessToken;
+      try {
+        const [, payloadB64] = accessToken.split('.');
+        const payloadJson = JSON.parse(atob(payloadB64));
+        console.log('[RLS] Supabase token first 48 chars:', accessToken.slice(0, 48));
+        console.log('[RLS] Supabase JWT payload:', payloadJson);
+      } catch (err) {
+        console.warn('[RLS] Failed to decode Supabase token for debug', err);
+      }
+    }
   }, []);
 
   const refresh = useCallback(async () => {
