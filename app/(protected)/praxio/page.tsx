@@ -121,6 +121,8 @@ export default function PraxioPage() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialSaving, setTutorialSaving] = useState(false);
   const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -191,12 +193,30 @@ export default function PraxioPage() {
       setLoadingChats(true);
       try {
         const data = await getPraxioChats(userId, supaToken);
-        console.log('PraxioPage: Received chats:', data.length);
-        setChats(data.map((chat: any) => ({
-          id: chat.id,
-          title: chat.title || `Chat #${chat.id}`,
-          created_at: chat.created_at
-        })));
+        if (data.length === 0 && supabaseUrl && supabaseAnonKey) {
+          // Fallback: call PostgREST directly for debug
+          const url = `${supabaseUrl}/rest/v1/chat?user_id=eq.${userId}&select=id,title,created_at,archive&or=(archive.is.null,archive.eq.false)`;
+          const resp = await fetch(url, {
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supaToken}`,
+            },
+          });
+          const json = await resp.json();
+          console.log('PraxioPage: Fallback REST rows:', json?.length);
+          setChats((json || []).map((chat: any) => ({
+            id: chat.id,
+            title: chat.title || `Chat #${chat.id}`,
+            created_at: chat.created_at,
+          })));
+        } else {
+          console.log('PraxioPage: Received chats:', data.length);
+          setChats(data.map((chat: any) => ({
+            id: chat.id,
+            title: chat.title || `Chat #${chat.id}`,
+            created_at: chat.created_at
+          })));
+        }
       } catch (error) {
         console.error('Error loading chats:', error);
         setChats([]);
