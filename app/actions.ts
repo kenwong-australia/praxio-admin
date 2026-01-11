@@ -222,12 +222,7 @@ export async function getPraxioChats(userId: string | null, accessToken?: string
     const { data, error } = await query;
     
     if (error) {
-      // If user_id field doesn't exist or query fails, log and try email fallback
       console.warn('Query by user_id failed, error:', error);
-      console.log('Attempting fallback to email-based filtering...');
-      
-      // Fallback: We'll need email for this, but this function now expects userId
-      // So we return empty and let the caller handle it
       return [];
     }
     
