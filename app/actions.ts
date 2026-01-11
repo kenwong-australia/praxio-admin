@@ -226,7 +226,9 @@ export async function getPraxioChats(userId: string | null, accessToken?: string
       return [];
     }
     
-    console.log(`getPraxioChats found ${data?.length || 0} chats for user_id ${userId}`);
+    console.log(`getPraxioChats found ${data?.length || 0} chats for user_id ${userId}`, {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    });
     
     return data ?? [];
   } catch (error) {

@@ -57,6 +57,7 @@ export function useSupabaseRlsToken() {
         const payloadJson = JSON.parse(atob(payloadB64));
         console.log('[RLS] Supabase token first 48 chars:', accessToken.slice(0, 48));
         console.log('[RLS] Supabase JWT payload:', payloadJson);
+        console.log('[RLS] Supabase URL host:', new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').host);
       } catch (err) {
         console.warn('[RLS] Failed to decode Supabase token for debug', err);
       }
