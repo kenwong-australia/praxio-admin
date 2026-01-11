@@ -3177,9 +3177,8 @@ export default function PraxioPage() {
                     Search on AustLII (Beta)
                   </Button>
                 </div>
-                <div className="max-w-none break-words">
+                <div className="max-w-none break-words space-y-2 text-sm leading-relaxed text-foreground">
                   <ReactMarkdown
-                    className="space-y-2 text-sm leading-relaxed text-foreground"
                     components={{
                       strong: ({ children }) => <span className="font-normal">{children}</span>,
                       b: ({ children }) => <span className="font-normal">{children}</span>,
