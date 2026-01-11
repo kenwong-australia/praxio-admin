@@ -8,6 +8,11 @@ type TokenState = {
   expiresIn?: number | null;
 };
 
+/**
+ * Mint and track a Supabase JWT for the signed-in Firebase user.
+ * JWT includes user_id/app_role and is used for RLS-enforced Supabase calls.
+ * No Supabase session persistence; we re-mint on Firebase auth changes.
+ */
 export function useSupabaseRlsToken() {
   const [tokenState, setTokenState] = useState<TokenState>({ accessToken: null, appRole: null });
   const [loading, setLoading] = useState(true);
@@ -48,20 +53,6 @@ export function useSupabaseRlsToken() {
     }
 
     setTokenState({ accessToken, appRole: appRole ?? null, expiresIn: expiresIn ?? null });
-
-    // TEMP: debug mint payload in browser console
-    if (typeof window !== 'undefined') {
-      (window as any).__supaToken = accessToken;
-      try {
-        const [, payloadB64] = accessToken.split('.');
-        const payloadJson = JSON.parse(atob(payloadB64));
-        console.log('[RLS] Supabase token first 48 chars:', accessToken.slice(0, 48));
-        console.log('[RLS] Supabase JWT payload:', payloadJson);
-        console.log('[RLS] Supabase URL host:', new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').host);
-      } catch (err) {
-        console.warn('[RLS] Failed to decode Supabase token for debug', err);
-      }
-    }
   }, []);
 
   const refresh = useCallback(async () => {

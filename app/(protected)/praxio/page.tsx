@@ -19,7 +19,7 @@ import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation, saveResearchEntry, saveCitationsEntry, getResearchHistory, getCitationsHistory } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
 import { ConversationRow } from '@/lib/types';
-import { useSupabaseRls } from '@/contexts/SupabaseRlsContext';
+import { useSupabaseRls } from '@/contexts/SupabaseRlsContext'; // provides user JWT for RLS
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 import MDEditor from '@uiw/react-md-editor';
@@ -120,9 +120,7 @@ export default function PraxioPage() {
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialSaving, setTutorialSaving] = useState(false);
-  const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls(); // RLS token from Firebase user
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -183,6 +181,7 @@ export default function PraxioPage() {
 
   // Fetch chats from Supabase when user ID is available
   useEffect(() => {
+    // Fetch chats with user-scoped Supabase JWT (RLS enforced)
     async function loadChats() {
       if (!userId || !supaToken) {
         console.log('PraxioPage: Waiting for user ID...');
@@ -192,37 +191,12 @@ export default function PraxioPage() {
       console.log('PraxioPage: Loading chats for user_id:', userId);
       setLoadingChats(true);
       try {
-        if (!supabaseUrl || !supabaseAnonKey) {
-          console.warn('PraxioPage: Missing SUPABASE URL or ANON key; cannot load chats');
-          setChats([]);
-          return;
-        }
-        const url =
-          `${supabaseUrl}/rest/v1/chat` +
-          `?user_id=eq.${userId}` +
-          `&select=id,title,created_at,archive` +
-          `&or=(archive.is.null,archive.eq.false)` +
-          `&order=created_at.desc` +
-          `&limit=100`;
-
-        const resp = await fetch(url, {
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supaToken}`,
-          },
-        });
-        if (!resp.ok) {
-          const text = await resp.text();
-          console.error('PraxioPage: REST chat fetch failed', resp.status, text);
-          setChats([]);
-          return;
-        }
-        const json = await resp.json();
-        console.log('PraxioPage: REST rows:', json?.length);
-        setChats((json || []).map((chat: any) => ({
+        const data = await getPraxioChats(userId, supaToken);
+        console.log('PraxioPage: Received chats:', data.length);
+        setChats(data.map((chat: any) => ({
           id: chat.id,
           title: chat.title || `Chat #${chat.id}`,
-          created_at: chat.created_at,
+          created_at: chat.created_at
         })));
       } catch (error) {
         console.error('Error loading chats:', error);

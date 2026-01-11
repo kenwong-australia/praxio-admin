@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Main Supabase client with service role key (server-side only)
  * Used for admin operations requiring elevated permissions
+ * Do NOT expose the service role key to the browser.
  */
 export function svc() {
   return createClient(
@@ -34,6 +35,7 @@ export function ingest() {
  * - Expects the caller to supply a valid access token (no refresh here).
  * - Disables session persistence/auto-refresh; caller should refresh the token
  *   and recreate the client when Firebase ID token rotates.
+ * - Safe for browser use with anon key and user JWT (RLS enforced).
  */
 export function userClient(accessToken: string, opts?: { schema?: string }) {
   if (!accessToken) {
