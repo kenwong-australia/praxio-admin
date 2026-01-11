@@ -55,6 +55,9 @@ interface FullChatData {
 interface Citation {
   title: string;
   url: string | null;
+  fullreference: string;
+  sourcefile: string;
+  text: string;
 }
 
 type ModelOption = 'Praxio AI' | 'Test AI';
@@ -121,6 +124,8 @@ export default function PraxioPage() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [tutorialSaving, setTutorialSaving] = useState(false);
   const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls(); // RLS token from Firebase user
+  const [legislationModalOpen, setLegislationModalOpen] = useState(false);
+  const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -1645,43 +1650,67 @@ export default function PraxioPage() {
 
   // Parse citations from Supabase JSONB field (same logic as ChatDetailsModal)
   const parseCitations = (usedcitationsArray: any): Citation[] => {
+    const placeholder = 'Not provided';
+
+    const buildCitation = (item: any): Citation | null => {
+      if (item && typeof item === 'object') {
+        const fullreference =
+          typeof item.fullreference === 'string' && item.fullreference.trim()
+            ? item.fullreference.trim()
+            : 'Legislation reference';
+        const url =
+          typeof item.url === 'string' && item.url.trim() ? item.url.trim() : null;
+        const sourcefile =
+          typeof item.sourcefile === 'string' && item.sourcefile.trim()
+            ? item.sourcefile.trim()
+            : placeholder;
+        const text =
+          typeof item.text === 'string' && item.text.trim()
+            ? item.text
+            : placeholder;
+        return {
+          title: fullreference,
+          url,
+          fullreference,
+          sourcefile,
+          text,
+        };
+      }
+
+      if (typeof item === 'string' && item.trim()) {
+        const trimmed = item.trim();
+        return {
+          title: trimmed,
+          url: null,
+          fullreference: trimmed,
+          sourcefile: placeholder,
+          text: placeholder,
+        };
+      }
+
+      return null;
+    };
+
+    const parseArray = (arr: any[]): Citation[] =>
+      arr
+        .map((item) => buildCitation(item))
+        .filter(Boolean) as Citation[];
+
     if (!usedcitationsArray) {
       return [];
     }
     
     if (Array.isArray(usedcitationsArray)) {
-      // Handle arrays of objects or strings
-      return usedcitationsArray
-        .map(item => {
-          if (item && typeof item === 'object' && item.fullreference?.trim()) {
-            return { title: item.fullreference, url: item.url?.trim() || null };
-          }
-          if (typeof item === 'string' && item.trim()) {
-            return { title: item.trim(), url: null };
-          }
-          return null;
-        })
-        .filter(Boolean) as Citation[];
+      return parseArray(usedcitationsArray);
     }
 
     if (typeof usedcitationsArray === 'object') {
-      // Handle objects that wrap the array (e.g., { citations: [...] })
       const inner =
         (usedcitationsArray as any).citations ||
         (usedcitationsArray as any).usedcitationsArray ||
         (usedcitationsArray as any).used_citations;
       if (Array.isArray(inner)) {
-        return inner
-          .map((item: any) => {
-            if (item && typeof item === 'object' && item.fullreference?.trim()) {
-              return { title: item.fullreference, url: item.url?.trim() || null };
-            }
-            if (typeof item === 'string' && item.trim()) {
-              return { title: item.trim(), url: null };
-            }
-            return null;
-          })
-          .filter(Boolean) as Citation[];
+        return parseArray(inner);
       }
     }
     
@@ -1689,34 +1718,14 @@ export default function PraxioPage() {
       try {
         const parsed = JSON.parse(usedcitationsArray);
         if (Array.isArray(parsed)) {
-          return parsed
-            .map(item => {
-              if (item && typeof item === 'object' && item.fullreference?.trim()) {
-                return { title: item.fullreference, url: item.url?.trim() || null };
-              }
-              if (typeof item === 'string' && item.trim()) {
-                return { title: item.trim(), url: null };
-              }
-              return null;
-            })
-            .filter(Boolean) as Citation[];
+          return parseArray(parsed);
         } else if (parsed && typeof parsed === 'object') {
           const inner =
             (parsed as any).citations ||
             (parsed as any).usedcitationsArray ||
             (parsed as any).used_citations;
           if (Array.isArray(inner)) {
-            return inner
-              .map((item: any) => {
-                if (item && typeof item === 'object' && item.fullreference?.trim()) {
-                  return { title: item.fullreference, url: item.url?.trim() || null };
-                }
-                if (typeof item === 'string' && item.trim()) {
-                  return { title: item.trim(), url: null };
-                }
-                return null;
-              })
-              .filter(Boolean) as Citation[];
+            return parseArray(inner);
           }
         }
       } catch (error) {
@@ -1728,6 +1737,16 @@ export default function PraxioPage() {
   };
 
   const citations = fullChatData ? parseCitations(fullChatData.usedcitationsArray || fullChatData.usedcitationsArray) : [];
+
+  const handleOpenLegislation = (citation: Citation) => {
+    setSelectedCitation(citation);
+    setLegislationModalOpen(true);
+  };
+
+  const handleCloseLegislation = () => {
+    setLegislationModalOpen(false);
+    setSelectedCitation(null);
+  };
 
   // Tutorial helpers
   const markTutorialFlag = async (value: boolean) => {
@@ -2386,9 +2405,13 @@ export default function PraxioPage() {
                                             <span className="leading-snug break-all">{citation.url}</span>
                                           </a>
                                         ) : (
-                                          <span className="text-[10px] text-muted-foreground italic">
-                                            Legislation reference
-                                          </span>
+                                      <button
+                                        type="button"
+                                        className="text-[10px] text-blue-600 underline underline-offset-2 font-medium hover:text-blue-800"
+                                        onClick={() => handleOpenLegislation(citation)}
+                                      >
+                                        Legislation Reference
+                                      </button>
                                         )}
                                       </div>
                                     </div>
@@ -3108,6 +3131,51 @@ export default function PraxioPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Legislation Modal */}
+      <Dialog
+        open={legislationModalOpen}
+        onOpenChange={(open) => {
+          setLegislationModalOpen(open);
+          if (!open) {
+            setSelectedCitation(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[90vw] max-w-2xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Legislation Reference</DialogTitle>
+            <DialogDescription>Details for the selected citation</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-2">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Title</p>
+                <p className="font-semibold text-sm break-words">
+                  {selectedCitation?.fullreference || 'Not provided'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Source</p>
+                <p className="text-sm break-words">
+                  Federal Register of Legislation — {selectedCitation?.sourcefile || 'Not provided'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Content</p>
+                <div className="prose prose-sm max-w-none break-words prose-headings:text-base prose-p:text-sm prose-invert">
+                  <ReactMarkdown>{selectedCitation?.text || 'Not provided'}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+          <div className="mt-4 flex justify-end">
+            <Button variant="outline" onClick={handleCloseLegislation}>
+              Back
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
         <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-4xl max-h-[85vh] overflow-hidden">
@@ -3272,7 +3340,13 @@ export default function PraxioPage() {
                                           {c.url}
                                         </a>
                                       ) : (
-                                        <span className="text-muted-foreground">(Legislation reference)</span>
+                                        <button
+                                          type="button"
+                                          className="ml-1 text-blue-600 underline underline-offset-2 hover:text-blue-800"
+                                          onClick={() => handleOpenLegislation(c)}
+                                        >
+                                          Legislation Reference
+                                        </button>
                                       )}
                                     </div>
                                   ))}
