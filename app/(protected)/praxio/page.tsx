@@ -192,31 +192,38 @@ export default function PraxioPage() {
       console.log('PraxioPage: Loading chats for user_id:', userId);
       setLoadingChats(true);
       try {
-        const data = await getPraxioChats(userId, supaToken);
-        if (data.length === 0 && supabaseUrl && supabaseAnonKey) {
-          // Fallback: call PostgREST directly for debug
-          const url = `${supabaseUrl}/rest/v1/chat?user_id=eq.${userId}&select=id,title,created_at,archive&or=(archive.is.null,archive.eq.false)`;
-          const resp = await fetch(url, {
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supaToken}`,
-            },
-          });
-          const json = await resp.json();
-          console.log('PraxioPage: Fallback REST rows:', json?.length);
-          setChats((json || []).map((chat: any) => ({
-            id: chat.id,
-            title: chat.title || `Chat #${chat.id}`,
-            created_at: chat.created_at,
-          })));
-        } else {
-          console.log('PraxioPage: Received chats:', data.length);
-          setChats(data.map((chat: any) => ({
-            id: chat.id,
-            title: chat.title || `Chat #${chat.id}`,
-            created_at: chat.created_at
-          })));
+        if (!supabaseUrl || !supabaseAnonKey) {
+          console.warn('PraxioPage: Missing SUPABASE URL or ANON key; cannot load chats');
+          setChats([]);
+          return;
         }
+        const url =
+          `${supabaseUrl}/rest/v1/chat` +
+          `?user_id=eq.${userId}` +
+          `&select=id,title,created_at,archive` +
+          `&or=(archive.is.null,archive.eq.false)` +
+          `&order=created_at.desc` +
+          `&limit=100`;
+
+        const resp = await fetch(url, {
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supaToken}`,
+          },
+        });
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.error('PraxioPage: REST chat fetch failed', resp.status, text);
+          setChats([]);
+          return;
+        }
+        const json = await resp.json();
+        console.log('PraxioPage: REST rows:', json?.length);
+        setChats((json || []).map((chat: any) => ({
+          id: chat.id,
+          title: chat.title || `Chat #${chat.id}`,
+          created_at: chat.created_at,
+        })));
       } catch (error) {
         console.error('Error loading chats:', error);
         setChats([]);
