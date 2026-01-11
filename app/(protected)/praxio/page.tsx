@@ -1748,6 +1748,14 @@ export default function PraxioPage() {
     setSelectedCitation(null);
   };
 
+  const handleAustliiSearch = (citation: Citation | null) => {
+    if (!citation?.fullreference) return;
+    const query = encodeURIComponent(`${citation.fullreference} site:austlii.edu.au`);
+    if (typeof window !== 'undefined') {
+      window.open(`https://www.google.com/search?q=${query}`, '_blank', 'noopener');
+    }
+  };
+
   // Tutorial helpers
   const markTutorialFlag = async (value: boolean) => {
     if (!userId) return;
@@ -3157,7 +3165,18 @@ export default function PraxioPage() {
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Content</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">Content</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => handleAustliiSearch(selectedCitation)}
+                    disabled={!selectedCitation?.fullreference}
+                  >
+                    Search on AustLII (Beta)
+                  </Button>
+                </div>
                 <div className="max-w-none break-words">
                   <ReactMarkdown
                     className="space-y-2 text-sm leading-relaxed text-foreground"
