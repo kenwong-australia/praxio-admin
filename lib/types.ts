@@ -57,6 +57,7 @@ export type User = {
   stripe_cancel_at_period_end: boolean;
   stripe_pending_frequency: string;
   has_received_welcome: boolean;
+  loops_audience_added: boolean;
   client_template: string;
   // Optional, computed at fetch time: whether this user exists in Supabase
   in_supabase?: boolean;

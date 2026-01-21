@@ -3,6 +3,7 @@ import { getAdminAuth, getAdminDb } from '@/lib/firebase';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 const LOOPS_ENDPOINT = 'https://app.loops.so/api/v1/transactional';
+const LOOPS_CONTACTS_ENDPOINT = 'https://app.loops.so/api/v1/contacts/create';
 const TRANSACTIONAL_ID = 'cmbo8a95k03g1290i63zfz51g';
 
 export async function POST(request: NextRequest) {
@@ -64,6 +65,49 @@ export async function POST(request: NextRequest) {
       console.error('Welcome email failed', err);
     }
 
+    // Add to Loops audience
+    let audienceAdded = false;
+    try {
+      const apiKey = process.env.LOOPS_API_KEY;
+      const audienceId = process.env.LOOPS_AUDIENCE_ID;
+      if (!apiKey) {
+        throw new Error('LOOPS_API_KEY not configured');
+      }
+      if (!audienceId) {
+        throw new Error('LOOPS_AUDIENCE_ID not configured');
+      }
+
+      const resp = await fetch(LOOPS_CONTACTS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          firstName,
+          lastName,
+          mailingLists: {
+            [audienceId]: true,
+          },
+        }),
+      });
+
+      const raw = await resp.text();
+      let json: any;
+      try {
+        json = JSON.parse(raw);
+      } catch {
+        // ignore non-JSON
+      }
+      if (!resp.ok || json?.success !== true) {
+        throw new Error(`Loops contacts error ${resp.status}`);
+      }
+      audienceAdded = true;
+    } catch (err) {
+      console.error('Loops audience add failed', err);
+    }
+
     // Provision Firestore user record
     const db = getAdminDb();
     await db
@@ -83,13 +127,14 @@ export async function POST(request: NextRequest) {
           company_name: company,
           abn_num: abn,
           has_received_welcome: welcomeSent,
+          loops_audience_added: audienceAdded,
           show_tutorial: true,
           created_time: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
 
-    return NextResponse.json({ ok: true, welcomeSent });
+    return NextResponse.json({ ok: true, welcomeSent, audienceAdded });
   } catch (error) {
     console.error('provision error', error);
     return NextResponse.json(
