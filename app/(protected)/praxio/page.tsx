@@ -891,6 +891,9 @@ export default function PraxioPage() {
     const toErr = (val: any) => {
       if (!val) return 'Unknown error';
 
+      const stripQuoteWrap = (s: string) =>
+        s.startsWith('"') && s.endsWith('"') ? s.slice(1, -1) : s;
+
       const stringify = (v: any) => {
         try {
           const json = JSON.stringify(
@@ -898,7 +901,7 @@ export default function PraxioPage() {
             (_, vv) => (typeof vv === 'bigint' ? vv.toString() : vv),
             2
           );
-          return json && json !== '{}' && json !== 'null' ? json : '';
+          return json && json !== '{}' && json !== 'null' ? stripQuoteWrap(json) : '';
         } catch {
           return '';
         }
@@ -911,7 +914,7 @@ export default function PraxioPage() {
           const json = stringify(val);
           return json || 'Unknown error';
         }
-        return s;
+        return stripQuoteWrap(s);
       }
 
       const msg =
@@ -919,14 +922,14 @@ export default function PraxioPage() {
         (val as any)?.error ||
         (val as any)?.msg ||
         (val as any)?.detail;
-      if (typeof msg === 'string' && msg.trim()) return msg.trim();
+      if (typeof msg === 'string' && msg.trim()) return stripQuoteWrap(msg.trim());
 
       const json = stringify(val);
       if (json) return json;
 
       const s = String(val);
       if (s === '[object Object]') return 'Unknown error';
-      return s;
+      return stripQuoteWrap(s);
     };
 
     setHistoryLoading(true);
@@ -946,7 +949,6 @@ export default function PraxioPage() {
       }
 
       const researchRows = researchRes.rows || [];
-      const citationRows = citationsRes.rows || [];
       const convRows: ConversationRow[] = Array.isArray(convRes) ? convRes : [];
       const convDesc = [...convRows].sort((a, b) => {
         const da = new Date(a.created_at || '').getTime();
@@ -954,22 +956,10 @@ export default function PraxioPage() {
         return isNaN(db) ? -1 : isNaN(da) ? 1 : db - da;
       });
       setHistoryConversations(convDesc);
-      const maxLen = Math.max(researchRows.length, citationRows.length);
-      const combined = [];
-      for (let i = 0; i < maxLen; i++) {
-        const citation = citationRows[i];
-        const citationsValue =
-          citation?.usedcitationsArray ??
-          (citation as any)?.used_citations ??
-          (citation as any)?.citations ??
-          null;
-
-        combined.push({
-          created_at: researchRows[i]?.created_at || citationRows[i]?.created_at || null,
-          research: researchRows[i]?.content ?? null,
-          citations: citationsValue,
-        });
-      }
+      const combined = researchRows.map((r: any) => ({
+        created_at: r?.created_at || null,
+        research: r?.content ?? null,
+      }));
       setHistoryItems(combined);
     } catch (err: any) {
       console.error('Error loading history data:', err);
@@ -3315,137 +3305,33 @@ export default function PraxioPage() {
               </div>
             ) : (
               <ScrollArea className="max-h-[70vh] pr-4">
-                <Accordion
-                  type="single"
-                  collapsible
-                  defaultValue={undefined}
-                  className="space-y-3 pb-4"
-                >
+                <div className="space-y-3 pb-4">
                   {historyItems.map((item, idx) => {
-                    const histCitations = parseCitations(item.citations);
                     const isInitial = idx === historyItems.length - 1;
-                    const runLabel = isInitial
-                      ? 'Initial Research'
-                      : idx === 0
-                      ? 'Latest Research'
-                      : 'Previous Research';
+                    const runLabel =
+                      idx === 0 ? 'Latest Research' : isInitial ? 'Initial Research' : 'Previous Research';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
-                    const showScenarioBox = idx === historyItems.length - 1;
-                    const pairOffset = idx * 2;
-                    const conv1 = historyConversations[pairOffset];
-                    const conv2 = historyConversations[pairOffset + 1];
                     return (
-                      <AccordionItem
+                      <div
                         key={`${item.created_at || 'run'}-${idx}`}
-                        value={`run-${idx}`}
-                        className="border rounded-lg px-3"
+                        className="border rounded-lg px-3 py-3 bg-white"
                       >
-                        <AccordionTrigger className="hover:no-underline py-2">
-                          <div className="flex items-center justify-between w-full pr-2">
-                            <div className="flex flex-col gap-0.5 text-left">
-                              <span className="text-sm font-semibold">{runLabel}</span>
-                              <span className="text-xs text-muted-foreground">{headerDate}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Citations</span>
-                            </div>
+                        <div className="flex items-center justify-between w-full mb-2">
+                          <div className="flex flex-col gap-0.5 text-left">
+                            <span className="text-sm font-semibold">{runLabel}</span>
+                            <span className="text-xs text-muted-foreground">{headerDate}</span>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-2 pb-3">
-                          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
-                            <div className="border border-border rounded-md p-3 bg-muted/30">
-                              {showScenarioBox ? (
-                                <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                                  {fullChatData?.scenario || 'No scenario provided.'}
-                                </div>
-                              ) : conv1 || conv2 ? (
-                                <div className="space-y-3">
-                                  {[conv1, conv2].filter(Boolean).map((c, i) => {
-                                    const isUser = c?.type === 'user';
-                                    const bubbleBase = 'max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm';
-                                    const time = c?.created_at ? toSydneyDateTime(c.created_at) : '';
-                                    return (
-                                      <div
-                                        key={i}
-                                        className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}
-                                      >
-                                        <div
-                                          className={`${bubbleBase} ${
-                                            isUser
-                                              ? 'bg-muted border border-border text-foreground text-left'
-                                              : 'bg-muted/80 border border-border text-foreground text-right'
-                                          }`}
-                                        >
-                                          <div className={`text-[11px] font-semibold mb-2 text-slate-600 ${isUser ? 'text-left' : 'text-right'}`}>
-                                            {isUser ? 'User' : 'Assistant'}
-                                          </div>
-                                          <div className={`whitespace-pre-wrap break-words ${isUser ? 'text-left' : 'text-right'}`}>
-                                            {c?.content || ''}
-                                          </div>
-                                          {time && (
-                                            <div className={`text-[11px] text-slate-500 mt-2 ${isUser ? 'text-left' : 'text-right'}`}>
-                                              {time}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-muted-foreground italic">No conversation available.</div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-1">Research</div>
-                              {item.research?.trim() ? (
-                                <div className="prose prose-sm max-w-none break-words prose-p:text-sm prose-li:text-sm prose-headings:text-base prose-invert">
-                                  <ReactMarkdown>{item.research}</ReactMarkdown>
-                                </div>
-                              ) : (
-                                <p className="text-xs text-muted-foreground italic">No research text</p>
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-1">
-                                Citations ({histCitations.length})
-                              </div>
-                              {histCitations.length > 0 ? (
-                                <div className="space-y-2">
-                                  {histCitations.map((c, i) => (
-                                    <div key={i} className="text-xs leading-snug">
-                                      <span className="font-medium">{i + 1}. {c.title}</span>{' '}
-                                      {c.url ? (
-                                        <a
-                                          href={c.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:text-blue-800 break-all"
-                                        >
-                                          {c.url}
-                                        </a>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          className="ml-1 text-blue-600 underline underline-offset-2 hover:text-blue-800"
-                                          onClick={() => handleOpenLegislation(c)}
-                                        >
-                                          Legislation Reference
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-xs text-muted-foreground italic">No citations</p>
-                              )}
-                            </div>
+                        </div>
+                        <div className="border border-border rounded-md p-3 bg-muted/30">
+                          <div className="text-sm font-semibold mb-1">Research</div>
+                          <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                            {item.research?.trim() || 'No research text.'}
                           </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                        </div>
+                      </div>
                     );
                   })}
-                </Accordion>
+                </div>
               </ScrollArea>
             )}
           </div>
