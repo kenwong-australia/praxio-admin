@@ -890,22 +890,29 @@ export default function PraxioPage() {
     setHistoryError(null);
     try {
       const toErr = (val: any) => {
-        if (!val) return '';
-        if (typeof val === 'string') return val;
-        if (typeof val === 'object') {
-          const msg =
-            (val as any).message ||
-            (val as any).error ||
-            (val as any).msg ||
-            (val as any).detail;
-          if (typeof msg === 'string' && msg.trim()) return msg;
-          try {
-            return JSON.stringify(val);
-          } catch {
-            return String(val);
-          }
+        if (!val) return 'Unknown error';
+        if (typeof val === 'string') {
+          const s = val.trim();
+          return s || 'Unknown error';
         }
-        return String(val);
+        const msg =
+          (val as any)?.message ||
+          (val as any)?.error ||
+          (val as any)?.msg ||
+          (val as any)?.detail;
+        if (typeof msg === 'string' && msg.trim()) return msg.trim();
+        try {
+          const json = JSON.stringify(
+            val,
+            (_, v) => (typeof v === 'bigint' ? v.toString() : v)
+          );
+          if (json && json !== '{}' && json !== 'null') return json;
+        } catch (_) {
+          // ignore
+        }
+        const s = String(val);
+        if (s === '[object Object]') return 'Unknown error';
+        return s;
       };
 
       const [researchRes, citationsRes, convRes] = await Promise.all([
@@ -950,15 +957,7 @@ export default function PraxioPage() {
     } catch (err: any) {
       console.error('Error loading history data:', err);
       setHistoryError(
-        (typeof err === 'string'
-          ? err
-          : err?.message || err?.error || err?.msg || (() => {
-              try {
-                return JSON.stringify(err);
-              } catch {
-                return String(err);
-              }
-            })()) || 'Failed to load history'
+        toErr(err) || 'Failed to load history'
       );
     } finally {
       setHistoryLoading(false);
