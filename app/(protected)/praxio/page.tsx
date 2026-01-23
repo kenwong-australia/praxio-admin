@@ -63,6 +63,7 @@ interface Citation {
 type ModelOption = 'Praxio AI' | 'Test AI';
 const MODEL_STORAGE_KEY = 'praxio_model_selection';
 const BUTTON_TEXT_PREF_KEY = 'praxio_show_button_text';
+const MAX_PROMPT_HEIGHT = 200;
 
 export default function PraxioPage() {
   const [isPreviousOpen, setIsPreviousOpen] = useState(true);
@@ -80,6 +81,7 @@ export default function PraxioPage() {
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const conversationEndRef = useRef<HTMLDivElement>(null);
+  const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [leftAccordionValue, setLeftAccordionValue] = useState<string[]>(['research']);
   const [rightAccordionValue, setRightAccordionValue] = useState<string>('questions');
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
@@ -126,6 +128,16 @@ export default function PraxioPage() {
   const { accessToken: supaToken, loading: supaTokenLoading, error: supaTokenError } = useSupabaseRls(); // RLS token from Firebase user
   const [legislationModalOpen, setLegislationModalOpen] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
+
+  const adjustPromptHeight = (textarea?: HTMLTextAreaElement | null) => {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_PROMPT_HEIGHT)}px`;
+  };
+
+  useEffect(() => {
+    adjustPromptHeight(promptTextareaRef.current);
+  }, [prompt]);
 
   // Get authenticated user UID (Firebase user ID)
   useEffect(() => {
@@ -2568,12 +2580,11 @@ export default function PraxioPage() {
                         <div className="flex gap-3 flex-wrap">
                           <div className="flex-1 relative">
                             <textarea
+                                ref={promptTextareaRef}
                               value={prompt}
                               onChange={(e) => {
                                 setPrompt(e.target.value);
-                                // Auto-resize textarea
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                                  adjustPromptHeight(e.target);
                               }}
                               placeholder="Add further details here..."
                               className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
@@ -2689,53 +2700,46 @@ export default function PraxioPage() {
             </div>
           ) : (
             // Empty state - No chat selected
-            <div className="h-full flex flex-col bg-card relative">
-              {/* Icon above prompt */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center text-muted-foreground mb-40">
+            <div className="h-full flex flex-col bg-card">
+              <div className="flex-1 flex flex-col items-center justify-center gap-8 p-6 overflow-auto">
+                <div className="text-center text-muted-foreground">
                   <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 </div>
-              </div>
 
-              {/* Prompt Input Area - Centered vertically in middle */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-full max-w-4xl px-6 pointer-events-auto">
-                  <div className="flex gap-3">
-                    <div className="flex-1 relative">
-                      <textarea
-                        value={prompt}
-                        onChange={(e) => {
-                          setPrompt(e.target.value);
-                          // Auto-resize textarea
-                          e.target.style.height = 'auto';
-                          e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-                        }}
-                        placeholder="Enter your scenario here..."
-                            className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
-                        rows={1}
-                        onKeyDown={(e) => {
-                          // Allow Enter to create new lines - only button click submits
-                        }}
-                      />
+                <div className="w-full max-w-4xl">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex gap-3 flex-wrap items-start">
+                      <div className="flex-1 relative">
+                        <textarea
+                          ref={promptTextareaRef}
+                          value={prompt}
+                          onChange={(e) => {
+                            setPrompt(e.target.value);
+                            adjustPromptHeight(e.target);
+                          }}
+                          placeholder="Enter your scenario here..."
+                          className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
+                          rows={1}
+                          onKeyDown={(e) => {
+                            // Allow Enter to create new lines - only button click submits
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-start">
+                        <Button
+                          onClick={handleRunResearch}
+                          disabled={!prompt.trim() || isRunning}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
+                          aria-label={showButtonText ? undefined : fullChatData ? 'Re-run Research' : 'Run Research'}
+                        >
+                          {renderActionLabel(fullChatData ? 'Re-run Research' : 'Run Research', ArrowUp)}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-start">
-                      <Button
-                        onClick={handleRunResearch}
-                        disabled={!prompt.trim() || isRunning}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 shrink-0 flex-shrink-0 disabled:opacity-60"
-                    aria-label={showButtonText ? undefined : fullChatData ? 'Re-run Research' : 'Run Research'}
-                      >
-                    {renderActionLabel(fullChatData ? 'Re-run Research' : 'Run Research', ArrowUp)}
-                      </Button>
+                    <div className="text-center text-muted-foreground">
+                      <p className="text-lg">Or select from Previous Research to view the conversation</p>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Text below prompt box */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center text-muted-foreground mt-40">
-                  <p className="text-lg">Or select from Previous Research to view the conversation</p>
                 </div>
               </div>
             </div>
