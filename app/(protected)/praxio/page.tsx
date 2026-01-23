@@ -18,6 +18,7 @@ import { Search, MoreVertical, MessageCircle, ExternalLink, FileText, HelpCircle
 import { toSydneyDateTime } from '@/lib/time';
 import { getChatById, getPraxioChats, getConversationsByChatId, updateChatTitle, deleteChat, archiveChat, updateChatDraft, sendDraftEmail, updateChatFeedback, createChatWithConversation, updateChatWithConversation, saveResearchEntry, saveCitationsEntry, getResearchHistory, getCitationsHistory } from '@/app/actions';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ConversationRow } from '@/lib/types';
 import { useSupabaseRls } from '@/contexts/SupabaseRlsContext'; // provides user JWT for RLS
 import ReactMarkdown from 'react-markdown';
@@ -3294,18 +3295,7 @@ export default function PraxioPage() {
             {historyLoading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">Loading history...</div>
             ) : historyError ? (
-              <div className="py-6 text-center text-sm text-red-600">
-                {historyError}
-                <div className="mt-3">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => fullChatData?.id && loadHistoryData(fullChatData.id)}
-                  >
-                    Retry
-                  </Button>
-                </div>
-              </div>
+              <ErrorBoundary historyError={historyError} onRetry={() => fullChatData?.id && loadHistoryData(fullChatData.id)} />
             ) : historyItems.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No history found for this chat yet.
