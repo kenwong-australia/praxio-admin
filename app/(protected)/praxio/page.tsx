@@ -889,13 +889,30 @@ export default function PraxioPage() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
+      const toErr = (val: any) => {
+        if (!val) return '';
+        if (typeof val === 'string') return val;
+        if (typeof val === 'object') {
+          const msg =
+            (val as any).message ||
+            (val as any).error ||
+            (val as any).msg ||
+            (val as any).detail;
+          if (typeof msg === 'string' && msg.trim()) return msg;
+          try {
+            return JSON.stringify(val);
+          } catch {
+            return String(val);
+          }
+        }
+        return String(val);
+      };
+
       const [researchRes, citationsRes, convRes] = await Promise.all([
         getResearchHistory(chatId, supaToken),
         getCitationsHistory(chatId, supaToken),
         getConversationsByChatId(chatId, supaToken),
       ]);
-
-      const toErr = (val: any) => (typeof val === 'string' ? val : val?.message ? String(val.message) : val ? String(val) : '');
 
       if (!researchRes.success) {
         setHistoryError(toErr(researchRes.error) || 'Failed to load research history');
@@ -932,7 +949,17 @@ export default function PraxioPage() {
       setHistoryItems(combined);
     } catch (err: any) {
       console.error('Error loading history data:', err);
-      setHistoryError(err?.message || 'Failed to load history');
+      setHistoryError(
+        (typeof err === 'string'
+          ? err
+          : err?.message || err?.error || err?.msg || (() => {
+              try {
+                return JSON.stringify(err);
+              } catch {
+                return String(err);
+              }
+            })()) || 'Failed to load history'
+      );
     } finally {
       setHistoryLoading(false);
     }
@@ -2762,6 +2789,9 @@ export default function PraxioPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Search Chats</DialogTitle>
+            <DialogDescription className="sr-only">
+              Search across your chats by title or content.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -2951,11 +2981,9 @@ export default function PraxioPage() {
                 <DialogTitle>
                   {draftStep === 'compile' ? 'Compile final output' : 'Create Client Draft'}
                 </DialogTitle>
-                {draftStep !== 'compile' && (
-                  <DialogDescription>
-                    Edit the draft directly below and then move to compile it with supporting sections
-                  </DialogDescription>
-                )}
+                <DialogDescription className={draftStep === 'compile' ? 'sr-only' : undefined}>
+                  Edit the draft directly below and then move to compile it with supporting sections
+                </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
                 {autoSaveStatus === 'saving' && (
@@ -3163,6 +3191,12 @@ export default function PraxioPage() {
         }}
       >
         <DialogContent className="w-[90vw] max-w-2xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Legislation excerpt</DialogTitle>
+            <DialogDescription className="sr-only">
+              Details of the selected citation including source and text.
+            </DialogDescription>
+          </DialogHeader>
           <ScrollArea className="max-h-[60vh] pr-2 pt-2">
             <div className="space-y-4">
               <div>
@@ -3226,6 +3260,9 @@ export default function PraxioPage() {
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle>Research History</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Past research runs, conversations, and citations for this chat.
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
