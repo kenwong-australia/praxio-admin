@@ -29,6 +29,20 @@ function isRlsDenied(error: any) {
   return code === '42501' || code === 'PGRST302' || msg.includes('permission') || msg.includes('rls');
 }
 
+function errToMsg(err: any): string {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  const msg = err?.message || err?.error || err?.msg || err?.detail;
+  if (typeof msg === 'string' && msg.trim()) return msg.trim();
+  try {
+    const json = JSON.stringify(err);
+    if (json && json !== '{}') return json;
+  } catch (_e) {
+    // ignore
+  }
+  return String(err);
+}
+
 export async function getDistinctEmails(accessToken?: string) {
   try {
     await ensureAdmin();
@@ -440,12 +454,12 @@ export async function saveCitationsEntry(input: { chat_id: number; usedcitations
         return { success: true, id: svcData?.id };
       } catch (fallbackErr) {
         console.error('Error saving citations entry (fallback):', fallbackErr);
-        return { success: false, error: String(fallbackErr) };
+        return { success: false, error: errToMsg(fallbackErr) };
       }
     }
 
     console.error('Error saving citations entry:', error);
-    return { success: false, error: String(error) };
+    return { success: false, error: errToMsg(error) };
   }
 }
 
@@ -531,12 +545,12 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
         return { success: true, rows: svcData ?? [] };
       } catch (fallbackErr) {
         console.error('Error fetching citations history (fallback):', fallbackErr);
-        return { success: false, error: String(fallbackErr), rows: [] };
+        return { success: false, error: errToMsg(fallbackErr), rows: [] };
       }
     }
 
     console.error('Error fetching citations history:', error);
-    return { success: false, error: String(error), rows: [] };
+    return { success: false, error: errToMsg(error), rows: [] };
   }
 }
 
