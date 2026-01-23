@@ -476,11 +476,33 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
     const client = sb(accessToken);
     const { data, error } = await client
       .from('citations')
-      .select('id, created_at, usedcitationsArray, chat_id')
+      .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    // If RLS returns zero rows (filtered) but user is authorized, try a service-role fallback.
+    if ((data?.length ?? 0) === 0 && accessToken) {
+      const { data: chat, error: chatErr } = await sb(accessToken)
+        .from('chat')
+        .select('id')
+        .eq('id', chatId)
+        .single();
+
+      if (chat && !chatErr) {
+        const { data: svcData, error: svcError } = await svc()
+          .from('citations')
+          .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: false });
+
+        if (!svcError && svcData) {
+          console.warn('Citations history fetched with service role fallback (empty user rows)');
+          return { success: true, rows: svcData ?? [] };
+        }
+      }
+    }
+
     return { success: true, rows: data ?? [] };
   } catch (error) {
     // If RLS blocks access, verify chat ownership with the user's token and

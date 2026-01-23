@@ -914,10 +914,17 @@ export default function PraxioPage() {
       const maxLen = Math.max(researchRows.length, citationRows.length);
       const combined = [];
       for (let i = 0; i < maxLen; i++) {
+        const citation = citationRows[i];
+        const citationsValue =
+          citation?.usedcitationsArray ??
+          (citation as any)?.used_citations ??
+          (citation as any)?.citations ??
+          null;
+
         combined.push({
           created_at: researchRows[i]?.created_at || citationRows[i]?.created_at || null,
           research: researchRows[i]?.content ?? null,
-          citations: citationRows[i]?.usedcitationsArray ?? null,
+          citations: citationsValue,
         });
       }
       setHistoryItems(combined);
