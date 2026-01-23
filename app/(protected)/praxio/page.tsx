@@ -3341,17 +3341,17 @@ export default function PraxioPage() {
                           <div className="space-y-3">
                             <div className="border border-border rounded-md p-3 bg-card">
                               <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
-                              <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto pr-1">
+                            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto pr-1">
                                 {item.research?.trim() || 'No research text.'}
                               </div>
                             </div>
 
                             <div className="border border-border rounded-md p-3 bg-card">
                               <div className="text-sm font-semibold mb-2 text-foreground">Citations</div>
-                              {parseCitations(item.citations).length === 0 ? (
+                            {parseCitations(item.citations).length === 0 ? (
                                 <p className="text-sm text-muted-foreground italic">No citations recorded.</p>
                               ) : (
-                                <ol className="text-sm list-decimal ml-4 space-y-1 text-foreground">
+                              <ol className="text-sm list-decimal ml-4 space-y-1 text-foreground max-h-64 overflow-y-auto pr-1">
                                   {parseCitations(item.citations).map((c, ci) => (
                                     <li key={ci} className="whitespace-pre-wrap break-words">
                                       <span className="font-medium">{c.title || 'Citation'}</span>
