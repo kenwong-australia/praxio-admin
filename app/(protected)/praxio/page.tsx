@@ -3342,7 +3342,7 @@ export default function PraxioPage() {
                               <span className="text-xs text-muted-foreground">{headerDate}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Citations: {histCitations.length}</span>
+                              <span>Citations</span>
                             </div>
                           </div>
                         </AccordionTrigger>
