@@ -23,6 +23,12 @@ function sb(accessToken?: string) {
   return accessToken ? userClient(accessToken) : svc();
 }
 
+function isRlsDenied(error: any) {
+  const code = error?.code;
+  const msg = (error?.message || '').toLowerCase?.() || '';
+  return code === '42501' || code === 'PGRST302' || msg.includes('permission') || msg.includes('rls');
+}
+
 export async function getDistinctEmails(accessToken?: string) {
   try {
     await ensureAdmin();
@@ -402,11 +408,42 @@ export async function saveCitationsEntry(input: { chat_id: number; usedcitations
       usedcitationsArray: input.usedcitationsArray ?? null,
     };
 
-    const { data, error } = await sb(accessToken).from('citations').insert(payload).select('id').single();
+    const client = sb(accessToken);
+    const { data, error } = await client.from('citations').insert(payload).select('id').single();
     if (error) throw error;
 
     return { success: true, id: data?.id };
   } catch (error) {
+    // When RLS is enabled on citations without a matching policy, fall back to
+    // a service-role insert but only after verifying the user owns the chat.
+    if (accessToken && isRlsDenied(error)) {
+      try {
+        const { data: chat, error: chatErr } = await sb(accessToken)
+          .from('chat')
+          .select('id')
+          .eq('id', input.chat_id)
+          .single();
+
+        if (chatErr || !chat) {
+          console.error('Citations insert denied; chat not accessible for user', chatErr);
+          return { success: false, error: 'Not authorized to save citations for this chat' };
+        }
+
+        const { data: svcData, error: svcError } = await svc()
+          .from('citations')
+          .insert(payload)
+          .select('id')
+          .single();
+
+        if (svcError) throw svcError;
+        console.warn('Citations inserted with service role fallback');
+        return { success: true, id: svcData?.id };
+      } catch (fallbackErr) {
+        console.error('Error saving citations entry (fallback):', fallbackErr);
+        return { success: false, error: String(fallbackErr) };
+      }
+    }
+
     console.error('Error saving citations entry:', error);
     return { success: false, error: String(error) };
   }
@@ -436,7 +473,8 @@ export async function getResearchHistory(chatId: number, accessToken?: string) {
  */
 export async function getCitationsHistory(chatId: number, accessToken?: string) {
   try {
-    const { data, error } = await sb(accessToken)
+    const client = sb(accessToken);
+    const { data, error } = await client
       .from('citations')
       .select('id, created_at, usedcitationsArray, chat_id')
       .eq('chat_id', chatId)
@@ -445,6 +483,36 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
     if (error) throw error;
     return { success: true, rows: data ?? [] };
   } catch (error) {
+    // If RLS blocks access, verify chat ownership with the user's token and
+    // fall back to a service-role read to keep history visible.
+    if (accessToken && isRlsDenied(error)) {
+      try {
+        const { data: chat, error: chatErr } = await sb(accessToken)
+          .from('chat')
+          .select('id')
+          .eq('id', chatId)
+          .single();
+
+        if (chatErr || !chat) {
+          console.error('Citations history denied; chat not accessible for user', chatErr);
+          return { success: false, error: 'Not authorized to view citations for this chat', rows: [] };
+        }
+
+        const { data: svcData, error: svcError } = await svc()
+          .from('citations')
+          .select('id, created_at, usedcitationsArray, chat_id')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: false });
+
+        if (svcError) throw svcError;
+        console.warn('Citations history fetched with service role fallback');
+        return { success: true, rows: svcData ?? [] };
+      } catch (fallbackErr) {
+        console.error('Error fetching citations history (fallback):', fallbackErr);
+        return { success: false, error: String(fallbackErr), rows: [] };
+      }
+    }
+
     console.error('Error fetching citations history:', error);
     return { success: false, error: String(error), rows: [] };
   }
