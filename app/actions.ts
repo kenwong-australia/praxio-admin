@@ -402,12 +402,12 @@ export async function saveResearchEntry(input: { chat_id: number; content: strin
  * Save citations for a chat (one row per run).
  */
 export async function saveCitationsEntry(input: { chat_id: number; usedcitationsArray: any }, accessToken?: string) {
-  try {
-    const payload = {
-      chat_id: input.chat_id,
-      usedcitationsArray: input.usedcitationsArray ?? null,
-    };
+  const payload = {
+    chat_id: input.chat_id,
+    usedcitationsArray: input.usedcitationsArray ?? null,
+  };
 
+  try {
     const client = sb(accessToken);
     const { data, error } = await client.from('citations').insert(payload).select('id').single();
     if (error) throw error;
