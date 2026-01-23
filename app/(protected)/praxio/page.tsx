@@ -117,7 +117,7 @@ export default function PraxioPage() {
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyItems, setHistoryItems] = useState<
-    { created_at: string | null; research: string | null; citations: any }[]
+    { created_at: string | null; research: string | null; citations: any | null }[]
   >([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyConversations, setHistoryConversations] = useState<ConversationRow[]>([]);
@@ -959,6 +959,7 @@ export default function PraxioPage() {
       const combined = researchRows.map((r: any) => ({
         created_at: r?.created_at || null,
         research: r?.content ?? null,
+        citations: null,
       }));
       setHistoryItems(combined);
     } catch (err: any) {
