@@ -3325,7 +3325,7 @@ export default function PraxioPage() {
                     return (
                       <div
                         key={`${item.created_at || 'run'}-${idx}`}
-                        className="border rounded-lg px-3 py-3 bg-white"
+                        className="border border-border rounded-lg px-3 py-3 bg-card shadow-sm"
                       >
                         <div className="flex items-center justify-between w-full mb-2">
                           <div className="flex flex-col gap-0.5 text-left">
@@ -3333,8 +3333,8 @@ export default function PraxioPage() {
                             <span className="text-xs text-muted-foreground">{headerDate}</span>
                           </div>
                         </div>
-                        <div className="border border-border rounded-md p-3 bg-muted/30">
-                          <div className="text-sm font-semibold mb-1">Research</div>
+                        <div className="border border-border rounded-md p-3 bg-card">
+                          <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
                           <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                             {item.research?.trim() || 'No research text.'}
                           </div>
