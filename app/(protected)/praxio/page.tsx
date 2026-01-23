@@ -890,27 +890,40 @@ export default function PraxioPage() {
 
     const toErr = (val: any) => {
       if (!val) return 'Unknown error';
+
+      const stringify = (v: any) => {
+        try {
+          const json = JSON.stringify(
+            v,
+            (_, vv) => (typeof vv === 'bigint' ? vv.toString() : vv),
+            2
+          );
+          return json && json !== '{}' && json !== 'null' ? json : '';
+        } catch {
+          return '';
+        }
+      };
+
       if (typeof val === 'string') {
         const s = val.trim();
         if (!s) return 'Unknown error';
-        if (s === '[object Object]') return 'Unknown error (see console)';
+        if (s === '[object Object]') {
+          const json = stringify(val);
+          return json || 'Unknown error';
+        }
         return s;
       }
+
       const msg =
         (val as any)?.message ||
         (val as any)?.error ||
         (val as any)?.msg ||
         (val as any)?.detail;
       if (typeof msg === 'string' && msg.trim()) return msg.trim();
-      try {
-        const json = JSON.stringify(
-          val,
-          (_, v) => (typeof v === 'bigint' ? v.toString() : v)
-        );
-        if (json && json !== '{}' && json !== 'null') return json;
-      } catch (_) {
-        // ignore
-      }
+
+      const json = stringify(val);
+      if (json) return json;
+
       const s = String(val);
       if (s === '[object Object]') return 'Unknown error';
       return s;
@@ -2985,8 +2998,8 @@ export default function PraxioPage() {
                   {draftStep === 'compile' ? 'Compile final output' : 'Create Client Draft'}
                 </DialogTitle>
                 <DialogDescription className={draftStep === 'compile' ? 'sr-only' : undefined}>
-                  Edit the draft directly below and then move to compile it with supporting sections
-                </DialogDescription>
+                    Edit the draft directly below and then move to compile it with supporting sections
+                  </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
                 {autoSaveStatus === 'saving' && (
