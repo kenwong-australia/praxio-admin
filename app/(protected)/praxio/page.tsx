@@ -886,35 +886,36 @@ export default function PraxioPage() {
       setHistoryError('Missing Supabase token');
       return;
     }
+
+    const toErr = (val: any) => {
+      if (!val) return 'Unknown error';
+      if (typeof val === 'string') {
+        const s = val.trim();
+        return s || 'Unknown error';
+      }
+      const msg =
+        (val as any)?.message ||
+        (val as any)?.error ||
+        (val as any)?.msg ||
+        (val as any)?.detail;
+      if (typeof msg === 'string' && msg.trim()) return msg.trim();
+      try {
+        const json = JSON.stringify(
+          val,
+          (_, v) => (typeof v === 'bigint' ? v.toString() : v)
+        );
+        if (json && json !== '{}' && json !== 'null') return json;
+      } catch (_) {
+        // ignore
+      }
+      const s = String(val);
+      if (s === '[object Object]') return 'Unknown error';
+      return s;
+    };
+
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const toErr = (val: any) => {
-        if (!val) return 'Unknown error';
-        if (typeof val === 'string') {
-          const s = val.trim();
-          return s || 'Unknown error';
-        }
-        const msg =
-          (val as any)?.message ||
-          (val as any)?.error ||
-          (val as any)?.msg ||
-          (val as any)?.detail;
-        if (typeof msg === 'string' && msg.trim()) return msg.trim();
-        try {
-          const json = JSON.stringify(
-            val,
-            (_, v) => (typeof v === 'bigint' ? v.toString() : v)
-          );
-          if (json && json !== '{}' && json !== 'null') return json;
-        } catch (_) {
-          // ignore
-        }
-        const s = String(val);
-        if (s === '[object Object]') return 'Unknown error';
-        return s;
-      };
-
       const [researchRes, citationsRes, convRes] = await Promise.all([
         getResearchHistory(chatId, supaToken),
         getCitationsHistory(chatId, supaToken),
