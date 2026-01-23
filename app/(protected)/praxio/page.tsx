@@ -895,11 +895,13 @@ export default function PraxioPage() {
         getConversationsByChatId(chatId, supaToken),
       ]);
 
+      const toErr = (val: any) => (typeof val === 'string' ? val : val?.message ? String(val.message) : val ? String(val) : '');
+
       if (!researchRes.success) {
-        setHistoryError(researchRes.error || 'Failed to load research history');
+        setHistoryError(toErr(researchRes.error) || 'Failed to load research history');
       }
       if (!citationsRes.success) {
-        setHistoryError((prev) => prev || citationsRes.error || 'Failed to load citations history');
+        setHistoryError((prev) => prev || toErr(citationsRes.error) || 'Failed to load citations history');
       }
 
       const researchRows = researchRes.rows || [];
