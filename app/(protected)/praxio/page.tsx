@@ -891,7 +891,9 @@ export default function PraxioPage() {
       if (!val) return 'Unknown error';
       if (typeof val === 'string') {
         const s = val.trim();
-        return s || 'Unknown error';
+        if (!s) return 'Unknown error';
+        if (s === '[object Object]') return 'Unknown error (see console)';
+        return s;
       }
       const msg =
         (val as any)?.message ||
