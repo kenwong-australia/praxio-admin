@@ -3316,33 +3316,38 @@ export default function PraxioPage() {
               </div>
             ) : (
               <ScrollArea className="max-h-[70vh] pr-4">
-                <div className="space-y-3 pb-4">
+                <Accordion type="single" collapsible className="space-y-3 pb-4">
                   {historyItems.map((item, idx) => {
                     const isInitial = idx === historyItems.length - 1;
                     const runLabel =
                       idx === 0 ? 'Latest Research' : isInitial ? 'Initial Research' : 'Previous Research';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
                     return (
-                      <div
+                      <AccordionItem
                         key={`${item.created_at || 'run'}-${idx}`}
-                        className="border border-border rounded-lg px-3 py-3 bg-card shadow-sm"
+                        value={`run-${idx}`}
+                        className="border border-border rounded-lg bg-card shadow-sm px-3"
                       >
-                        <div className="flex items-center justify-between w-full mb-2">
-                          <div className="flex flex-col gap-0.5 text-left">
-                            <span className="text-sm font-semibold">{runLabel}</span>
-                            <span className="text-xs text-muted-foreground">{headerDate}</span>
+                        <AccordionTrigger className="hover:no-underline py-2">
+                          <div className="flex items-center justify-between w-full pr-2">
+                            <div className="flex flex-col text-left">
+                              <span className="text-sm font-semibold">{runLabel}</span>
+                              <span className="text-xs text-muted-foreground">{headerDate}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="border border-border rounded-md p-3 bg-card">
-                          <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
-                          <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                            {item.research?.trim() || 'No research text.'}
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-3">
+                          <div className="border border-border rounded-md p-3 bg-card">
+                            <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
+                            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                              {item.research?.trim() || 'No research text.'}
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </AccordionContent>
+                      </AccordionItem>
                     );
                   })}
-                </div>
+                </Accordion>
               </ScrollArea>
             )}
           </div>
