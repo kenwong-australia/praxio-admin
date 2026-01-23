@@ -522,7 +522,7 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
 
         const { data: svcData, error: svcError } = await svc()
           .from('citations')
-          .select('id, created_at, usedcitationsArray, chat_id')
+          .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
           .eq('chat_id', chatId)
           .order('created_at', { ascending: false });
 
