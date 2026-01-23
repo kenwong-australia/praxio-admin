@@ -490,7 +490,7 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
     const client = sb(accessToken);
     const { data, error } = await client
       .from('citations')
-      .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
+      .select('id, created_at, usedcitationsArray, chat_id')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: false });
 
@@ -506,7 +506,7 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
       if (chat && !chatErr) {
         const { data: svcData, error: svcError } = await svc()
           .from('citations')
-          .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
+          .select('id, created_at, usedcitationsArray, chat_id')
           .eq('chat_id', chatId)
           .order('created_at', { ascending: false });
 
@@ -536,7 +536,7 @@ export async function getCitationsHistory(chatId: number, accessToken?: string) 
 
         const { data: svcData, error: svcError } = await svc()
           .from('citations')
-          .select('id, created_at, usedcitationsArray, used_citations, citations, chat_id')
+          .select('id, created_at, usedcitationsArray, chat_id')
           .eq('chat_id', chatId)
           .order('created_at', { ascending: false });
 
