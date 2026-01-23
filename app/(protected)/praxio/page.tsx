@@ -3323,6 +3323,7 @@ export default function PraxioPage() {
                     const runLabel =
                       idx === 0 ? 'Latest Research' : isInitial ? 'Initial Research' : 'Previous Research';
                     const headerDate = item.created_at ? toSydneyDateTime(item.created_at) : 'Unknown date';
+                    const histCitations = parseCitations(item.citations);
                     return (
                       <AccordionItem
                         key={`${item.created_at || 'run'}-${idx}`}
@@ -3356,11 +3357,11 @@ export default function PraxioPage() {
                               <div className="text-sm font-semibold mb-2 text-foreground">
                                 Citations ({histCitations.length})
                               </div>
-                              {parseCitations(item.citations).length === 0 ? (
+                              {histCitations.length === 0 ? (
                                 <p className="text-sm text-muted-foreground italic">No citations recorded.</p>
                               ) : (
                                 <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                                  {parseCitations(item.citations).map((citation, ci) => (
+                                  {histCitations.map((citation, ci) => (
                                     <div
                                       key={ci}
                                       className="flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg w-full min-w-0 border border-border/50"
