@@ -8,10 +8,18 @@ type Props = {
 
 export function ErrorBoundary({ historyError, onRetry }: Props) {
   // Ensure we always render a plain string, never [object Object]
+  const normalize = (msg: string) => {
+    const trimmed = msg.trim();
+    if (!trimmed || trimmed === '[object Object]') {
+      return 'Unknown error (no details). Please check console.';
+    }
+    return trimmed;
+  };
+
   const safeMessage =
     typeof historyError === 'string' && historyError.trim()
-      ? historyError
-      : 'An unknown error occurred. Please check console for details.';
+      ? normalize(historyError)
+      : 'Unknown error (no details). Please check console.';
 
   return (
     <div className="py-6 text-center text-sm text-red-600">
