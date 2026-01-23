@@ -941,11 +941,21 @@ export default function PraxioPage() {
         getConversationsByChatId(chatId, supaToken),
       ]);
 
+      console.error('history debug', {
+        researchRes,
+        citationsRes,
+        convRes,
+      });
+
       if (!researchRes.success) {
-        setHistoryError(toErr(researchRes.error) || 'Failed to load research history');
+        setHistoryError(
+          `Research history failed: ${toErr(researchRes.error) || 'Unknown error'}`
+        );
       }
       if (!citationsRes.success) {
-        setHistoryError((prev) => prev || toErr(citationsRes.error) || 'Failed to load citations history');
+        setHistoryError((prev) =>
+          prev || `Citations history failed: ${toErr(citationsRes.error) || 'Unknown error'}`
+        );
       }
 
       const researchRows = researchRes.rows || [];
