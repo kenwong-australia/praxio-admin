@@ -966,10 +966,11 @@ export default function PraxioPage() {
         return isNaN(db) ? -1 : isNaN(da) ? 1 : db - da;
       });
       setHistoryConversations(convDesc);
-      const combined = researchRows.map((r: any) => ({
-        created_at: r?.created_at || null,
+      const citationRows = citationsRes.rows || [];
+      const combined = researchRows.map((r: any, i: number) => ({
+        created_at: r?.created_at || citationRows[i]?.created_at || null,
         research: r?.content ?? null,
-        citations: null,
+        citations: citationRows[i]?.usedcitationsArray ?? null,
       }));
       setHistoryItems(combined);
     } catch (err: any) {
@@ -3337,10 +3338,40 @@ export default function PraxioPage() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pb-3">
-                          <div className="border border-border rounded-md p-3 bg-card">
-                            <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
-                            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                              {item.research?.trim() || 'No research text.'}
+                          <div className="space-y-3">
+                            <div className="border border-border rounded-md p-3 bg-card">
+                              <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
+                              <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto pr-1">
+                                {item.research?.trim() || 'No research text.'}
+                              </div>
+                            </div>
+
+                            <div className="border border-border rounded-md p-3 bg-card">
+                              <div className="text-sm font-semibold mb-2 text-foreground">Citations</div>
+                              {parseCitations(item.citations).length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic">No citations recorded.</p>
+                              ) : (
+                                <ol className="text-sm list-decimal ml-4 space-y-1 text-foreground">
+                                  {parseCitations(item.citations).map((c, ci) => (
+                                    <li key={ci} className="whitespace-pre-wrap break-words">
+                                      <span className="font-medium">{c.title || 'Citation'}</span>
+                                      {c.url ? (
+                                        <>
+                                          {' — '}
+                                          <a
+                                            href={c.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-blue-600 hover:underline break-all"
+                                          >
+                                            {c.url}
+                                          </a>
+                                        </>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ol>
+                              )}
                             </div>
                           </div>
                         </AccordionContent>
