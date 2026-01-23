@@ -2728,7 +2728,6 @@ export default function PraxioPage() {
                           }}
                           placeholder="Enter your scenario here..."
                           className="w-full min-h-[32px] max-h-[320px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
-                          className="w-full min-h-[32px] max-h-[320px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
                           rows={1}
                           onKeyDown={(e) => {
                             // Allow Enter to create new lines - only button click submits
