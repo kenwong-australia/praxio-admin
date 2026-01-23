@@ -63,7 +63,7 @@ interface Citation {
 type ModelOption = 'Praxio AI' | 'Test AI';
 const MODEL_STORAGE_KEY = 'praxio_model_selection';
 const BUTTON_TEXT_PREF_KEY = 'praxio_show_button_text';
-const MAX_PROMPT_HEIGHT = 200;
+const MAX_PROMPT_HEIGHT = 320;
 
 export default function PraxioPage() {
   const [isPreviousOpen, setIsPreviousOpen] = useState(true);
@@ -2727,7 +2727,8 @@ export default function PraxioPage() {
                             adjustPromptHeight(e.target);
                           }}
                           placeholder="Enter your scenario here..."
-                          className="w-full min-h-[32px] max-h-[200px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
+                          className="w-full min-h-[32px] max-h-[320px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
+                          className="w-full min-h-[32px] max-h-[320px] px-3 py-1.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none overflow-y-auto leading-normal text-sm"
                           rows={1}
                           onKeyDown={(e) => {
                             // Allow Enter to create new lines - only button click submits
