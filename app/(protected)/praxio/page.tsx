@@ -3341,36 +3341,57 @@ export default function PraxioPage() {
                           <div className="space-y-3">
                             <div className="border border-border rounded-md p-3 bg-card">
                               <div className="text-sm font-semibold mb-2 text-foreground">Research</div>
-                            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto pr-1">
-                                {item.research?.trim() || 'No research text.'}
+                              <div className="max-h-80 overflow-y-auto pr-1">
+                                {item.research?.trim() ? (
+                                  <div className="prose prose-sm max-w-none break-words prose-headings:font-semibold prose-p:leading-relaxed prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-sm prose-headings:text-base prose-ul:text-sm prose-ol:text-sm prose-li:text-sm prose-code:text-xs prose-invert">
+                                    <ReactMarkdown>{item.research}</ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground italic">No research text.</p>
+                                )}
                               </div>
                             </div>
 
                             <div className="border border-border rounded-md p-3 bg-card">
-                              <div className="text-sm font-semibold mb-2 text-foreground">Citations</div>
-                            {parseCitations(item.citations).length === 0 ? (
+                              <div className="text-sm font-semibold mb-2 text-foreground">
+                                Citations ({histCitations.length})
+                              </div>
+                              {parseCitations(item.citations).length === 0 ? (
                                 <p className="text-sm text-muted-foreground italic">No citations recorded.</p>
                               ) : (
-                              <ol className="text-sm list-decimal ml-4 space-y-1 text-foreground max-h-64 overflow-y-auto pr-1">
-                                  {parseCitations(item.citations).map((c, ci) => (
-                                    <li key={ci} className="whitespace-pre-wrap break-words">
-                                      <span className="font-medium">{c.title || 'Citation'}</span>
-                                      {c.url ? (
-                                        <>
-                                          {' — '}
+                                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                                  {parseCitations(item.citations).map((citation, ci) => (
+                                    <div
+                                      key={ci}
+                                      className="flex items-start gap-2 p-2.5 bg-muted/50 rounded-lg w-full min-w-0 border border-border/50"
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-xs mb-0.5 line-clamp-2">
+                                          {citation.title || 'Citation'}
+                                        </p>
+                                        {citation.url ? (
                                           <a
-                                            href={c.url}
+                                            href={citation.url}
                                             target="_blank"
-                                            rel="noreferrer"
-                                            className="text-blue-600 hover:underline break-all"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 text-[10px] flex items-start gap-1 break-all whitespace-normal min-w-0"
                                           >
-                                            {c.url}
+                                            <ExternalLink className="h-2.5 w-2.5 shrink-0 mt-[2px]" />
+                                            <span className="leading-snug break-all">{citation.url}</span>
                                           </a>
-                                        </>
-                                      ) : null}
-                                    </li>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            className="text-[10px] text-blue-600 underline underline-offset-2 font-medium hover:text-blue-800"
+                                            onClick={() => handleOpenLegislation(citation)}
+                                          >
+                                            Legislation Reference
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
                                   ))}
-                                </ol>
+                                </div>
                               )}
                             </div>
                           </div>
